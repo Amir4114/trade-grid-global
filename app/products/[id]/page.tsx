@@ -1,0 +1,49 @@
+﻿import Link from "next/link";
+import { notFound } from "next/navigation";
+import Footer from "@/components/layout/Footer";
+import Navbar from "@/components/layout/Navbar";
+import CountryFlag from "@/components/marketplace/CountryFlag";
+import TrustScore from "@/components/marketplace/TrustScore";
+import VerificationBadge from "@/components/marketplace/VerificationBadge";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { getProductById, getSupplierForProduct } from "@/lib/marketplace/data";
+
+type PageProps = { params: Promise<{ id: string }> };
+
+export default async function ProductDetailPage({ params }: PageProps) {
+  const { id } = await params;
+  const product = getProductById(id);
+  if (!product) notFound();
+  const supplier = getSupplierForProduct(product);
+
+  return (
+    <main className="min-h-screen bg-neutral-50 text-neutral-950">
+      <Navbar />
+      <section className="border-b border-neutral-200 bg-white">
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:px-6 lg:grid-cols-[1fr_480px] lg:px-8">
+          <div>
+            <Badge variant="outline" className="rounded-md">{product.category}</Badge>
+            <h1 className="mt-4 text-4xl font-semibold tracking-tight md:text-5xl">{product.name}</h1>
+            <p className="mt-4 max-w-3xl text-lg leading-8 text-neutral-600">{product.description}</p>
+            <div className="mt-6 flex flex-wrap gap-3 text-sm text-neutral-700"><span className="rounded-lg bg-neutral-100 px-3 py-2">MOQ {product.moq}</span><span className="rounded-lg bg-neutral-100 px-3 py-2">Lead time {product.leadTime}</span><span className="rounded-lg bg-neutral-100 px-3 py-2"><CountryFlag country={product.country} /></span></div>
+            <Button asChild className="mt-8"><Link href="/rfq">Request Quote</Link></Button>
+          </div>
+          <div className="grid gap-3"><div className="overflow-hidden rounded-lg border border-neutral-200 bg-neutral-100"><img src={product.image} alt={product.name} className="h-80 w-full object-cover" /></div><div className="grid grid-cols-2 gap-3">{product.gallery.map((image) => <img key={image} src={image} alt={product.name} className="h-28 rounded-lg border border-neutral-200 object-cover" />)}</div></div>
+        </div>
+      </section>
+      <section className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[1fr_360px] lg:px-8">
+        <div className="space-y-6">
+          <Card className="rounded-lg bg-white"><CardContent className="p-6"><h2 className="text-2xl font-semibold">Specifications</h2><dl className="mt-5 grid gap-4 sm:grid-cols-2">{Object.entries(product.specifications).map(([key, value]) => <div key={key}><dt className="text-sm text-neutral-500">{key}</dt><dd className="mt-1 font-medium">{value}</dd></div>)}<div><dt className="text-sm text-neutral-500">Packaging</dt><dd className="mt-1 font-medium">{product.packaging}</dd></div><div><dt className="text-sm text-neutral-500">MOQ</dt><dd className="mt-1 font-medium">{product.moq}</dd></div></dl></CardContent></Card>
+          <Card className="rounded-lg bg-white"><CardContent className="p-6"><h2 className="text-2xl font-semibold">Certifications</h2><div className="mt-4 flex flex-wrap gap-2">{product.certifications.map((item) => <Badge key={item} className="rounded-md">{item}</Badge>)}</div></CardContent></Card>
+        </div>
+        <aside className="h-fit rounded-lg border border-neutral-200 bg-white p-5 shadow-sm">
+          <h2 className="text-xl font-semibold">Supplier Information</h2>
+          {supplier ? <div className="mt-4 space-y-4"><div className="flex items-center gap-3"><div className="flex size-12 items-center justify-center rounded-lg bg-neutral-950 text-xs font-semibold text-white">{supplier.logo}</div><div><Link href={`/suppliers/${supplier.id}`} className="font-semibold hover:underline">{supplier.companyName}</Link><div className="mt-1"><VerificationBadge state={supplier.verificationState} /></div></div></div><TrustScore score={supplier.trustScore} compact /><Button asChild className="w-full"><Link href="/rfq">RFQ Button</Link></Button><Button asChild variant="outline" className="w-full"><Link href={`/suppliers/${supplier.id}`}>View Supplier</Link></Button></div> : null}
+        </aside>
+      </section>
+      <Footer />
+    </main>
+  );
+}

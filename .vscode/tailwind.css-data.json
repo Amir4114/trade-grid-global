@@ -1,0 +1,49 @@
+{
+  "version": 1.1,
+  "atDirectives": [
+    {
+      "name": "@apply",
+      "description": "Inline Tailwind utility classes."
+    },
+    {
+      "name": "@config",
+      "description": "Load a legacy Tailwind config file."
+    },
+    {
+      "name": "@custom-variant",
+      "description": "Define a custom variant."
+    },
+    {
+      "name": "@import",
+      "description": "Import Tailwind CSS and other stylesheets."
+    },
+    {
+      "name": "@layer",
+      "description": "Organize styles into base, components, and utilities layers."
+    },
+    {
+      "name": "@plugin",
+      "description": "Load a Tailwind plugin."
+    },
+    {
+      "name": "@reference",
+      "description": "Reference Tailwind without emitting CSS."
+    },
+    {
+      "name": "@source",
+      "description": "Specify source files for class detection."
+    },
+    {
+      "name": "@theme",
+      "description": "Define design tokens and theme variables."
+    },
+    {
+      "name": "@utility",
+      "description": "Define a custom utility class."
+    },
+    {
+      "name": "@variant",
+      "description": "Define a custom variant."
+    }
+  ]
+}

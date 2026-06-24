@@ -1,0 +1,12 @@
+{
+  "css.customData": [".vscode/tailwind.css-data.json"],
+  "files.associations": {
+    "*.css": "tailwindcss",
+    "**/.next/dev/trace": "plaintext"
+  },
+  "search.exclude": {
+    "**/.next": true
+  },
+  "typescript.tsconfig": "trade-grid-global/tsconfig.json",
+  "eslint.workingDirectories": ["trade-grid-global"]
+}
