@@ -4,7 +4,6 @@
   Category,
   CategoryName,
   Country,
-  CountryName,
   Inquiry,
   PlatformUser,
   Product,

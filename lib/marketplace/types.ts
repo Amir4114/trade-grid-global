@@ -1,6 +1,8 @@
-﻿export type VerificationLevel = "basic" | "verified" | "premium";
+﻿import type { UserRole } from "@/lib/database/types";
+
+export type { UserRole };
+export type VerificationLevel = "basic" | "verified" | "premium";
 export type VerificationState = "pending" | "under-review" | "verified" | "rejected" | "gold-verified";
-export type UserRole = "buyer" | "supplier" | "admin";
 
 export type CountryName =
   | "India"

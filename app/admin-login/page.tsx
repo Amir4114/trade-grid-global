@@ -1,22 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { supabase } from "../../lib/supabase";
+import { createClient } from "@/lib/supabase/client";
+import {
+  fetchClientAuthRedirectContext,
+  resolvePostAuthRedirectPath,
+} from "@/lib/auth/redirects";
 
 export default function AdminLoginPage() {
-  const router = useRouter();
+  const supabase = createClient();
 
   const [email, setEmail] = useState("");
-  const [password, setPassword] =
-    useState("");
+  const [password, setPassword] = useState("");
 
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleLogin = async () => {
+  async function handleLogin(
+    e: React.FormEvent<HTMLFormElement>
+  ) {
+    e.preventDefault();
+
     try {
       setLoading(true);
+      setError("");
 
       const { data, error } =
         await supabase.auth.signInWithPassword({
@@ -25,8 +32,11 @@ export default function AdminLoginPage() {
         });
 
       if (error) {
-        alert(error.message);
-        return;
+        throw error;
+      }
+
+      if (!data.user) {
+        throw new Error("Admin login failed.");
       }
 
       const { data: profile, error: profileError } =
@@ -37,72 +47,87 @@ export default function AdminLoginPage() {
           .single();
 
       if (profileError) {
-        alert(profileError.message);
-        return;
+        throw profileError;
       }
 
-      if (profile?.role !== "admin") {
-        alert("Access denied");
+      if (!profile) {
+        throw new Error("Admin profile not found.");
+      }
 
+      if (profile.role !== "admin") {
         await supabase.auth.signOut();
-
-        return;
+        throw new Error(
+          "Access denied. Admin account required."
+        );
       }
 
-      router.push("/admin");
-
+      window.location.replace(
+        resolvePostAuthRedirectPath(
+          await fetchClientAuthRedirectContext(data.user.id)
+        )
+      );
     } catch (err) {
-      console.error(err);
+      console.error("Admin Login Error:", err);
 
-      alert("Something went wrong");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong."
+      );
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-black text-white">
-
-      <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8">
+      <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl">
 
         <h1 className="mb-8 text-center text-4xl font-bold">
           Admin Login
         </h1>
 
-        <div className="space-y-4">
+        {error && (
+          <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+            {error}
+          </div>
+        )}
 
+        <form
+          onSubmit={handleLogin}
+          className="space-y-4"
+        >
           <input
             type="email"
             placeholder="Admin Email"
-            className="w-full rounded-xl bg-black/40 p-4 outline-none"
             value={email}
             onChange={(e) =>
               setEmail(e.target.value)
             }
+            className="w-full rounded-xl bg-black/40 p-4 outline-none ring-1 ring-white/10 transition focus:ring-2 focus:ring-white"
+            required
           />
 
           <input
             type="password"
             placeholder="Password"
-            className="w-full rounded-xl bg-black/40 p-4 outline-none"
             value={password}
             onChange={(e) =>
               setPassword(e.target.value)
             }
+            className="w-full rounded-xl bg-black/40 p-4 outline-none ring-1 ring-white/10 transition focus:ring-2 focus:ring-white"
+            required
           />
 
           <button
-            onClick={handleLogin}
+            type="submit"
             disabled={loading}
-            className="w-full rounded-xl bg-white py-4 font-medium text-black"
+            className="w-full rounded-xl bg-white py-4 font-semibold text-black transition hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {loading ? "Loading..." : "Login"}
+            {loading ? "Signing In..." : "Login"}
           </button>
-
-        </div>
-
+        </form>
       </div>
-
     </main>
   );
 }

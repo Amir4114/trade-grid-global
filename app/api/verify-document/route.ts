@@ -10,7 +10,7 @@ export async function POST(req: Request) {
   const text = result.data.text.toLowerCase();
 
   let score = 100;
-  let flags = [];
+  const flags: string[] = [];
 
   // 2. Check company name match
   if (!text.includes(companyName.toLowerCase())) {
