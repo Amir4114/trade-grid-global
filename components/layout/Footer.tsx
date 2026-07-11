@@ -3,7 +3,7 @@
 const sections = [
   { title: "Marketplace", links: [["Products", "/products"], ["Suppliers", "/suppliers"], ["Buyers", "/buyers"], ["RFQs", "/rfq"]] },
   { title: "Platform", links: [["Pricing", "/pricing"], ["Categories", "/categories"], ["Countries", "/countries"], ["Verification", "/verification"]] },
-  { title: "Company", links: [["About", "/about"], ["Contact", "/contact"], ["Help Center", "/help-center"], ["AI Assistant", "/ai-trade-assistant"]] },
+  { title: "Company", links: [["About", "/about"], ["Contact", "/contact"], ["Help Center", "/help-center"], ["AI Assistant", "/ai-sourcing"]] },
 ];
 
 export default function Footer() {

@@ -72,17 +72,26 @@ export async function proxy(request: NextRequest) {
 
   const destination = resolvePostAuthRedirectPath(authContext);
 
-  if (
-    pathname === "/login" ||
-    pathname === "/signup" ||
-    pathname === "/dashboard" ||
-    pathname === "/onboarding"
-  ) {
+  if (process.env.NODE_ENV !== "production") {
+    console.log("[proxy] auth trace", {
+      pathname,
+      sessionExists: Boolean(user),
+      userId,
+      role: authContext.role,
+      onboardingCompleted: authContext.onboardingCompleted,
+      resolvedDestination: destination,
+    });
+  }
+
+  // Only the neutral entry points route an authenticated user to their
+  // correct destination. /login and /signup must stay publicly accessible.
+  if (pathname === "/dashboard" || pathname === "/onboarding") {
     return redirectTo(request, destination, supabaseResponse);
   }
 
   if (
     pathname.startsWith("/dashboard") &&
+    profileRole !== "admin" &&
     !authContext.onboardingCompleted
   ) {
     return redirectTo(
@@ -130,7 +139,5 @@ export const config = {
     "/admin/:path*",
     "/onboarding",
     "/onboarding/:path*",
-    "/login",
-    "/signup",
   ],
 };

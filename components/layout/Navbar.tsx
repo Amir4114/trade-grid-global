@@ -38,7 +38,7 @@ const navItems = [
     icon: FileText,
   },
   {
-    href: "/ai-trade-assistant",
+    href: "/ai-sourcing",
     label: "AI Assistant",
     icon: Bot,
   },

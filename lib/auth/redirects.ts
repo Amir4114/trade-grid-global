@@ -110,7 +110,8 @@ export function resolvePostAuthRedirectPath({
     return "/login";
   }
 
-  if (!onboardingCompleted) {
+  // Admins do not have a company profile and never go through onboarding.
+  if (parsedRole !== "admin" && !onboardingCompleted) {
     return getOnboardingPathForRole(parsedRole);
   }
 
