@@ -3,16 +3,36 @@ import { ArrowUpRight, PackageCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { getSupplierForProduct } from "@/lib/marketplace/data";
-import type { Product } from "@/lib/marketplace/types";
+import { getSupplierById } from "@/lib/marketplace/data";
 import CountryFlag from "./CountryFlag";
 
+/**
+ * Structural props shared by both real Supabase products (mapped via
+ * productToCardView) and legacy mock products. Mock `Product` values satisfy
+ * this shape directly, so existing callers need no changes.
+ */
+type ProductCardProduct = {
+  id: string;
+  name: string;
+  image: string;
+  category: string;
+  country: string;
+  moq: string;
+  packaging: string;
+  supplierId?: string;
+  supplierName?: string;
+};
+
 type ProductCardProps = {
-  product: Product;
+  product: ProductCardProduct;
 };
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const supplier = getSupplierForProduct(product);
+  const supplierName =
+    product.supplierName ??
+    (product.supplierId
+      ? getSupplierById(product.supplierId)?.companyName
+      : undefined);
 
   return (
     <Card className="rounded-lg border-neutral-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
@@ -31,7 +51,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="text-sm text-neutral-600">{supplier?.companyName ?? "Verified supplier"}</div>
+        <div className="text-sm text-neutral-600">{supplierName ?? "Verified supplier"}</div>
         <div className="flex items-center justify-between rounded-lg bg-neutral-50 p-3 text-sm">
           <CountryFlag country={product.country} />
           <span className="font-medium text-neutral-950">MOQ {product.moq}</span>

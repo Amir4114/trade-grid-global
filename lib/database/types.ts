@@ -80,6 +80,63 @@ export type CompanyDocument = {
 };
 
 /* -------------------------------------------------------------------------- */
+/*                                  PRODUCTS                                  */
+/* -------------------------------------------------------------------------- */
+
+export type ProductStatus =
+  | "draft"
+  | "pending"
+  | "published"
+  | "rejected"
+  | "archived";
+
+export type Product = {
+  id: string;
+
+  company_id: string;
+
+  created_by: string | null;
+
+  name: string;
+
+  category: string;
+
+  description: string;
+
+  country_of_origin: string;
+
+  moq: string;
+
+  packaging: string;
+
+  lead_time: string;
+
+  incoterms: string;
+
+  hs_code: string;
+
+  price: string;
+
+  certifications: string[];
+
+  specifications: Record<string, string>;
+
+  image_url: string | null;
+
+  gallery: string[];
+
+  status: ProductStatus;
+
+  rejection_reason: string | null;
+
+  published_at: string | null;
+
+  created_at: string;
+
+  updated_at: string;
+};
+
+/* -------------------------------------------------------------------------- */
 /*                                   DATABASE                                 */
 /* -------------------------------------------------------------------------- */
 
@@ -177,11 +234,100 @@ export type Database = {
 
         Relationships: [];
       };
+
+      products: {
+        Row: Product;
+
+        Insert: {
+          id?: string;
+
+          company_id: string;
+
+          created_by?: string | null;
+
+          name: string;
+
+          category: string;
+
+          description?: string;
+
+          country_of_origin?: string;
+
+          moq?: string;
+
+          packaging?: string;
+
+          lead_time?: string;
+
+          incoterms?: string;
+
+          hs_code?: string;
+
+          price?: string;
+
+          certifications?: string[];
+
+          specifications?: Record<string, string>;
+
+          image_url?: string | null;
+
+          gallery?: string[];
+
+          status?: ProductStatus;
+
+          rejection_reason?: string | null;
+
+          published_at?: string | null;
+
+          created_at?: string;
+
+          updated_at?: string;
+        };
+
+        Update: Partial<Product>;
+
+        Relationships: [];
+      };
     };
 
     Views: Record<string, never>;
 
-    Functions: Record<string, never>;
+    Functions: {
+      is_admin: {
+        Args: Record<string, never>;
+        Returns: boolean;
+      };
+
+      is_supplier: {
+        Args: Record<string, never>;
+        Returns: boolean;
+      };
+
+      user_owns_company: {
+        Args: { cid: string };
+        Returns: boolean;
+      };
+
+      submit_product_for_review: {
+        Args: { product_id: string };
+        Returns: Product;
+      };
+
+      approve_product: {
+        Args: { product_id: string };
+        Returns: Product;
+      };
+
+      reject_product: {
+        Args: { product_id: string; reason: string };
+        Returns: Product;
+      };
+
+      archive_product: {
+        Args: { product_id: string };
+        Returns: Product;
+      };
+    };
 
     Enums: Record<string, never>;
 
