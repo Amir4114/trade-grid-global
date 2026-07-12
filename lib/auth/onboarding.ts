@@ -1,6 +1,67 @@
 import type { Company, CompanyDocument } from "@/lib/database/types";
 import { createClient } from "@/lib/supabase/client";
 
+export const COMPANY_DOCUMENT_ALLOWED_TYPES = [
+  "application/pdf",
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+] as const;
+
+export const COMPANY_DOCUMENT_MAX_SIZE = 5 * 1024 * 1024;
+
+export function validateCompanyDocumentFile(file: File): string | null {
+  if (!COMPANY_DOCUMENT_ALLOWED_TYPES.includes(file.type as (typeof COMPANY_DOCUMENT_ALLOWED_TYPES)[number])) {
+    return "Only PDF, PNG, and JPG files are allowed.";
+  }
+
+  if (file.size > COMPANY_DOCUMENT_MAX_SIZE) {
+    return "File size must be below 5MB.";
+  }
+
+  return null;
+}
+
+export function validateYearEstablished(value: string): string | null {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  if (!/^\d{4}$/.test(trimmed)) {
+    return "Year established must be a four-digit year.";
+  }
+
+  const year = Number(trimmed);
+  const currentYear = new Date().getFullYear();
+
+  if (year < 1800 || year > currentYear) {
+    return `Year established must be between 1800 and ${currentYear}.`;
+  }
+
+  return null;
+}
+
+export function validateOnboardingBusinessProfile(input: {
+  businessType: string;
+  companyStructure: string;
+  categoryCount: number;
+}): string | null {
+  if (!input.businessType.trim()) {
+    return "Please select a business type.";
+  }
+
+  if (!input.companyStructure.trim()) {
+    return "Please select a company structure.";
+  }
+
+  if (input.categoryCount === 0) {
+    return "Select at least one product category.";
+  }
+
+  return null;
+}
+
 export type BuyerOnboardingPayload = {
   business_type: string;
   company_structure: string;
@@ -110,6 +171,11 @@ export async function uploadCompanyDocument(
 
   if (!file) {
     throw new Error("No file selected.");
+  }
+
+  const fileError = validateCompanyDocumentFile(file);
+  if (fileError) {
+    throw new Error(fileError);
   }
 
   const cleanFileName = file.name.replace(/\s+/g, "-");

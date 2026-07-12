@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Select from "react-select";
 import type { StylesConfig } from "react-select";
@@ -9,7 +9,7 @@ import type { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth, useCompany, useProfile } from "@/contexts/AuthProvider";
-import { saveBuyerOnboarding } from "@/lib/auth/onboarding";
+import { saveBuyerOnboarding, validateOnboardingBusinessProfile } from "@/lib/auth/onboarding";
 import { resolvePostAuthRedirectPath } from "@/lib/auth/redirects";
 import { formatVerificationStatus } from "@/lib/dashboard/roles";
 import type { Company, Profile } from "@/lib/database/types";
@@ -22,10 +22,10 @@ type SelectOption = { value: string; label: string };
 const steps = [
   "Business Information",
   "Import Categories",
-  "Target Markets",
+  "Sourcing Countries",
   "Required Certifications",
   "Verification Status",
-];
+] as const;
 
 export default function BuyerOnboardingPage() {
   const { user, loading: authLoading } = useAuth();
@@ -64,8 +64,9 @@ function BuyerOnboardingForm({
   refreshCompany,
 }: BuyerOnboardingFormProps) {
   const router = useRouter();
+  const sectionRefs = useRef<Partial<Record<(typeof steps)[number], HTMLElement | null>>>({});
 
-  const [activeSection, setActiveSection] = useState("Business Information");
+  const [activeSection, setActiveSection] = useState<(typeof steps)[number]>("Business Information");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -107,11 +108,30 @@ function BuyerOnboardingForm({
     []
   );
 
+  const scrollToSection = (step: (typeof steps)[number]) => {
+    setActiveSection(step);
+    sectionRefs.current[step]?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!user) {
       setError("You must be signed in to complete onboarding.");
+      return;
+    }
+
+    const validationError = validateOnboardingBusinessProfile({
+      businessType,
+      companyStructure,
+      categoryCount: selectedCategories.length,
+    });
+
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
@@ -170,7 +190,7 @@ function BuyerOnboardingForm({
               <button
                 key={step}
                 type="button"
-                onClick={() => setActiveSection(step)}
+                onClick={() => scrollToSection(step)}
                 className={`mb-3 flex w-full items-center gap-3 rounded-xl p-4 text-left transition-all duration-200 ${
                   activeSection === step
                     ? "scale-[1.02] bg-black text-white shadow-lg"
@@ -196,7 +216,9 @@ function BuyerOnboardingForm({
             className="space-y-8 rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm"
           >
             <section
-              onMouseEnter={() => setActiveSection("Business Information")}
+              ref={(element) => {
+                sectionRefs.current["Business Information"] = element;
+              }}
             >
               <h2 className="text-2xl font-semibold">Business Information</h2>
 
@@ -245,7 +267,11 @@ function BuyerOnboardingForm({
               </div>
             </section>
 
-            <section onMouseEnter={() => setActiveSection("Import Categories")}>
+            <section
+              ref={(element) => {
+                sectionRefs.current["Import Categories"] = element;
+              }}
+            >
               <h2 className="text-2xl font-semibold">Import Categories</h2>
               <p className="mt-2 text-sm text-neutral-500">
                 Select products you regularly import.
@@ -262,10 +288,14 @@ function BuyerOnboardingForm({
               </div>
             </section>
 
-            <section onMouseEnter={() => setActiveSection("Target Markets")}>
-              <h2 className="text-2xl font-semibold">Target Markets</h2>
+            <section
+              ref={(element) => {
+                sectionRefs.current["Sourcing Countries"] = element;
+              }}
+            >
+              <h2 className="text-2xl font-semibold">Sourcing Countries</h2>
               <p className="mt-2 text-sm text-neutral-500">
-                Select preferred sourcing countries.
+                Select countries you prefer to source products from.
               </p>
               <div className="mt-4">
                 <Select
@@ -280,7 +310,9 @@ function BuyerOnboardingForm({
             </section>
 
             <section
-              onMouseEnter={() => setActiveSection("Required Certifications")}
+              ref={(element) => {
+                sectionRefs.current["Required Certifications"] = element;
+              }}
             >
               <h2 className="text-2xl font-semibold">Required Certifications</h2>
               <p className="mt-2 text-sm text-neutral-500">
@@ -301,7 +333,9 @@ function BuyerOnboardingForm({
             </section>
 
             <section
-              onMouseEnter={() => setActiveSection("Verification Status")}
+              ref={(element) => {
+                sectionRefs.current["Verification Status"] = element;
+              }}
               className="rounded-2xl bg-neutral-100 p-6"
             >
               <h2 className="text-2xl font-semibold">Verification Status</h2>

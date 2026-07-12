@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Select from "react-select";
 import type { StylesConfig } from "react-select";
@@ -14,6 +14,9 @@ import { useAuth, useCompany, useProfile } from "@/contexts/AuthProvider";
 import {
   saveSupplierOnboarding,
   uploadCompanyDocument,
+  validateCompanyDocumentFile,
+  validateOnboardingBusinessProfile,
+  validateYearEstablished,
 } from "@/lib/auth/onboarding";
 import type { Company, Profile } from "@/lib/database/types";
 import { countries } from "@/lib/marketplace/countries";
@@ -28,7 +31,7 @@ const steps = [
   "Export Markets",
   "Certifications",
   "Verification Status",
-];
+] as const;
 
 export default function SupplierOnboardingPage() {
   const { user, loading: authLoading } = useAuth();
@@ -67,8 +70,9 @@ function SupplierOnboardingForm({
   refreshCompany,
 }: SupplierOnboardingFormProps) {
   const router = useRouter();
+  const sectionRefs = useRef<Partial<Record<(typeof steps)[number], HTMLElement | null>>>({});
 
-  const [activeSection, setActiveSection] = useState("Business Information");
+  const [activeSection, setActiveSection] = useState<(typeof steps)[number]>("Business Information");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [certificationFile, setCertificationFile] = useState<File | null>(null);
@@ -108,6 +112,14 @@ function SupplierOnboardingForm({
     []
   );
 
+  const scrollToSection = (step: (typeof steps)[number]) => {
+    setActiveSection(step);
+    sectionRefs.current[step]?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -116,11 +128,44 @@ function SupplierOnboardingForm({
       return;
     }
 
+    const validationError = validateOnboardingBusinessProfile({
+      businessType,
+      companyStructure,
+      categoryCount: selectedCategories.length,
+    });
+
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    const yearError = validateYearEstablished(yearEstablished);
+    if (yearError) {
+      setError(yearError);
+      return;
+    }
+
+    if (certificationFile) {
+      const fileError = validateCompanyDocumentFile(certificationFile);
+      if (fileError) {
+        setError(fileError);
+        return;
+      }
+    }
+
     try {
       setSaving(true);
       setError(null);
 
-      const savedCompany = await saveSupplierOnboarding(user.id, {
+      if (certificationFile) {
+        await uploadCompanyDocument(
+          company.id,
+          certificationFile,
+          "Certification Document"
+        );
+      }
+
+      await saveSupplierOnboarding(user.id, {
         business_type: businessType,
         company_structure: companyStructure,
         employee_count: employeeCount,
@@ -131,14 +176,6 @@ function SupplierOnboardingForm({
         onboarding_step: "completed",
         onboarding_completed: true,
       });
-
-      if (certificationFile) {
-        await uploadCompanyDocument(
-          savedCompany.id,
-          certificationFile,
-          "Certification Document"
-        );
-      }
 
       await refreshCompany();
       router.push(
@@ -180,7 +217,7 @@ function SupplierOnboardingForm({
               <button
                 key={step}
                 type="button"
-                onClick={() => setActiveSection(step)}
+                onClick={() => scrollToSection(step)}
                 className={`mb-3 flex w-full items-center gap-3 rounded-xl p-4 text-left transition-all duration-200 ${
                   activeSection === step
                     ? "scale-[1.02] bg-black text-white shadow-lg"
@@ -206,7 +243,9 @@ function SupplierOnboardingForm({
             className="space-y-8 rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm"
           >
             <section
-              onMouseEnter={() => setActiveSection("Business Information")}
+              ref={(element) => {
+                sectionRefs.current["Business Information"] = element;
+              }}
             >
               <h2 className="text-2xl font-semibold">Business Information</h2>
 
@@ -257,7 +296,11 @@ function SupplierOnboardingForm({
               </div>
             </section>
 
-            <section onMouseEnter={() => setActiveSection("Product Categories")}>
+            <section
+              ref={(element) => {
+                sectionRefs.current["Product Categories"] = element;
+              }}
+            >
               <h2 className="text-2xl font-semibold">Product Categories</h2>
               <p className="mt-2 text-sm text-neutral-500">
                 Select all categories you export.
@@ -274,7 +317,11 @@ function SupplierOnboardingForm({
               </div>
             </section>
 
-            <section onMouseEnter={() => setActiveSection("Export Markets")}>
+            <section
+              ref={(element) => {
+                sectionRefs.current["Export Markets"] = element;
+              }}
+            >
               <h2 className="text-2xl font-semibold">Export Markets</h2>
               <p className="mt-2 text-sm text-neutral-500">
                 Choose countries you currently export to.
@@ -291,8 +338,17 @@ function SupplierOnboardingForm({
               </div>
             </section>
 
-            <section onMouseEnter={() => setActiveSection("Certifications")}>
+            <section
+              ref={(element) => {
+                sectionRefs.current["Certifications"] = element;
+              }}
+            >
               <h2 className="text-2xl font-semibold">Certifications</h2>
+              <p className="mt-2 text-sm text-neutral-500">
+                Optional: select certifications you hold and upload one supporting
+                document. Full company verification documents can be submitted later
+                from your dashboard.
+              </p>
               <div className="mt-6 grid gap-4 md:grid-cols-2">
                 <Select
                   isMulti
@@ -316,7 +372,9 @@ function SupplierOnboardingForm({
             </section>
 
             <section
-              onMouseEnter={() => setActiveSection("Verification Status")}
+              ref={(element) => {
+                sectionRefs.current["Verification Status"] = element;
+              }}
               className="rounded-2xl bg-neutral-100 p-6"
             >
               <h2 className="text-2xl font-semibold">Verification Status</h2>
