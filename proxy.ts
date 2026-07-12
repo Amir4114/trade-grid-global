@@ -7,6 +7,7 @@ import {
   isOnboardingFormPath,
   isRoleDashboardPath,
   isWrongOnboardingPath,
+  resolveOnboardingEntryPath,
   resolvePostAuthRedirectPath,
 } from "@/lib/auth/redirects";
 import { getDashboardPathForRole, parseProfileRole } from "@/lib/dashboard/roles";
@@ -70,7 +71,8 @@ export async function proxy(request: NextRequest) {
     return supabaseResponse;
   }
 
-  const destination = resolvePostAuthRedirectPath(authContext);
+  const dashboardDestination = resolvePostAuthRedirectPath(authContext);
+  const onboardingDestination = resolveOnboardingEntryPath(authContext);
 
   if (process.env.NODE_ENV !== "production") {
     console.log("[proxy] auth trace", {
@@ -79,26 +81,19 @@ export async function proxy(request: NextRequest) {
       userId,
       role: authContext.role,
       onboardingCompleted: authContext.onboardingCompleted,
-      resolvedDestination: destination,
+      dashboardDestination,
+      onboardingDestination,
     });
   }
 
-  // Only the neutral entry points route an authenticated user to their
-  // correct destination. /login and /signup must stay publicly accessible.
-  if (pathname === "/dashboard" || pathname === "/onboarding") {
-    return redirectTo(request, destination, supabaseResponse);
+  // Neutral entry points route authenticated users to their role destination.
+  // /login and /signup must stay publicly accessible.
+  if (pathname === "/dashboard") {
+    return redirectTo(request, dashboardDestination, supabaseResponse);
   }
 
-  if (
-    pathname.startsWith("/dashboard") &&
-    profileRole !== "admin" &&
-    !authContext.onboardingCompleted
-  ) {
-    return redirectTo(
-      request,
-      getCorrectOnboardingPath(profileRole),
-      supabaseResponse
-    );
+  if (pathname === "/onboarding") {
+    return redirectTo(request, onboardingDestination, supabaseResponse);
   }
 
   if (isOnboardingFormPath(pathname) && authContext.onboardingCompleted) {

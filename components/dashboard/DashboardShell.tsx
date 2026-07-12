@@ -5,6 +5,7 @@ import { useState } from "react";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import DashboardTopBar from "@/components/dashboard/DashboardTopBar";
+import OnboardingNotice from "@/components/dashboard/OnboardingNotice";
 import {
   Sheet,
   SheetContent,
@@ -117,6 +118,7 @@ export default function DashboardShell({
             badge={displayBadge}
             actions={actions}
           />
+          <OnboardingNotice role={resolvedRole} company={company} />
           {children}
         </main>
       </div>

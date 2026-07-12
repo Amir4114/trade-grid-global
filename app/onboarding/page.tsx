@@ -1,6 +1,6 @@
 ﻿import { redirect } from "next/navigation";
 
-import { resolvePostAuthRedirectPath } from "@/lib/auth/redirects";
+import { resolveOnboardingEntryPath } from "@/lib/auth/redirects";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function OnboardingPage() {
@@ -23,7 +23,7 @@ export default async function OnboardingPage() {
   ]);
 
   redirect(
-    resolvePostAuthRedirectPath({
+    resolveOnboardingEntryPath({
       role: profileResult.data?.role ?? null,
       onboardingCompleted: companyResult.data?.onboarding_completed ?? false,
     })

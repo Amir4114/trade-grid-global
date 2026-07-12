@@ -96,13 +96,10 @@ function isSafeNextPath(
   }
 }
 
-export function resolvePostAuthRedirectPath({
-  role,
-  onboardingCompleted,
-  nextPath,
-}: AuthRedirectContext & {
-  nextPath?: string | null;
-}): string {
+export function resolvePostAuthRedirectPath(
+  context: AuthRedirectContext & { nextPath?: string | null }
+): string {
+  const { role, nextPath } = context;
   const parsedRole = parseProfileRole(role);
 
   if (!parsedRole) {
@@ -110,16 +107,52 @@ export function resolvePostAuthRedirectPath({
     return "/login";
   }
 
-  // Admins do not have a company profile and never go through onboarding.
-  if (parsedRole !== "admin" && !onboardingCompleted) {
-    return getOnboardingPathForRole(parsedRole);
-  }
-
   if (nextPath && isSafeNextPath(nextPath, parsedRole)) {
     return nextPath;
   }
 
   return getDashboardPathForRole(parsedRole);
+}
+
+/**
+ * Resolves the neutral /onboarding entry route.
+ * Incomplete users go to their role onboarding form; completed users go to dashboard.
+ */
+export function resolveOnboardingEntryPath({
+  role,
+  onboardingCompleted,
+}: AuthRedirectContext): string {
+  const parsedRole = parseProfileRole(role);
+
+  if (!parsedRole) {
+    return "/login";
+  }
+
+  if (parsedRole === "admin") {
+    return getDashboardPathForRole(parsedRole);
+  }
+
+  if (onboardingCompleted) {
+    return getDashboardPathForRole(parsedRole);
+  }
+
+  return getOnboardingPathForRole(parsedRole);
+}
+
+/**
+ * Single source of truth for future feature gates that require completed onboarding.
+ * Dashboard access itself is NOT gated by this helper.
+ */
+export function isOnboardingComplete(
+  company: { onboarding_completed?: boolean | null } | null | undefined
+): boolean {
+  return company?.onboarding_completed === true;
+}
+
+export function requiresCompletedOnboarding(
+  company: { onboarding_completed?: boolean | null } | null | undefined
+): boolean {
+  return !isOnboardingComplete(company);
 }
 
 export function isRoleDashboardPath(

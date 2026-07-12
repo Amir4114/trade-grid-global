@@ -123,10 +123,7 @@ async function loginAndVerify({ email, password, label, expectedRole }) {
   console.log({
     profileRole: profile?.role,
     onboardingCompleted: company?.onboarding_completed,
-    expectedOnboardingPath:
-      company?.onboarding_completed === false
-        ? `/onboarding/${expectedRole}`
-        : `/dashboard/${expectedRole}`,
+    expectedDashboardPath: `/dashboard/${expectedRole}`,
   });
 
   if (profile?.role !== expectedRole) {
@@ -134,7 +131,7 @@ async function loginAndVerify({ email, password, label, expectedRole }) {
   }
 
   if (company?.onboarding_completed !== false) {
-    throw new Error(`${label} should still require onboarding`);
+    throw new Error(`${label} should still have incomplete onboarding`);
   }
 }
 
