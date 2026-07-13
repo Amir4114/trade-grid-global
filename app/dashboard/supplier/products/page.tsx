@@ -1,25 +1,40 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 
 import DashboardPanel from "@/components/dashboard/DashboardPanel";
 import DashboardShell from "@/components/dashboard/DashboardShell";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useCompany } from "@/contexts/AuthProvider";
 import { isOnboardingComplete } from "@/lib/auth/redirects";
 import type { Product, ProductStatus } from "@/lib/database/types";
 import {
   archiveProduct,
   listOwnProducts,
+  reopenPublishedProductForEditing,
+  restoreArchivedProduct,
   submitProductForReview,
 } from "@/lib/products/service";
 import {
   PRODUCT_STATUS_LABELS,
   canArchiveProduct,
   canEditProduct,
+  canReopenPublishedProduct,
+  canRestoreProduct,
   canSubmitProduct,
+  canViewProduct,
+  submitActionLabel,
 } from "@/lib/products/types";
 import { createClient } from "@/lib/supabase/client";
 
@@ -31,6 +46,11 @@ const STATUS_STYLES: Record<ProductStatus, string> = {
   archived: "bg-neutral-200 text-neutral-500",
 };
 
+type ConfirmAction =
+  | { type: "reopen"; product: Product }
+  | { type: "restore"; product: Product }
+  | null;
+
 function formatDate(value: string): string {
   return new Date(value).toLocaleDateString(undefined, {
     year: "numeric",
@@ -40,6 +60,7 @@ function formatDate(value: string): string {
 }
 
 export default function SupplierProductsPage() {
+  const router = useRouter();
   const { company } = useCompany();
   const supabase = useMemo(() => createClient(), []);
 
@@ -49,6 +70,7 @@ export default function SupplierProductsPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
 
   const companyId = company?.id ?? null;
   const onboardingComplete = isOnboardingComplete(company);
@@ -111,6 +133,38 @@ export default function SupplierProductsPage() {
     } catch (err) {
       setActionError(
         err instanceof Error ? err.message : "Failed to archive product."
+      );
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleConfirmAction = async () => {
+    if (!confirmAction) return;
+
+    const product = confirmAction.product;
+
+    try {
+      setActionError(null);
+      setBusyId(product.id);
+
+      if (confirmAction.type === "reopen") {
+        await reopenPublishedProductForEditing(supabase, product.id);
+        setConfirmAction(null);
+        router.push(`/dashboard/supplier/products/${product.id}/edit`);
+        router.refresh();
+        return;
+      }
+
+      if (confirmAction.type === "restore") {
+        await restoreArchivedProduct(supabase, product.id);
+        setConfirmAction(null);
+        reload();
+        return;
+      }
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : "Failed to update product."
       );
     } finally {
       setBusyId(null);
@@ -181,7 +235,7 @@ export default function SupplierProductsPage() {
         ) : (
           <div className="overflow-hidden rounded-lg border border-neutral-200 bg-white">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[820px] text-left text-sm">
+              <table className="w-full min-w-[920px] text-left text-sm">
                 <thead className="bg-neutral-50 text-xs uppercase tracking-wide text-neutral-500">
                   <tr>
                     <th className="px-4 py-3 font-semibold">Product</th>
@@ -196,8 +250,19 @@ export default function SupplierProductsPage() {
                 <tbody className="divide-y divide-neutral-200">
                   {products.map((product) => {
                     const isBusy = busyId === product.id;
+                    const hasActions =
+                      canEditProduct(product.status) ||
+                      canSubmitProduct(product.status) ||
+                      canArchiveProduct(product.status) ||
+                      canViewProduct(product.status) ||
+                      canRestoreProduct(product.status) ||
+                      canReopenPublishedProduct(product.status);
+
                     return (
-                      <tr key={product.id} className="align-top hover:bg-neutral-50">
+                      <tr
+                        key={product.id}
+                        className="align-top hover:bg-neutral-50"
+                      >
                         <td className="px-4 py-3">
                           <div className="font-medium text-neutral-900">
                             {product.name}
@@ -206,6 +271,11 @@ export default function SupplierProductsPage() {
                           product.rejection_reason ? (
                             <div className="mt-1 text-xs text-red-600">
                               Rejected: {product.rejection_reason}
+                            </div>
+                          ) : null}
+                          {product.status === "pending" ? (
+                            <div className="mt-1 text-xs text-amber-700">
+                              Locked while awaiting admin review.
                             </div>
                           ) : null}
                         </td>
@@ -233,6 +303,33 @@ export default function SupplierProductsPage() {
                                 </Link>
                               </Button>
                             ) : null}
+
+                            {canViewProduct(product.status) ? (
+                              <Button asChild variant="outline" size="sm">
+                                <Link
+                                  href={`/dashboard/supplier/products/${product.id}/edit`}
+                                >
+                                  View
+                                </Link>
+                              </Button>
+                            ) : null}
+
+                            {canReopenPublishedProduct(product.status) ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={isBusy}
+                                onClick={() =>
+                                  setConfirmAction({
+                                    type: "reopen",
+                                    product,
+                                  })
+                                }
+                              >
+                                Edit &amp; resubmit
+                              </Button>
+                            ) : null}
+
                             {canSubmitProduct(product.status) ? (
                               <Button
                                 size="sm"
@@ -244,9 +341,10 @@ export default function SupplierProductsPage() {
                                 }
                                 onClick={() => void handleSubmit(product)}
                               >
-                                Submit for review
+                                {submitActionLabel(product.status)}
                               </Button>
                             ) : null}
+
                             {canArchiveProduct(product.status) ? (
                               <Button
                                 variant="outline"
@@ -256,6 +354,28 @@ export default function SupplierProductsPage() {
                               >
                                 Archive
                               </Button>
+                            ) : null}
+
+                            {canRestoreProduct(product.status) ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={isBusy}
+                                onClick={() =>
+                                  setConfirmAction({
+                                    type: "restore",
+                                    product,
+                                  })
+                                }
+                              >
+                                Restore to draft
+                              </Button>
+                            ) : null}
+
+                            {!hasActions ? (
+                              <span className="text-xs text-neutral-400">
+                                No actions
+                              </span>
                             ) : null}
                           </div>
                         </td>
@@ -268,6 +388,78 @@ export default function SupplierProductsPage() {
           </div>
         )}
       </DashboardPanel>
+
+      <Dialog
+        open={confirmAction !== null}
+        onOpenChange={(open) => {
+          if (!open) setConfirmAction(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          {confirmAction?.type === "reopen" ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>Edit &amp; resubmit published product?</DialogTitle>
+                <DialogDescription>
+                  This will move{" "}
+                  <span className="font-medium text-neutral-900">
+                    {confirmAction.product.name}
+                  </span>{" "}
+                  back to draft. It will be removed from the public marketplace
+                  immediately and will require admin approval again before it
+                  can be published.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setConfirmAction(null)}
+                  disabled={busyId !== null}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => void handleConfirmAction()}
+                  disabled={busyId !== null}
+                >
+                  {busyId ? "Processing..." : "Move to draft"}
+                </Button>
+              </DialogFooter>
+            </>
+          ) : null}
+
+          {confirmAction?.type === "restore" ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>Restore archived product to draft?</DialogTitle>
+                <DialogDescription>
+                  This will restore{" "}
+                  <span className="font-medium text-neutral-900">
+                    {confirmAction.product.name}
+                  </span>{" "}
+                  to draft so you can edit and submit it for review again. It
+                  will not return directly to published.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setConfirmAction(null)}
+                  disabled={busyId !== null}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => void handleConfirmAction()}
+                  disabled={busyId !== null}
+                >
+                  {busyId ? "Processing..." : "Restore to draft"}
+                </Button>
+              </DialogFooter>
+            </>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </DashboardShell>
   );
 }

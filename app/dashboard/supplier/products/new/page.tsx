@@ -11,6 +11,7 @@ import ProductForm from "@/components/products/ProductForm";
 import { Button } from "@/components/ui/button";
 import { useAuth, useCompany } from "@/contexts/AuthProvider";
 import { createDraftProduct } from "@/lib/products/service";
+import { uploadProductImage } from "@/lib/products/storage";
 import { EMPTY_PRODUCT_FORM, type ProductFormValues } from "@/lib/products/types";
 import { createClient } from "@/lib/supabase/client";
 
@@ -69,6 +70,12 @@ export default function NewSupplierProductPage() {
           saving={saving}
           error={error}
           onSubmit={handleSubmit}
+          uploadImage={
+            company?.id
+              ? (file) =>
+                  uploadProductImage(supabase, { companyId: company.id, file })
+              : undefined
+          }
         />
       </DashboardPanel>
     </DashboardShell>

@@ -9,36 +9,51 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getProductById, getSupplierForProduct } from "@/lib/marketplace/data";
-import type { Product } from "@/lib/database/types";
-import { getPublishedProductById } from "@/lib/products/service";
+import type { PublicProduct } from "@/lib/database/types";
+import { getPublicProductById } from "@/lib/products/service";
+import {
+  displayIncoterms,
+  displayLeadTime,
+  displayMoq,
+  displayPrice,
+} from "@/lib/products/trade-data";
+import { mapVerificationState } from "@/lib/products/types";
 import { createClient } from "@/lib/supabase/server";
 
 type PageProps = { params: Promise<{ id: string }> };
+
+const PLACEHOLDER_IMAGE =
+  "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1200&q=80";
 
 export default async function ProductDetailPage({ params }: PageProps) {
   const { id } = await params;
 
   const supabase = await createClient();
-  const realProduct = await getPublishedProductById(supabase, id);
+  const realProduct = await getPublicProductById(supabase, id);
 
   if (realProduct) {
     return <RealProductDetail product={realProduct} />;
   }
 
-  // Transitional fallback: existing mock marketing pages still link to mock
-  // product ids. Real published products always take precedence above.
+  // Transitional fallback: legacy marketing pages still link to non-UUID mock
+  // product ids (e.g. "product-1"). Real published products always take
+  // precedence above, and this branch can never surface an unpublished product
+  // because getPublicProductById only reads the published-only public view.
   const mockProduct = getProductById(id);
   if (!mockProduct) notFound();
 
   return <MockProductDetail productId={id} />;
 }
 
-function RealProductDetail({ product }: { product: Product }) {
-  const imageUrl =
-    product.image_url ||
-    "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1200&q=80";
-  const gallery = product.gallery.length > 0 ? product.gallery : [imageUrl];
+function RealProductDetail({ product }: { product: PublicProduct }) {
+  const imageUrl = product.image_url || PLACEHOLDER_IMAGE;
+  const gallery = product.gallery.length > 0 ? product.gallery : [];
   const specEntries = Object.entries(product.specifications ?? {});
+  const verificationState = mapVerificationState(product.verification_status);
+  const moqLabel = displayMoq(product);
+  const leadTimeLabel = displayLeadTime(product);
+  const incotermsLabel = displayIncoterms(product);
+  const priceLabel = displayPrice(product);
 
   return (
     <main className="min-h-screen bg-neutral-50 text-neutral-950">
@@ -58,14 +73,14 @@ function RealProductDetail({ product }: { product: Product }) {
               </p>
             ) : null}
             <div className="mt-6 flex flex-wrap gap-3 text-sm text-neutral-700">
-              {product.moq ? (
+              {moqLabel !== "On request" ? (
                 <span className="rounded-lg bg-neutral-100 px-3 py-2">
-                  MOQ {product.moq}
+                  MOQ {moqLabel}
                 </span>
               ) : null}
-              {product.lead_time ? (
+              {leadTimeLabel ? (
                 <span className="rounded-lg bg-neutral-100 px-3 py-2">
-                  Lead time {product.lead_time}
+                  Lead time {leadTimeLabel}
                 </span>
               ) : null}
               {product.country_of_origin ? (
@@ -74,9 +89,14 @@ function RealProductDetail({ product }: { product: Product }) {
                 </span>
               ) : null}
             </div>
-            <Button asChild className="mt-8">
-              <Link href="/rfq">Request Quote</Link>
-            </Button>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Button asChild>
+                <Link href="/rfq">Request Quote</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/rfq">Send Inquiry</Link>
+              </Button>
+            </div>
           </div>
           <div className="grid gap-3">
             <div className="overflow-hidden rounded-lg border border-neutral-200 bg-neutral-100">
@@ -87,15 +107,15 @@ function RealProductDetail({ product }: { product: Product }) {
                 className="h-80 w-full object-cover"
               />
             </div>
-            {gallery.length > 1 ? (
-              <div className="grid grid-cols-2 gap-3">
-                {gallery.slice(0, 2).map((image) => (
+            {gallery.length > 0 ? (
+              <div className="grid grid-cols-3 gap-3">
+                {gallery.slice(0, 6).map((image) => (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     key={image}
                     src={image}
                     alt={product.name}
-                    className="h-28 rounded-lg border border-neutral-200 object-cover"
+                    className="h-24 w-full rounded-lg border border-neutral-200 object-cover"
                   />
                 ))}
               </div>
@@ -121,10 +141,10 @@ function RealProductDetail({ product }: { product: Product }) {
                     <dd className="mt-1 font-medium">{product.packaging}</dd>
                   </div>
                 ) : null}
-                {product.incoterms ? (
+                {incotermsLabel ? (
                   <div>
                     <dt className="text-sm text-neutral-500">Incoterms</dt>
-                    <dd className="mt-1 font-medium">{product.incoterms}</dd>
+                    <dd className="mt-1 font-medium">{incotermsLabel}</dd>
                   </div>
                 ) : null}
                 {product.hs_code ? (
@@ -133,10 +153,10 @@ function RealProductDetail({ product }: { product: Product }) {
                     <dd className="mt-1 font-medium">{product.hs_code}</dd>
                   </div>
                 ) : null}
-                {product.price ? (
+                {priceLabel ? (
                   <div>
                     <dt className="text-sm text-neutral-500">Indicative price</dt>
-                    <dd className="mt-1 font-medium">{product.price}</dd>
+                    <dd className="mt-1 font-medium">{priceLabel}</dd>
                   </div>
                 ) : null}
               </dl>
@@ -159,9 +179,44 @@ function RealProductDetail({ product }: { product: Product }) {
         </div>
         <aside className="h-fit rounded-lg border border-neutral-200 bg-white p-5 shadow-sm">
           <h2 className="text-xl font-semibold">Supplier</h2>
-          <p className="mt-3 text-sm text-neutral-600">
-            This product is listed by a Trade Grid Global supplier. Send an RFQ
-            to receive commercial pricing, documentation, and certifications.
+          <div className="mt-4 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-neutral-950 text-sm font-semibold text-white">
+                {product.company_name.slice(0, 2).toUpperCase()}
+              </div>
+              <div>
+                <div className="font-semibold">{product.company_name}</div>
+                <div className="mt-1">
+                  <VerificationBadge state={verificationState} />
+                </div>
+              </div>
+            </div>
+            <dl className="grid gap-2 text-sm">
+              {product.company_country ? (
+                <div className="flex items-center justify-between">
+                  <dt className="text-neutral-500">Country</dt>
+                  <dd className="font-medium">
+                    <CountryFlag country={product.company_country} />
+                  </dd>
+                </div>
+              ) : null}
+              {product.business_type ? (
+                <div className="flex items-center justify-between">
+                  <dt className="text-neutral-500">Business type</dt>
+                  <dd className="font-medium">{product.business_type}</dd>
+                </div>
+              ) : null}
+              {product.year_established ? (
+                <div className="flex items-center justify-between">
+                  <dt className="text-neutral-500">Established</dt>
+                  <dd className="font-medium">{product.year_established}</dd>
+                </div>
+              ) : null}
+            </dl>
+          </div>
+          <p className="mt-4 text-sm text-neutral-600">
+            Send an RFQ to receive commercial pricing, documentation, and
+            certifications directly from this supplier.
           </p>
           <Button asChild className="mt-5 w-full">
             <Link href="/rfq">Request Quote</Link>

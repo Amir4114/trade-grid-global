@@ -107,15 +107,35 @@ export type Product = {
 
   moq: string;
 
+  moq_quantity: number | null;
+
+  moq_unit: string | null;
+
   packaging: string;
 
   lead_time: string;
 
+  lead_time_min: number | null;
+
+  lead_time_max: number | null;
+
+  lead_time_unit: string | null;
+
   incoterms: string;
+
+  incoterms_codes: string[];
 
   hs_code: string;
 
   price: string;
+
+  price_amount: number | null;
+
+  price_currency: string | null;
+
+  price_unit: string | null;
+
+  price_incoterm: string | null;
 
   certifications: string[];
 
@@ -134,6 +154,66 @@ export type Product = {
   created_at: string;
 
   updated_at: string;
+};
+
+/* -------------------------------------------------------------------------- */
+/*                          PUBLIC MARKETPLACE VIEWS                          */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Row shape of public.public_products (migration 008). Exposes ONLY published
+ * products joined with the safe, public-facing supplier fields. No private
+ * company/profile columns (user_id, risk_score, email, ...) are present.
+ */
+export type PublicProduct = {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  country_of_origin: string;
+  moq: string;
+  moq_quantity: number | null;
+  moq_unit: string | null;
+  packaging: string;
+  lead_time: string;
+  lead_time_min: number | null;
+  lead_time_max: number | null;
+  lead_time_unit: string | null;
+  incoterms: string;
+  incoterms_codes: string[];
+  hs_code: string;
+  price: string;
+  price_amount: number | null;
+  price_currency: string | null;
+  price_unit: string | null;
+  price_incoterm: string | null;
+  certifications: string[];
+  specifications: Record<string, string>;
+  image_url: string | null;
+  gallery: string[];
+  published_at: string | null;
+  created_at: string;
+  company_id: string;
+  company_name: string;
+  company_country: string;
+  business_type: string;
+  verification_status: string;
+  year_established: string | null;
+  company_categories: string[];
+};
+
+/**
+ * Row shape of public.public_suppliers (migration 008). Companies that have at
+ * least one published product, projected to safe public fields only.
+ */
+export type PublicSupplier = {
+  company_id: string;
+  company_name: string;
+  country: string;
+  business_type: string;
+  verification_status: string;
+  year_established: string | null;
+  categories: string[];
 };
 
 /* -------------------------------------------------------------------------- */
@@ -255,15 +335,35 @@ export type Database = {
 
           moq?: string;
 
+          moq_quantity?: number | null;
+
+          moq_unit?: string | null;
+
           packaging?: string;
 
           lead_time?: string;
 
+          lead_time_min?: number | null;
+
+          lead_time_max?: number | null;
+
+          lead_time_unit?: string | null;
+
           incoterms?: string;
+
+          incoterms_codes?: string[];
 
           hs_code?: string;
 
           price?: string;
+
+          price_amount?: number | null;
+
+          price_currency?: string | null;
+
+          price_unit?: string | null;
+
+          price_incoterm?: string | null;
 
           certifications?: string[];
 
@@ -290,7 +390,17 @@ export type Database = {
       };
     };
 
-    Views: Record<string, never>;
+    Views: {
+      public_products: {
+        Row: PublicProduct;
+        Relationships: [];
+      };
+
+      public_suppliers: {
+        Row: PublicSupplier;
+        Relationships: [];
+      };
+    };
 
     Functions: {
       is_admin: {
@@ -324,6 +434,16 @@ export type Database = {
       };
 
       archive_product: {
+        Args: { product_id: string };
+        Returns: Product;
+      };
+
+      restore_archived_product: {
+        Args: { product_id: string };
+        Returns: Product;
+      };
+
+      reopen_published_product_for_editing: {
         Args: { product_id: string };
         Returns: Product;
       };
