@@ -25,8 +25,9 @@ export default function ForgotPasswordPage() {
       setError("");
       setMessage("");
 
-      const redirectTo =
-        `${window.location.origin}/login`;
+      const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(
+        "/reset-password"
+      )}`;
 
       const { error } =
         await supabase.auth.resetPasswordForEmail(
@@ -41,7 +42,7 @@ export default function ForgotPasswordPage() {
       }
 
       setMessage(
-        "Password reset instructions have been sent to your email."
+        "If an account exists for this email, a password reset link has been sent. Please check your inbox."
       );
     } catch (err) {
       console.error("Reset Password:", err);

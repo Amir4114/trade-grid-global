@@ -11,6 +11,7 @@ import { registerMarketplaceAccount } from "@/lib/auth/signup";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 
 type AccountType = "buyer" | "supplier";
 
@@ -169,9 +170,8 @@ export default function SignupPage() {
             required
           />
 
-          <Input
+          <PasswordInput
             placeholder="Password"
-            type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required

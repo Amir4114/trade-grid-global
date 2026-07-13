@@ -10,6 +10,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 
 export default function LoginPage() {
   const supabase = createClient();
@@ -109,9 +110,8 @@ export default function LoginPage() {
               required
             />
 
-            <Input
+            <PasswordInput
               placeholder="Password"
-              type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
