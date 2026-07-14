@@ -9,6 +9,7 @@ import {
 } from "@/lib/auth/redirects";
 import { registerMarketplaceAccount } from "@/lib/auth/signup";
 import { createClient } from "@/lib/supabase/client";
+import { toast } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/auth/PasswordInput";
@@ -39,6 +40,7 @@ export default function SignupPage() {
       });
 
       if (signUpError) {
+        toast.error("Signup failed", { description: signUpError.message });
         setError(signUpError.message);
         return;
       }
@@ -64,14 +66,22 @@ export default function SignupPage() {
         accountType,
       });
 
+      toast.success("Account created", {
+        description:
+          accountType === "supplier"
+            ? "Complete your company profile to start listing products."
+            : "Complete your company profile to unlock more features.",
+      });
+
       const authContext = await fetchClientAuthRedirectContext(data.user.id);
 
       window.location.assign(resolvePostAuthRedirectPath(authContext));
     } catch (err) {
       console.error(err);
-      setError(
-        err instanceof Error ? err.message : "Something went wrong during signup."
-      );
+      const message =
+        err instanceof Error ? err.message : "Something went wrong during signup.";
+      toast.error("Signup failed", { description: message });
+      setError(message);
     } finally {
       setLoading(false);
     }

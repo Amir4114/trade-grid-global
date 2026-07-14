@@ -14,6 +14,7 @@ import { createDraftProduct } from "@/lib/products/service";
 import { uploadProductImage } from "@/lib/products/storage";
 import { EMPTY_PRODUCT_FORM, type ProductFormValues } from "@/lib/products/types";
 import { createClient } from "@/lib/supabase/client";
+import { toast } from "@/lib/toast";
 
 export default function NewSupplierProductPage() {
   const router = useRouter();
@@ -38,12 +39,14 @@ export default function NewSupplierProductPage() {
         createdBy: user?.id ?? null,
         values,
       });
+      toast.success("Product draft saved");
       router.push(`/dashboard/supplier/products/${created.id}/edit`);
       router.refresh();
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to create product draft."
-      );
+      const message =
+        err instanceof Error ? err.message : "Failed to create product draft.";
+      toast.error("Save failed", { description: message });
+      setError(message);
     } finally {
       setSaving(false);
     }

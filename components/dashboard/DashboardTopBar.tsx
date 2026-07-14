@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import { ExternalLink, LogOut, Menu } from "lucide-react";
 import { useState } from "react";
 
+import NotificationBell from "@/components/dashboard/NotificationBell";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthProvider";
+import { toast } from "@/lib/toast";
 import { roleLabel } from "@/lib/dashboard/roles";
 import type { UserRole } from "@/lib/marketplace/types";
 
@@ -33,7 +35,7 @@ export default function DashboardTopBar({
       router.refresh();
     } catch (err) {
       console.error(err);
-      alert("Unable to sign out. Please try again.");
+      toast.error("Unable to sign out. Please try again.");
     } finally {
       setLoggingOut(false);
     }
@@ -67,6 +69,8 @@ export default function DashboardTopBar({
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
+          <NotificationBell />
+
           {email ? (
             <span className="hidden max-w-[180px] truncate text-sm text-neutral-500 md:inline">
               {email}

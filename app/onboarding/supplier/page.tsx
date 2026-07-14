@@ -22,6 +22,7 @@ import type { Company, Profile } from "@/lib/database/types";
 import { countries } from "@/lib/marketplace/countries";
 import { certifications } from "@/lib/marketplace/certifications";
 import { productCategories } from "@/lib/marketplace/productCategories";
+import { toast } from "@/lib/toast";
 
 type SelectOption = { value: string; label: string };
 
@@ -177,6 +178,10 @@ function SupplierOnboardingForm({
         onboarding_completed: true,
       });
 
+      toast.success("Onboarding saved", {
+        description: "Your supplier profile has been updated.",
+      });
+
       await refreshCompany();
       router.push(
         resolvePostAuthRedirectPath({
@@ -187,9 +192,10 @@ function SupplierOnboardingForm({
       router.refresh();
     } catch (err) {
       console.error(err);
-      setError(
-        err instanceof Error ? err.message : "Failed to save onboarding data."
-      );
+      const message =
+        err instanceof Error ? err.message : "Failed to save onboarding data.";
+      toast.error("Onboarding failed", { description: message });
+      setError(message);
     } finally {
       setSaving(false);
     }

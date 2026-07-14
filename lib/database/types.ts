@@ -217,6 +217,28 @@ export type PublicSupplier = {
 };
 
 /* -------------------------------------------------------------------------- */
+/*                               NOTIFICATIONS                                */
+/* -------------------------------------------------------------------------- */
+
+export type NotificationPriority = "low" | "normal" | "high" | "urgent";
+
+export type Notification = {
+  id: string;
+  recipient_user_id: string;
+  type: string;
+  title: string;
+  message: string;
+  entity_type: string | null;
+  entity_id: string | null;
+  action_url: string | null;
+  metadata: Record<string, unknown>;
+  priority: NotificationPriority;
+  is_read: boolean;
+  read_at: string | null;
+  created_at: string;
+};
+
+/* -------------------------------------------------------------------------- */
 /*                                   DATABASE                                 */
 /* -------------------------------------------------------------------------- */
 
@@ -311,6 +333,16 @@ export type Database = {
         };
 
         Update: Partial<CompanyDocument>;
+
+        Relationships: [];
+      };
+
+      notifications: {
+        Row: Notification;
+
+        Insert: never;
+
+        Update: never;
 
         Relationships: [];
       };
@@ -446,6 +478,21 @@ export type Database = {
       reopen_published_product_for_editing: {
         Args: { product_id: string };
         Returns: Product;
+      };
+
+      mark_notification_read: {
+        Args: { notification_id: string };
+        Returns: Notification;
+      };
+
+      mark_all_notifications_read: {
+        Args: Record<string, never>;
+        Returns: number;
+      };
+
+      submit_company_for_verification: {
+        Args: { company_id: string };
+        Returns: Company;
       };
     };
 

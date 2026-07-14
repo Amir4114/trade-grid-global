@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
+import { toast } from "@/lib/toast";
 
 export default function ForgotPasswordPage() {
   const supabase = createClient();
@@ -44,14 +45,18 @@ export default function ForgotPasswordPage() {
       setMessage(
         "If an account exists for this email, a password reset link has been sent. Please check your inbox."
       );
+      toast.success("Reset link sent", {
+        description: "Check your inbox if an account exists for this email.",
+      });
     } catch (err) {
       console.error("Reset Password:", err);
 
-      setError(
+      const message =
         err instanceof Error
           ? err.message
-          : "Unable to send reset email."
-      );
+          : "Unable to send reset email.";
+      toast.error("Unable to send reset email", { description: message });
+      setError(message);
     } finally {
       setLoading(false);
     }

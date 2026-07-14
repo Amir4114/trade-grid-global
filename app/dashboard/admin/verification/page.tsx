@@ -7,6 +7,7 @@ import DashboardShell from "@/components/dashboard/DashboardShell";
 import { Button } from "@/components/ui/button";
 import type { Company } from "@/lib/database/types";
 import { createClient } from "@/lib/supabase/client";
+import { toast } from "@/lib/toast";
 
 export default function AdminVerificationPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -56,13 +57,26 @@ export default function AdminVerificationPage() {
   ) => {
     const supabase = createClient();
 
-    await supabase
+    const { error } = await supabase
       .from("companies")
       .update({
         verification_status,
         ...(risk_score !== undefined ? { risk_score } : {}),
       })
       .eq("id", id);
+
+    if (error) {
+      toast.error("Verification update failed", { description: error.message });
+      return;
+    }
+
+    if (verification_status === "verified") {
+      toast.success("Company approved successfully");
+    } else if (verification_status === "rejected") {
+      toast.success("Company rejected");
+    } else if (verification_status === "under_review") {
+      toast.info("Company marked for review");
+    }
 
     await refreshCompanies();
   };

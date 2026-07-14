@@ -227,13 +227,9 @@ export async function submitCompanyForVerification(
 ): Promise<void> {
   const supabase = createClient();
 
-  const { error } = await supabase
-    .from("companies")
-    .update({
-      verification_status: "under_review",
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", companyId);
+  const { error } = await supabase.rpc("submit_company_for_verification", {
+    company_id: companyId,
+  });
 
   if (error) {
     throw new Error(error.message);

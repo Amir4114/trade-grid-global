@@ -18,6 +18,7 @@ import {
   rejectProduct,
 } from "@/lib/products/service";
 import { createClient } from "@/lib/supabase/client";
+import { toast } from "@/lib/toast";
 
 function formatDate(value: string): string {
   return new Date(value).toLocaleDateString(undefined, {
@@ -77,11 +78,13 @@ export default function AdminProductsPage() {
       setActionError(null);
       setBusyId(product.id);
       await approveProduct(supabase, product.id);
+      toast.success("Product approved successfully");
       reload();
     } catch (err) {
-      setActionError(
-        err instanceof Error ? err.message : "Failed to approve product."
-      );
+      const message =
+        err instanceof Error ? err.message : "Failed to approve product.";
+      toast.error("Approval failed", { description: message });
+      setActionError(message);
     } finally {
       setBusyId(null);
     }
@@ -100,13 +103,15 @@ export default function AdminProductsPage() {
       setActionError(null);
       setBusyId(rejectTarget.id);
       await rejectProduct(supabase, rejectTarget.id, rejectReason);
+      toast.success("Product rejected");
       setRejectTarget(null);
       setRejectReason("");
       reload();
     } catch (err) {
-      setActionError(
-        err instanceof Error ? err.message : "Failed to reject product."
-      );
+      const message =
+        err instanceof Error ? err.message : "Failed to reject product.";
+      toast.error("Rejection failed", { description: message });
+      setActionError(message);
     } finally {
       setBusyId(null);
     }

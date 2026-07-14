@@ -59,6 +59,7 @@ import {
 } from "@/lib/products/types";
 
 import { createClient } from "@/lib/supabase/client";
+import { toast } from "@/lib/toast";
 
 
 
@@ -170,6 +171,10 @@ export default function EditSupplierProductPage() {
 
       setProduct(updated);
 
+      toast.success(
+        product.status === "draft" ? "Draft saved" : "Product updated"
+      );
+
       setNotice(
 
         product.status === "draft"
@@ -182,11 +187,10 @@ export default function EditSupplierProductPage() {
 
     } catch (err) {
 
-      setSaveError(
-
-        err instanceof Error ? err.message : "Failed to save product."
-
-      );
+      const message =
+        err instanceof Error ? err.message : "Failed to save product.";
+      toast.error("Save failed", { description: message });
+      setSaveError(message);
 
     } finally {
 
@@ -214,17 +218,20 @@ export default function EditSupplierProductPage() {
 
       await submitProductForReview(supabase, product.id);
 
+      toast.success("Product submitted for review", {
+        description: `${product.name} is waiting for admin approval.`,
+      });
+
       router.push("/dashboard/supplier/products");
 
       router.refresh();
 
     } catch (err) {
 
-      setSaveError(
-
-        err instanceof Error ? err.message : "Failed to submit product."
-
-      );
+      const message =
+        err instanceof Error ? err.message : "Failed to submit product.";
+      toast.error("Submission failed", { description: message });
+      setSaveError(message);
 
     } finally {
 

@@ -16,6 +16,7 @@ import {
 import { documentTypes } from "@/lib/document-options";
 import type { CompanyDocument } from "@/lib/database/types";
 import { createClient } from "@/lib/supabase/client";
+import { toast } from "@/lib/toast";
 
 const documentOptions = documentTypes.map((doc) => ({
   value: doc,
@@ -169,9 +170,12 @@ export default function VerificationPage() {
       setFile(null);
       setSelectedDocType(null);
       await refreshDocuments(companyId);
+      toast.success("Document uploaded");
     } catch (err) {
       console.error(err);
-      setError(err instanceof Error ? err.message : "Upload failed.");
+      const message = err instanceof Error ? err.message : "Upload failed.";
+      toast.error("Upload failed", { description: message });
+      setError(message);
     } finally {
       setUploading(false);
     }
@@ -191,6 +195,10 @@ export default function VerificationPage() {
       setError(null);
       await submitCompanyForVerification(companyId);
 
+      toast.success("Verification submitted", {
+        description: "Your company profile has been submitted for review.",
+      });
+
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -203,11 +211,12 @@ export default function VerificationPage() {
       router.push(resolvePostAuthRedirectPath(authContext));
     } catch (err) {
       console.error(err);
-      setError(
+      const message =
         err instanceof Error
           ? err.message
-          : "Unable to submit verification request."
-      );
+          : "Unable to submit verification request.";
+      toast.error("Verification submission failed", { description: message });
+      setError(message);
     }
   };
 

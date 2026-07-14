@@ -155,10 +155,18 @@ export function requiresCompletedOnboarding(
   return !isOnboardingComplete(company);
 }
 
+export function isSharedDashboardPath(pathname: string): boolean {
+  return pathname === "/dashboard/notifications";
+}
+
 export function isRoleDashboardPath(
   pathname: string,
   role: UserRole
 ): boolean {
+  if (isSharedDashboardPath(pathname)) {
+    return true;
+  }
+
   switch (role) {
     case "buyer":
       return pathname.startsWith("/dashboard/buyer");

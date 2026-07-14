@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
+import { toast } from "@/lib/toast";
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -61,6 +62,7 @@ export default function ResetPasswordPage() {
       });
 
       if (updateError) {
+        toast.error("Password update failed", { description: updateError.message });
         setError(updateError.message);
         return;
       }
@@ -68,12 +70,18 @@ export default function ResetPasswordPage() {
       // End the recovery session so the user must sign in with the new password.
       await supabase.auth.signOut();
 
+      toast.success("Password updated", {
+        description: "Sign in with your new password.",
+      });
       setSuccess(true);
       setTimeout(() => {
         router.replace("/login");
       }, 1500);
     } catch (err) {
       console.error("Reset password error:", err);
+      toast.error("Password update failed", {
+        description: "Something went wrong while updating your password.",
+      });
       setError("Something went wrong while updating your password.");
     } finally {
       setSaving(false);

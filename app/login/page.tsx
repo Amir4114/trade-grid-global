@@ -8,6 +8,7 @@ import {
   resolvePostAuthRedirectPath,
 } from "@/lib/auth/redirects";
 import { createClient } from "@/lib/supabase/client";
+import { toast } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/auth/PasswordInput";
@@ -33,6 +34,7 @@ export default function LoginPage() {
       });
 
       if (signInError) {
+        toast.error("Login failed", { description: signInError.message });
         setError(signInError.message);
         return;
       }
@@ -62,6 +64,9 @@ export default function LoginPage() {
       );
     } catch (err) {
       console.error("Login error:", err);
+      toast.error("Login failed", {
+        description: "Something went wrong during login.",
+      });
       setError("Something went wrong during login.");
     } finally {
       setLoading(false);

@@ -37,6 +37,7 @@ import {
   submitActionLabel,
 } from "@/lib/products/types";
 import { createClient } from "@/lib/supabase/client";
+import { toast } from "@/lib/toast";
 
 const STATUS_STYLES: Record<ProductStatus, string> = {
   draft: "bg-neutral-100 text-neutral-700",
@@ -114,11 +115,15 @@ export default function SupplierProductsPage() {
       setActionError(null);
       setBusyId(product.id);
       await submitProductForReview(supabase, product.id);
+      toast.success("Product submitted for review", {
+        description: `${product.name} is waiting for admin approval.`,
+      });
       reload();
     } catch (err) {
-      setActionError(
-        err instanceof Error ? err.message : "Failed to submit product."
-      );
+      const message =
+        err instanceof Error ? err.message : "Failed to submit product.";
+      toast.error("Submission failed", { description: message });
+      setActionError(message);
     } finally {
       setBusyId(null);
     }
@@ -129,11 +134,13 @@ export default function SupplierProductsPage() {
       setActionError(null);
       setBusyId(product.id);
       await archiveProduct(supabase, product.id);
+      toast.success("Product archived");
       reload();
     } catch (err) {
-      setActionError(
-        err instanceof Error ? err.message : "Failed to archive product."
-      );
+      const message =
+        err instanceof Error ? err.message : "Failed to archive product.";
+      toast.error("Archive failed", { description: message });
+      setActionError(message);
     } finally {
       setBusyId(null);
     }
@@ -150,6 +157,9 @@ export default function SupplierProductsPage() {
 
       if (confirmAction.type === "reopen") {
         await reopenPublishedProductForEditing(supabase, product.id);
+        toast.success("Product reopened for editing", {
+          description: `${product.name} was moved back to draft.`,
+        });
         setConfirmAction(null);
         router.push(`/dashboard/supplier/products/${product.id}/edit`);
         router.refresh();
@@ -158,14 +168,16 @@ export default function SupplierProductsPage() {
 
       if (confirmAction.type === "restore") {
         await restoreArchivedProduct(supabase, product.id);
+        toast.success("Product restored to draft");
         setConfirmAction(null);
         reload();
         return;
       }
     } catch (err) {
-      setActionError(
-        err instanceof Error ? err.message : "Failed to update product."
-      );
+      const message =
+        err instanceof Error ? err.message : "Failed to update product.";
+      toast.error("Action failed", { description: message });
+      setActionError(message);
     } finally {
       setBusyId(null);
     }
