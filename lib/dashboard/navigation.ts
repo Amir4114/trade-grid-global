@@ -20,10 +20,11 @@ export type DashboardNavItem = {
 
 const buyerNav: DashboardNavItem[] = [
   { label: "Overview", href: "/dashboard/buyer", icon: BarChart3 },
+  { label: "My RFQs", href: "/dashboard/buyer/rfqs", icon: FileText },
   { label: "Saved Suppliers", href: "/dashboard/buyer/suppliers", icon: Users },
   { label: "Inquiries", href: "/dashboard/buyer/inquiries", icon: Bell },
-  { label: "Quotations", href: "/dashboard/buyer/quotations", icon: FileText },
-  { label: "Orders", href: "/dashboard/buyer/orders", icon: PackageSearch },
+  { label: "Quotations", href: "/dashboard/buyer/quotations", icon: PackageSearch },
+  { label: "Orders", href: "/dashboard/buyer/orders", icon: Package },
   { label: "Settings", href: "/dashboard/buyer/settings", icon: Settings },
 ];
 
@@ -39,9 +40,9 @@ const supplierNav: DashboardNavItem[] = [
 const adminNav: DashboardNavItem[] = [
   { label: "Overview", href: "/dashboard/admin", icon: BarChart3 },
   { label: "Users", href: "/dashboard/admin/users", icon: Users },
-  { label: "Products", href: "/dashboard/admin/products", icon: Package },
+  { label: "Verification Ops", href: "/dashboard/admin/verification", icon: ShieldCheck },
+  { label: "Product Management", href: "/dashboard/admin/products", icon: Package },
   { label: "RFQs", href: "/dashboard/admin/rfqs", icon: FileText },
-  { label: "Verification", href: "/dashboard/admin/verification", icon: ShieldCheck },
   { label: "Analytics", href: "/dashboard/admin/analytics", icon: BarChart3 },
 ];
 

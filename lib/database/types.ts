@@ -90,6 +90,92 @@ export type ProductStatus =
   | "rejected"
   | "archived";
 
+/* -------------------------------------------------------------------------- */
+/*                                    RFQs                                    */
+/* -------------------------------------------------------------------------- */
+
+export type RfqStatus =
+  | "draft"
+  | "open"
+  | "quoted"
+  | "awarded"
+  | "closed"
+  | "cancelled"
+  | "expired";
+
+export type RfqVisibility =
+  | "public"
+  | "verified_suppliers_only"
+  | "invite_only";
+
+export type RfqInviteStatus =
+  | "pending"
+  | "accepted"
+  | "declined"
+  | "revoked";
+
+export type Rfq = {
+  id: string;
+  buyer_company_id: string;
+  created_by: string | null;
+  title: string;
+  product_name: string;
+  category: string;
+  description: string;
+  quantity_value: number | null;
+  quantity_unit: string;
+  packaging_requirement: string;
+  target_country: string;
+  delivery_port: string;
+  required_certifications: string[];
+  preferred_incoterms: string[];
+  quote_deadline_at: string | null;
+  notes: string;
+  linked_product_id: string | null;
+  visibility: RfqVisibility;
+  status: RfqStatus;
+  published_at: string | null;
+  closed_at: string | null;
+  cancelled_at: string | null;
+  cancellation_reason: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type RfqAttachment = {
+  id: string;
+  rfq_id: string;
+  uploaded_by: string | null;
+  file_name: string;
+  storage_path: string;
+  mime_type: string;
+  file_size_bytes: number | null;
+  created_at: string;
+};
+
+export type RfqEvent = {
+  id: string;
+  rfq_id: string;
+  event_type: string;
+  actor_type: "user" | "admin" | "system" | "ai";
+  actor_user_id: string | null;
+  from_status: string | null;
+  to_status: string | null;
+  message: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+};
+
+export type RfqInvite = {
+  id: string;
+  rfq_id: string;
+  supplier_company_id: string;
+  invited_by: string | null;
+  status: RfqInviteStatus;
+  invited_at: string;
+  responded_at: string | null;
+};
+
 export type Product = {
   id: string;
 
@@ -239,6 +325,56 @@ export type Notification = {
 };
 
 /* -------------------------------------------------------------------------- */
+/*                          VERIFICATION OPERATIONS                           */
+/* -------------------------------------------------------------------------- */
+
+export type VerificationCaseRow = {
+  id: string;
+  case_type: "company_verification" | "product_review";
+  entity_id: string;
+  subject_user_id: string | null;
+  company_id: string | null;
+  status: "pending" | "in_review" | "approved" | "rejected" | "cancelled";
+  priority: "low" | "normal" | "high" | "urgent";
+  submitted_at: string;
+  review_started_at: string | null;
+  decided_at: string | null;
+  assigned_admin_id: string | null;
+  decision_reason: string | null;
+  sla_due_at: string;
+  sla_breached_at: string | null;
+  source: "user_submission" | "system" | "ai_assisted" | "automation";
+  created_at: string;
+  updated_at: string;
+};
+
+export type VerificationCaseEventRow = {
+  id: string;
+  case_id: string;
+  event_type: string;
+  actor_type: "user" | "admin" | "system" | "ai";
+  actor_user_id: string | null;
+  from_status: string | null;
+  to_status: string | null;
+  message: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+};
+
+export type VerificationAssessmentRow = {
+  id: string;
+  case_id: string;
+  assessor_type: "rule" | "ai" | "admin";
+  assessor_name: string;
+  assessment_type: string;
+  result: "pass" | "fail" | "warning" | "unknown";
+  confidence: number | null;
+  summary: string | null;
+  findings: Record<string, unknown>;
+  created_at: string;
+};
+
+/* -------------------------------------------------------------------------- */
 /*                                   DATABASE                                 */
 /* -------------------------------------------------------------------------- */
 
@@ -347,6 +483,81 @@ export type Database = {
         Relationships: [];
       };
 
+      verification_cases: {
+        Row: VerificationCaseRow;
+
+        Insert: never;
+
+        Update: never;
+
+        Relationships: [];
+      };
+
+      verification_case_events: {
+        Row: VerificationCaseEventRow;
+
+        Insert: never;
+
+        Update: never;
+
+        Relationships: [];
+      };
+
+      verification_assessments: {
+        Row: VerificationAssessmentRow;
+
+        Insert: never;
+
+        Update: never;
+
+        Relationships: [];
+      };
+
+      rfqs: {
+        Row: Rfq;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+
+      rfq_attachments: {
+        Row: RfqAttachment;
+        Insert: {
+          id?: string;
+          rfq_id: string;
+          uploaded_by?: string | null;
+          file_name: string;
+          storage_path: string;
+          mime_type?: string;
+          file_size_bytes?: number | null;
+          created_at?: string;
+        };
+        Update: Partial<RfqAttachment>;
+        Relationships: [];
+      };
+
+      rfq_events: {
+        Row: RfqEvent;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+
+      rfq_invites: {
+        Row: RfqInvite;
+        Insert: {
+          id?: string;
+          rfq_id: string;
+          supplier_company_id: string;
+          invited_by?: string | null;
+          status?: RfqInviteStatus;
+          invited_at?: string;
+          responded_at?: string | null;
+        };
+        Update: Partial<RfqInvite>;
+        Relationships: [];
+      };
+
       products: {
         Row: Product;
 
@@ -445,9 +656,81 @@ export type Database = {
         Returns: boolean;
       };
 
+      is_buyer: {
+        Args: Record<string, never>;
+        Returns: boolean;
+      };
+
       user_owns_company: {
         Args: { cid: string };
         Returns: boolean;
+      };
+
+      supplier_can_access_rfq: {
+        Args: { p_rfq_id: string };
+        Returns: boolean;
+      };
+
+      create_draft_rfq: {
+        Args: {
+          p_title: string;
+          p_product_name: string;
+          p_category: string;
+          p_description?: string;
+          p_quantity_value?: number | null;
+          p_quantity_unit?: string;
+          p_packaging_requirement?: string;
+          p_target_country?: string;
+          p_delivery_port?: string;
+          p_required_certifications?: string[];
+          p_preferred_incoterms?: string[];
+          p_quote_deadline_at?: string | null;
+          p_notes?: string;
+          p_visibility?: string;
+          p_linked_product_id?: string | null;
+          p_invite_supplier_ids?: string[];
+        };
+        Returns: Rfq;
+      };
+
+      update_draft_rfq: {
+        Args: {
+          p_rfq_id: string;
+          p_title?: string | null;
+          p_product_name?: string | null;
+          p_category?: string | null;
+          p_description?: string | null;
+          p_quantity_value?: number | null;
+          p_quantity_unit?: string | null;
+          p_packaging_requirement?: string | null;
+          p_target_country?: string | null;
+          p_delivery_port?: string | null;
+          p_required_certifications?: string[] | null;
+          p_preferred_incoterms?: string[] | null;
+          p_quote_deadline_at?: string | null;
+          p_clear_quote_deadline?: boolean;
+          p_notes?: string | null;
+          p_visibility?: string | null;
+          p_linked_product_id?: string | null;
+          p_clear_linked_product?: boolean;
+          p_invite_supplier_ids?: string[] | null;
+        };
+        Returns: Rfq;
+      };
+
+      publish_rfq: {
+        Args: { p_rfq_id: string };
+        Returns: Rfq;
+      };
+
+      close_rfq: {
+        Args: { p_rfq_id: string };
+        Returns: Rfq;
+      };
+
+      cancel_rfq: {
+        Args: { p_rfq_id: string; p_reason?: string | null };
+        Returns: Rfq;
       };
 
       submit_product_for_review: {
@@ -493,6 +776,35 @@ export type Database = {
       submit_company_for_verification: {
         Args: { company_id: string };
         Returns: Company;
+      };
+
+      start_verification_case_review: {
+        Args: { p_case_id: string };
+        Returns: VerificationCaseRow;
+      };
+
+      set_verification_case_priority: {
+        Args: { p_case_id: string; p_priority: string };
+        Returns: VerificationCaseRow;
+      };
+
+      approve_company_verification: {
+        Args: { p_company_id: string; p_risk_score?: number };
+        Returns: Company;
+      };
+
+      reject_company_verification: {
+        Args: { p_company_id: string; p_reason?: string };
+        Returns: Company;
+      };
+
+      verification_case_sla_state: {
+        Args: {
+          p_sla_due_at: string;
+          p_submitted_at: string;
+          p_status: string;
+        };
+        Returns: string | null;
       };
     };
 

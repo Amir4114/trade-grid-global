@@ -1,6 +1,12 @@
 export type NotificationPriority = "low" | "normal" | "high" | "urgent";
 
-export type NotificationEntityType = "company" | "product" | "account" | null;
+export type NotificationEntityType =
+  | "company"
+  | "product"
+  | "account"
+  | "rfq"
+  | "quotation"
+  | null;
 
 /** Canonical notification type strings for Phase 1 and future AI/verification events. */
 export type NotificationType =
@@ -15,6 +21,10 @@ export type NotificationType =
   | "product.admin_review_required"
   | "product.approved"
   | "product.rejected"
+  | "rfq.published"
+  | "rfq.invited"
+  | "rfq.closed"
+  | "rfq.cancelled"
   // Future AI / background verification (metadata-only conventions for now)
   | "verification.ai_started"
   | "verification.ai_completed"
@@ -53,6 +63,10 @@ export const ARRIVAL_TOAST_TYPES = new Set<string>([
   "verification.rejected",
   "product.approved",
   "product.rejected",
+  "rfq.published",
+  "rfq.invited",
+  "rfq.closed",
+  "rfq.cancelled",
 ]);
 
 export function formatRelativeTime(value: string): string {

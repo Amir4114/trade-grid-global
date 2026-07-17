@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { Database, Product, PublicProduct } from "@/lib/database/types";
+import type { Database, Product, ProductStatus, PublicProduct } from "@/lib/database/types";
 import {
   buildTradePayload,
   validateProductFormValues,
@@ -222,6 +222,51 @@ export async function reopenPublishedProductForEditing(
 }
 
 /* ----------------------------- admin: moderate ---------------------------- */
+
+export type AdminProductFilters = {
+  status?: ProductStatus | "all";
+  q?: string;
+};
+
+export type AdminProductRow = {
+  product: Product;
+  companyName: string | null;
+  activeReviewCaseId: string | null;
+};
+
+export async function listAdminProducts(
+  supabase: Client,
+  filters: AdminProductFilters = {}
+): Promise<Product[]> {
+  let query = supabase.from("products").select("*").order("updated_at", {
+    ascending: false,
+  });
+
+  if (filters.status && filters.status !== "all") {
+    query = query.eq("status", filters.status);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  let rows = data ?? [];
+
+  if (filters.q?.trim()) {
+    const term = filters.q.trim().toLowerCase();
+    rows = rows.filter(
+      (product) =>
+        product.name.toLowerCase().includes(term) ||
+        product.category.toLowerCase().includes(term) ||
+        product.country_of_origin.toLowerCase().includes(term) ||
+        product.description.toLowerCase().includes(term)
+    );
+  }
+
+  return rows;
+}
 
 export async function listPendingProducts(
   supabase: Client

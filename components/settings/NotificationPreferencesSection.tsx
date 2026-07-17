@@ -20,7 +20,7 @@ export default function NotificationPreferencesSection() {
           <li>In-app verification updates</li>
           <li>In-app product moderation updates</li>
           <li>Email notifications (planned)</li>
-          <li>RFQ and quotation alerts (planned)</li>
+          <li>RFQ and quotation alerts</li>
         </ul>
       </div>
     </SettingsSection>
