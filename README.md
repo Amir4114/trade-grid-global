@@ -1,21 +1,174 @@
-# Next.js template
+# Trade Grid Global
 
-This is a Next.js template with shadcn/ui.
+**Food Import / Export B2B Platform** — a trust-first marketplace for Food & FMCG trade (importers, exporters, manufacturers, distributors, wholesalers, and food brands).
 
-## Adding components
+Not a generic consumer marketplace. Focused on verification, structured RFQs, quotations, and auditable supplier selection.
 
-To add components to your app, run the following command:
+| | |
+|--|--|
+| **Current version** | `0.3.0` (`package.json`) |
+| **Latest release / Git tag** | `v0.3.0-procurement-complete` |
+| **Milestone** | Procurement complete through supplier award |
+| **Branch** | `main` |
+
+---
+
+## Technology stack
+
+| Layer | Technology |
+|-------|------------|
+| Frontend | Next.js App Router, React 19, TypeScript, Tailwind CSS, shadcn/ui |
+| Backend | Supabase Auth, PostgreSQL, Row Level Security, Storage |
+| Domain logic | SECURITY DEFINER SQL RPCs + TypeScript services (`lib/`) |
+| Hosting | Vercel-oriented Next.js deployment |
+
+---
+
+## Architecture overview
+
+```mermaid
+flowchart LR
+  UI[Next.js dashboards] --> SVC[lib/* services]
+  SVC --> SB[Supabase Auth + Postgres]
+  SB --> RLS[RLS]
+  SB --> RPC[SECURITY DEFINER RPCs]
+  SB --> ST[Storage]
+```
+
+Full detail: [`docs/architecture/ARCHITECTURE_STATUS_v0.3.0.md`](./docs/architecture/ARCHITECTURE_STATUS_v0.3.0.md)
+
+---
+
+## Major features
+
+- Buyer / supplier / admin roles with dashboard-first onboarding
+- Company verification operations (admin command center)
+- Product catalog with moderation lifecycle
+- Persistent notifications
+- RFQ lifecycle (draft → publish → close/cancel/award)
+- Supplier quotations (draft / submit / revise / withdraw)
+- Buyer compare & award; supplier award history
+
+**Not implemented yet:** purchase orders, invoices, payments, logistics, production AI.
+
+---
+
+## Project structure
+
+```
+app/                  Next.js App Router
+components/           UI by domain
+contexts/             AuthProvider
+lib/                  Services, types, Supabase clients
+scripts/              Live verification scripts
+supabase/migrations/  SQL migrations 001–016
+docs/                 Product & engineering documentation
+proxy.ts              Auth / dashboard gate
+```
+
+---
+
+## Quick start
 
 ```bash
-npx shadcn@latest add button
+npm install
+cp .env.example .env.local
+# Fill NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY
+# Apply supabase/migrations/001–016 to your Supabase project
+npm run dev
 ```
 
-This will place the ui components in the `components` directory.
+Quality checks:
 
-## Using components
-
-To use the components in your app, import them as follows:
-
-```tsx
-import { Button } from "@/components/ui/button";
+```bash
+npm run typecheck
+npm run lint
+npm run build
 ```
+
+---
+
+## Environment setup
+
+See [`.env.example`](./.env.example) and [`docs/deployment/ENVIRONMENT.md`](./docs/deployment/ENVIRONMENT.md).
+
+Required for the app:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+Optional for verification scripts:
+
+- `SUPABASE_SERVICE_ROLE_KEY` (server/scripts only — never expose to the browser)
+
+---
+
+## Documentation
+
+| Document | Link |
+|----------|------|
+| Docs home | [`docs/README.md`](./docs/README.md) |
+| Architecture status | [`docs/architecture/ARCHITECTURE_STATUS_v0.3.0.md`](./docs/architecture/ARCHITECTURE_STATUS_v0.3.0.md) |
+| Database schema | [`docs/architecture/DATABASE_SCHEMA.md`](./docs/architecture/DATABASE_SCHEMA.md) |
+| Security model | [`docs/architecture/SECURITY_MODEL.md`](./docs/architecture/SECURITY_MODEL.md) |
+| API / RPC reference | [`docs/architecture/API_REFERENCE.md`](./docs/architecture/API_REFERENCE.md) |
+| Current status | [`docs/planning/CURRENT_STATUS.md`](./docs/planning/CURRENT_STATUS.md) |
+| Roadmap | [`docs/planning/ROADMAP.md`](./docs/planning/ROADMAP.md) |
+| Changelog | [`docs/CHANGELOG.md`](./docs/CHANGELOG.md) |
+| Release notes | [`docs/RELEASE_NOTES.md`](./docs/RELEASE_NOTES.md) |
+| Deployment | [`docs/deployment/DEPLOYMENT.md`](./docs/deployment/DEPLOYMENT.md) |
+| Contributing | [`CONTRIBUTING.md`](./CONTRIBUTING.md) |
+
+---
+
+## Current modules
+
+| Module | Status |
+|--------|--------|
+| Foundation (auth, products, notifications, verification) | Complete |
+| Procurement (RFQ → quotation → award) | Complete (`v0.3.0-procurement-complete`) |
+
+---
+
+## Future modules
+
+| Module | Focus |
+|--------|-------|
+| Module 3 — Trade execution | Purchase orders, order lifecycle, logistics, documents |
+| Module 4 — Finance | Invoices, payments |
+| Module 5 — AI procurement | Real recommendations (replace mock `/ai-sourcing`) |
+| Module 6 — Analytics | Live reporting / admin intelligence |
+
+See [`docs/planning/ROADMAP.md`](./docs/planning/ROADMAP.md).
+
+---
+
+## Roadmap
+
+**Now:** Trust + procurement through award.  
+**Next:** Purchase Orders after award (Module 3).  
+**Later:** Finance → AI → Analytics.
+
+---
+
+## Screenshots
+
+> Placeholder — product screenshots to be added for marketing/GitHub social preview.
+
+- Buyer RFQ compare & award — *TBD*
+- Supplier quotation / award history — *TBD*
+- Admin verification command center — *TBD*
+
+---
+
+## License
+
+This repository is **proprietary**. See [`LICENSE.md`](./LICENSE.md).
+
+---
+
+## Contributing
+
+Internal contribution guidelines: [`CONTRIBUTING.md`](./CONTRIBUTING.md).
+
+Do not modify historical SQL migrations. Prefer additive migrations and verification scripts for database changes.

@@ -1,0 +1,377 @@
+# API Reference (Supabase RPCs)
+
+Client-facing and notable internal RPCs for Trade Grid Global.  
+Invoked from the Next.js app via `supabase.rpc(...)` (see `lib/*/service.ts`).
+
+Related: [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md) · [SECURITY_MODEL.md](./SECURITY_MODEL.md) · [ARCHITECTURE_STATUS_v0.3.0.md](./ARCHITECTURE_STATUS_v0.3.0.md)
+
+**Legend**
+
+- **Permissions:** who may successfully execute
+- **Internal:** underscore helpers — not for direct client use (typically revoked)
+
+### Table of contents
+
+- [Role & access helpers](#role--access-helpers)
+- [Notifications](#notifications)
+- [Company verification](#company-verification)
+- [Products](#products)
+- [RFQ](#rfq)
+- [Quotations](#quotations)
+- [Awards](#awards)
+- [HTTP API routes](#http-api-routes-nextjs)
+
+---
+
+## Role & access helpers
+
+### `is_admin()` / `is_supplier()` / `is_buyer()`
+
+| | |
+|--|--|
+| **Purpose** | Role predicates for RLS/RPCs |
+| **Parameters** | none |
+| **Returns** | `boolean` |
+| **Permissions** | `authenticated` (execute) |
+| **Related** | `profiles` |
+
+### `user_owns_company(cid uuid)`
+
+| | |
+|--|--|
+| **Purpose** | Ownership check |
+| **Returns** | `boolean` |
+| **Permissions** | `authenticated` |
+
+### `supplier_can_access_rfq(p_rfq_id uuid)`
+
+| | |
+|--|--|
+| **Purpose** | Whether current supplier may read an RFQ (visibility rules **or** existing quotation thread — 016) |
+| **Returns** | `boolean` |
+| **Business rules** | Open/quoted discoverability by visibility; post-award read if thread exists |
+| **Related** | `rfqs`, `rfq_invites`, `quotation_threads` |
+
+### `can_access_quotation_thread(p_thread_id uuid)`
+
+| | |
+|--|--|
+| **Purpose** | Buyer/owner supplier/admin access predicate |
+| **Returns** | `boolean` |
+
+### `verification_case_sla_state(...)`
+
+| | |
+|--|--|
+| **Purpose** | Compute SLA state for a case (013) |
+| **Permissions** | As granted in migration (admin tooling) |
+
+---
+
+## Notifications
+
+### `mark_notification_read(notification_id uuid)`
+
+| | |
+|--|--|
+| **Purpose** | Mark one notification read |
+| **Returns** | Updated notification row (as defined in migration) |
+| **Permissions** | Recipient only |
+| **Failure** | Not found / not owner |
+| **Example** | `supabase.rpc('mark_notification_read', { notification_id })` |
+| **Related** | `notifications` |
+
+### `mark_all_notifications_read()`
+
+| | |
+|--|--|
+| **Purpose** | Mark all caller notifications read |
+| **Permissions** | Authenticated caller’s rows only |
+
+### `_create_system_notification(...)` / `_notify_all_admins(...)`
+
+| | |
+|--|--|
+| **Purpose** | Trusted notification creation |
+| **Permissions** | **Internal** — not client-callable |
+| **Related** | `notifications` |
+
+---
+
+## Company verification
+
+### `submit_company_for_verification(company_id uuid)`
+
+| | |
+|--|--|
+| **Purpose** | Owner submits company for review → `under_review` |
+| **Permissions** | Company owner |
+| **Business rules** | Only from `pending`/`rejected`; sets submit config for triggers; opens verification case (013) |
+| **Failure** | Not owner; invalid status |
+| **Related** | `companies`, `verification_cases`, notifications |
+
+### `approve_company_verification(p_company_id uuid, ...)`
+
+| | |
+|--|--|
+| **Purpose** | Admin approve company |
+| **Permissions** | Admin |
+| **Business rules** | Company must be `under_review`; resolves case; notifies |
+| **Related** | `companies`, `verification_cases` |
+
+### `reject_company_verification(p_company_id uuid, ...)`
+
+| | |
+|--|--|
+| **Purpose** | Admin reject company with reason |
+| **Permissions** | Admin |
+| **Failure** | Not under review; not admin |
+
+### `start_verification_case_review(p_case_id uuid)`
+
+| | |
+|--|--|
+| **Purpose** | Admin moves case to `in_review` |
+| **Permissions** | Admin |
+
+### `set_verification_case_priority(p_case_id uuid, p_priority text, ...)`
+
+| | |
+|--|--|
+| **Purpose** | Admin priority change |
+| **Permissions** | Admin |
+| **Constraints** | Priority in `low|normal|high|urgent` |
+
+---
+
+## Products
+
+### `submit_product_for_review(product_id uuid)`
+
+| | |
+|--|--|
+| **Purpose** | Supplier submits draft/rejected → pending review |
+| **Permissions** | Owning supplier |
+| **Side effects** | Notifications; verification case sync (013) |
+| **Failure** | Not owner; invalid status |
+
+### `approve_product(product_id uuid)`
+
+| | |
+|--|--|
+| **Purpose** | Admin publish product |
+| **Permissions** | Admin |
+| **Side effects** | `published`; notify supplier; resolve case |
+
+### `reject_product(product_id uuid, reason text)`
+
+| | |
+|--|--|
+| **Purpose** | Admin reject with reason |
+| **Permissions** | Admin |
+| **Failure** | Empty reason (enforced in RPC) |
+
+### `archive_product(product_id uuid)`
+
+| | |
+|--|--|
+| **Purpose** | Supplier archives allowed statuses |
+| **Permissions** | Owner supplier |
+| **Failure** | Pending cannot archive (per lifecycle verify script) |
+
+### `restore_archived_product(product_id uuid)`
+
+| | |
+|--|--|
+| **Purpose** | Archive → draft (never directly published) |
+| **Permissions** | Owner |
+
+### `reopen_published_product_for_editing(product_id uuid)`
+
+| | |
+|--|--|
+| **Purpose** | Published → draft for edit (removes public visibility) |
+| **Permissions** | Owner (as implemented in 010) |
+
+---
+
+## RFQ
+
+### `create_draft_rfq(...)`
+
+| | |
+|--|--|
+| **Purpose** | Create draft RFQ; optional invites |
+| **Key params** | `p_title`, `p_product_name`, `p_category`, visibility, quantity, certs, deadline, `p_invite_supplier_ids[]`, … |
+| **Returns** | `rfqs` row |
+| **Permissions** | Buyer |
+| **Related** | `rfqs`, `rfq_invites`, `rfq_events` |
+
+### `update_draft_rfq(p_rfq_id uuid, ...)`
+
+| | |
+|--|--|
+| **Purpose** | Update draft only |
+| **Permissions** | Owning buyer |
+| **Failure** | Not draft / not owner |
+
+### `publish_rfq(p_rfq_id uuid)`
+
+| | |
+|--|--|
+| **Purpose** | Draft → `open`; notify; invite notifications |
+| **Permissions** | Owning buyer |
+| **Failure** | Invalid status |
+
+### `close_rfq(p_rfq_id uuid)` / `cancel_rfq(p_rfq_id uuid, p_reason text)`
+
+| | |
+|--|--|
+| **Purpose** | Close or cancel RFQ; notify parties |
+| **Permissions** | Owning buyer |
+| **Failure** | Illegal transition |
+
+**Example**
+
+```ts
+await supabase.rpc("publish_rfq", { p_rfq_id: rfqId });
+```
+
+---
+
+## Quotations
+
+### `create_draft_quotation(...)`
+
+| | |
+|--|--|
+| **Purpose** | Create/ensure thread + draft offer |
+| **Permissions** | Supplier with quote access |
+| **Failure** | Cannot quote (visibility/status); draft already exists path rules |
+
+### `update_draft_quotation(p_offer_id uuid, ...)`
+
+| | |
+|--|--|
+| **Purpose** | Update draft commercial fields |
+| **Permissions** | Owning supplier |
+| **Failure** | Not draft |
+
+### `submit_quotation(...)`
+
+| | |
+|--|--|
+| **Purpose** | Submit new offer or existing draft |
+| **Key params** | `p_rfq_id` and/or `p_offer_id`, unit price, currency, lead time, MOQ, incoterm, notes, … |
+| **Returns** | `quotation_offers` row (`submitted`) |
+| **Permissions** | Supplier |
+| **Business rules** | RFQ must be `open`/`quoted`; blocks after award/close |
+| **Side effects** | Buyer `quotation.submitted`; may set RFQ `quoted` |
+| **Failure** | Access denied; closed/awarded RFQ; validation |
+
+### `create_quotation_revision(p_thread_id uuid, ...)`
+
+| | |
+|--|--|
+| **Purpose** | New submitted revision; prior submitted → `superseded` |
+| **Permissions** | Owning supplier; thread active |
+| **Side effects** | `quotation.updated` |
+
+### `withdraw_quotation(p_thread_id uuid)`
+
+| | |
+|--|--|
+| **Purpose** | Withdraw thread/offers |
+| **Permissions** | Owning supplier |
+| **Side effects** | `quotation.withdrawn` |
+
+### `get_quotation_thread(p_thread_id uuid)`
+
+| | |
+|--|--|
+| **Purpose** | Aggregated JSON: thread, rfq, offers, events |
+| **Permissions** | Buyer of RFQ, owning supplier, or admin |
+| **Failure** | Access denied |
+| **Returns** | `jsonb` / record payload |
+
+**Example**
+
+```ts
+await supabase.rpc("submit_quotation", {
+  p_rfq_id: rfqId,
+  p_unit_price: 900,
+  p_currency: "USD",
+  p_incoterm: "FOB",
+});
+```
+
+---
+
+## Awards
+
+### `award_supplier(p_rfq_id uuid, p_thread_id uuid, p_notes text default null)`
+
+| | |
+|--|--|
+| **Purpose** | Award winning quotation; lock RFQ |
+| **Returns** | `quotation_awards` row (`active`) |
+| **Permissions** | Buyer owning the RFQ |
+| **Business rules** | RFQ `open`/`quoted`; one active award; thread belongs to RFQ; submitted supplier offer required; winner → `awarded`; losers → `not_selected`; RFQ → `awarded` |
+| **Side effects** | Award/RFQ/quotation events; notifications `rfq.awarded`, `quotation.awarded`, `quotation.not_selected` |
+| **Failure** | Not buyer/owner; already awarded; closed/cancelled; withdrawn thread; no submitted offer |
+| **Related** | `quotation_awards`, `award_events`, `rfqs`, offers/threads |
+
+### `get_award(p_rfq_id uuid)`
+
+| | |
+|--|--|
+| **Purpose** | Fetch award payload for authorized parties |
+| **Returns** | `jsonb` with `awarded`, `is_winner`, `award`, `events` (losers: `award` null) |
+| **Permissions** | Buyer, quoting participant, admin |
+| **Failure** | Access denied; RFQ missing |
+
+### `revoke_award(p_award_id uuid, p_reason text default null)`
+
+| | |
+|--|--|
+| **Purpose** | Revoke active award; reopen RFQ to `quoted`; restore offers for re-award |
+| **Permissions** | Owning buyer |
+| **Business rules** | Preserves award history (`revoked`); does not delete rows |
+| **Failure** | Not active; not owner |
+
+**Example**
+
+```ts
+await supabase.rpc("award_supplier", {
+  p_rfq_id: rfqId,
+  p_thread_id: threadId,
+  p_notes: "Best landed cost",
+});
+```
+
+---
+
+## Internal helpers (selected)
+
+| Function | Purpose |
+|----------|---------|
+| `_append_rfq_event` | RFQ audit insert |
+| `_append_quotation_event` | Quotation audit insert |
+| `_append_award_event` | Award audit insert |
+| `_recompute_rfq_quote_status` | open ↔ quoted based on active submits |
+| `_assert_supplier_can_quote` | Enforce quote eligibility |
+| `_ensure_quotation_thread` | Get/create thread |
+| `_open_or_refresh_verification_case` / `_resolve_*` | Case lifecycle |
+
+These are **not** part of the public client API.
+
+---
+
+## HTTP API routes (Next.js)
+
+| Route | Purpose | Notes |
+|-------|---------|-------|
+| `app/auth/callback` | OAuth/email callback | Auth |
+| `app/api/verify-document` | Document verification helper | Not a Supabase RPC; see route for env needs |
+
+REST resource APIs for orders/payments — **Not implemented.**
