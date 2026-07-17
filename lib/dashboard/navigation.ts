@@ -33,6 +33,7 @@ const supplierNav: DashboardNavItem[] = [
   { label: "Products", href: "/dashboard/supplier/products", icon: Package },
   { label: "RFQs", href: "/dashboard/supplier/rfqs", icon: FileText },
   { label: "Quotations", href: "/dashboard/supplier/quotations", icon: Bell },
+  { label: "Awards", href: "/dashboard/supplier/awards", icon: PackageSearch },
   { label: "Certifications", href: "/dashboard/supplier/certifications", icon: ShieldCheck },
   { label: "Settings", href: "/dashboard/supplier/settings", icon: Settings },
 ];

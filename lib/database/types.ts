@@ -176,6 +176,127 @@ export type RfqInvite = {
   responded_at: string | null;
 };
 
+/* -------------------------------------------------------------------------- */
+/*                                QUOTATIONS                                  */
+/* -------------------------------------------------------------------------- */
+
+export type QuotationThreadStatus =
+  | "draft"
+  | "active"
+  | "withdrawn"
+  | "awarded"
+  | "closed";
+
+export type QuotationOfferStatus =
+  | "draft"
+  | "submitted"
+  | "withdrawn"
+  | "rejected"
+  | "superseded"
+  | "awarded"
+  | "not_selected";
+
+export type QuotationOfferedBy = "supplier" | "buyer";
+
+export type QuotationThread = {
+  id: string;
+  rfq_id: string;
+  supplier_company_id: string;
+  status: QuotationThreadStatus;
+  current_offer_id: string | null;
+  awarded_offer_id: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type QuotationOffer = {
+  id: string;
+  thread_id: string;
+  revision_no: number;
+  offered_by: QuotationOfferedBy;
+  supersedes_offer_id: string | null;
+  currency: string;
+  unit_price: number | null;
+  price_unit: string;
+  total_price: number | null;
+  incoterm: string;
+  lead_time_min: number | null;
+  lead_time_max: number | null;
+  lead_time_unit: string;
+  moq_quantity: number | null;
+  moq_unit: string;
+  validity_until: string | null;
+  notes: string;
+  linked_product_id: string | null;
+  status: QuotationOfferStatus;
+  created_by: string | null;
+  submitted_at: string | null;
+  withdrawn_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type QuotationAttachment = {
+  id: string;
+  offer_id: string;
+  uploaded_by: string | null;
+  file_name: string;
+  storage_path: string;
+  mime_type: string;
+  file_size_bytes: number | null;
+  created_at: string;
+};
+
+export type QuotationEvent = {
+  id: string;
+  thread_id: string;
+  offer_id: string | null;
+  event_type: string;
+  actor_type: "user" | "admin" | "system" | "ai";
+  actor_user_id: string | null;
+  from_status: string | null;
+  to_status: string | null;
+  message: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+};
+
+/* -------------------------------------------------------------------------- */
+/*                                   AWARDS                                   */
+/* -------------------------------------------------------------------------- */
+
+export type QuotationAwardStatus = "active" | "revoked";
+
+export type QuotationAward = {
+  id: string;
+  rfq_id: string;
+  thread_id: string;
+  offer_id: string;
+  supplier_company_id: string;
+  awarded_by: string | null;
+  status: QuotationAwardStatus;
+  notes: string;
+  awarded_at: string;
+  revoked_at: string | null;
+  revoke_reason: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AwardEvent = {
+  id: string;
+  award_id: string;
+  event_type: string;
+  actor_type: "user" | "admin" | "system" | "ai";
+  actor_user_id: string | null;
+  from_status: string | null;
+  to_status: string | null;
+  message: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+};
+
 export type Product = {
   id: string;
 
@@ -558,6 +679,57 @@ export type Database = {
         Relationships: [];
       };
 
+      quotation_threads: {
+        Row: QuotationThread;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+
+      quotation_offers: {
+        Row: QuotationOffer;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+
+      quotation_attachments: {
+        Row: QuotationAttachment;
+        Insert: {
+          id?: string;
+          offer_id: string;
+          uploaded_by?: string | null;
+          file_name: string;
+          storage_path: string;
+          mime_type?: string;
+          file_size_bytes?: number | null;
+          created_at?: string;
+        };
+        Update: Partial<QuotationAttachment>;
+        Relationships: [];
+      };
+
+      quotation_events: {
+        Row: QuotationEvent;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+
+      quotation_awards: {
+        Row: QuotationAward;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+
+      award_events: {
+        Row: AwardEvent;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+
       products: {
         Row: Product;
 
@@ -731,6 +903,123 @@ export type Database = {
       cancel_rfq: {
         Args: { p_rfq_id: string; p_reason?: string | null };
         Returns: Rfq;
+      };
+
+      create_draft_quotation: {
+        Args: {
+          p_rfq_id: string;
+          p_currency?: string;
+          p_unit_price?: number | null;
+          p_price_unit?: string;
+          p_total_price?: number | null;
+          p_incoterm?: string;
+          p_lead_time_min?: number | null;
+          p_lead_time_max?: number | null;
+          p_lead_time_unit?: string;
+          p_moq_quantity?: number | null;
+          p_moq_unit?: string;
+          p_validity_until?: string | null;
+          p_notes?: string;
+          p_linked_product_id?: string | null;
+        };
+        Returns: QuotationOffer;
+      };
+
+      update_draft_quotation: {
+        Args: {
+          p_offer_id: string;
+          p_currency?: string | null;
+          p_unit_price?: number | null;
+          p_price_unit?: string | null;
+          p_total_price?: number | null;
+          p_incoterm?: string | null;
+          p_lead_time_min?: number | null;
+          p_lead_time_max?: number | null;
+          p_lead_time_unit?: string | null;
+          p_moq_quantity?: number | null;
+          p_moq_unit?: string | null;
+          p_validity_until?: string | null;
+          p_clear_validity?: boolean;
+          p_notes?: string | null;
+          p_linked_product_id?: string | null;
+          p_clear_linked_product?: boolean;
+        };
+        Returns: QuotationOffer;
+      };
+
+      submit_quotation: {
+        Args: {
+          p_rfq_id?: string | null;
+          p_offer_id?: string | null;
+          p_currency?: string;
+          p_unit_price?: number | null;
+          p_price_unit?: string;
+          p_total_price?: number | null;
+          p_incoterm?: string;
+          p_lead_time_min?: number | null;
+          p_lead_time_max?: number | null;
+          p_lead_time_unit?: string;
+          p_moq_quantity?: number | null;
+          p_moq_unit?: string;
+          p_validity_until?: string | null;
+          p_notes?: string;
+          p_linked_product_id?: string | null;
+        };
+        Returns: QuotationOffer;
+      };
+
+      create_quotation_revision: {
+        Args: {
+          p_thread_id: string;
+          p_currency?: string;
+          p_unit_price?: number | null;
+          p_price_unit?: string;
+          p_total_price?: number | null;
+          p_incoterm?: string;
+          p_lead_time_min?: number | null;
+          p_lead_time_max?: number | null;
+          p_lead_time_unit?: string;
+          p_moq_quantity?: number | null;
+          p_moq_unit?: string;
+          p_validity_until?: string | null;
+          p_notes?: string;
+          p_linked_product_id?: string | null;
+        };
+        Returns: QuotationOffer;
+      };
+
+      withdraw_quotation: {
+        Args: { p_thread_id: string };
+        Returns: QuotationThread;
+      };
+
+      get_quotation_thread: {
+        Args: { p_thread_id: string };
+        Returns: Record<string, unknown>;
+      };
+
+      can_access_quotation_thread: {
+        Args: { p_thread_id: string };
+        Returns: boolean;
+      };
+
+      award_supplier: {
+        Args: {
+          p_rfq_id: string;
+          p_thread_id: string;
+          p_notes?: string | null;
+        };
+        Returns: QuotationAward;
+      };
+
+      get_award: {
+        Args: { p_rfq_id: string };
+        Returns: Record<string, unknown> | null;
+      };
+
+      revoke_award: {
+        Args: { p_award_id: string; p_reason?: string | null };
+        Returns: QuotationAward;
       };
 
       submit_product_for_review: {

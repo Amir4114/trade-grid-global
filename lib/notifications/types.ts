@@ -25,6 +25,12 @@ export type NotificationType =
   | "rfq.invited"
   | "rfq.closed"
   | "rfq.cancelled"
+  | "quotation.submitted"
+  | "quotation.updated"
+  | "quotation.withdrawn"
+  | "quotation.awarded"
+  | "quotation.not_selected"
+  | "rfq.awarded"
   // Future AI / background verification (metadata-only conventions for now)
   | "verification.ai_started"
   | "verification.ai_completed"
@@ -67,6 +73,12 @@ export const ARRIVAL_TOAST_TYPES = new Set<string>([
   "rfq.invited",
   "rfq.closed",
   "rfq.cancelled",
+  "quotation.submitted",
+  "quotation.updated",
+  "quotation.withdrawn",
+  "quotation.awarded",
+  "quotation.not_selected",
+  "rfq.awarded",
 ]);
 
 export function formatRelativeTime(value: string): string {

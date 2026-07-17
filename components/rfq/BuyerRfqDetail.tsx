@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
+import BuyerAwardComparePanel from "@/components/quotation/BuyerAwardComparePanel";
 import RfqFormFields from "@/components/rfq/RfqFormFields";
 import DashboardPanel from "@/components/dashboard/DashboardPanel";
 import DashboardShell from "@/components/dashboard/DashboardShell";
@@ -11,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useCompany } from "@/contexts/AuthProvider";
 import { isOnboardingComplete } from "@/lib/auth/redirects";
+import type { AwardEvent, QuotationAward } from "@/lib/database/types";
 import {
   cancelRfq,
   closeRfq,
@@ -32,6 +34,12 @@ import {
   type RfqDetail,
   type RfqFormValues,
 } from "@/lib/rfq/types";
+import {
+  awardSupplier,
+  getAwardForRfq,
+  listBuyerQuotationThreadsForRfq,
+} from "@/lib/quotation/service";
+import type { QuotationThreadSummary } from "@/lib/quotation/types";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
@@ -45,6 +53,9 @@ export default function BuyerRfqDetailPage() {
 
   const [detail, setDetail] = useState<RfqDetail | null>(null);
   const [values, setValues] = useState<RfqFormValues | null>(null);
+  const [quotes, setQuotes] = useState<QuotationThreadSummary[]>([]);
+  const [award, setAward] = useState<QuotationAward | null>(null);
+  const [awardEvents, setAwardEvents] = useState<AwardEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,6 +72,19 @@ export default function BuyerRfqDetailPage() {
     }
     setDetail(data);
     setValues(formValuesFromRfq(data.rfq, data.invites));
+    if (data.rfq.status !== "draft") {
+      const [received, awardPayload] = await Promise.all([
+        listBuyerQuotationThreadsForRfq(supabase, rfqId),
+        getAwardForRfq(supabase, rfqId),
+      ]);
+      setQuotes(received);
+      setAward(awardPayload?.award ?? null);
+      setAwardEvents(awardPayload?.events ?? []);
+    } else {
+      setQuotes([]);
+      setAward(null);
+      setAwardEvents([]);
+    }
   };
 
   useEffect(() => {
@@ -77,6 +101,16 @@ export default function BuyerRfqDetailPage() {
         }
         setDetail(data);
         setValues(formValuesFromRfq(data.rfq, data.invites));
+        if (data.rfq.status !== "draft") {
+          const [received, awardPayload] = await Promise.all([
+            listBuyerQuotationThreadsForRfq(supabase, rfqId),
+            getAwardForRfq(supabase, rfqId),
+          ]);
+          if (!active) return;
+          setQuotes(received);
+          setAward(awardPayload?.award ?? null);
+          setAwardEvents(awardPayload?.events ?? []);
+        }
         setError(null);
       } catch (err) {
         if (!active) return;
@@ -180,6 +214,43 @@ export default function BuyerRfqDetailPage() {
       </div>
 
       {error ? <p className="mb-4 text-sm text-red-600">{error}</p> : null}
+
+      {rfq.status !== "draft" ? (
+        <div className="mb-6">
+          <DashboardPanel
+            title="Compare & award"
+            description="Side-by-side commercial comparison. Awarding locks the RFQ and notifies suppliers."
+          >
+            <BuyerAwardComparePanel
+              rfqStatus={rfq.status}
+              requiredCertifications={rfq.required_certifications ?? []}
+              quotes={quotes}
+              award={award}
+              awardEvents={awardEvents}
+              busy={busy}
+              onAward={async (threadId, notes) => {
+                await runAction(
+                  () => awardSupplier(supabase, rfq.id, threadId, notes),
+                  "Supplier awarded."
+                );
+              }}
+            />
+            {quotes.length > 0 ? (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {quotes.map((quote) => (
+                  <Button key={quote.id} asChild size="sm" variant="outline">
+                    <Link
+                      href={`/dashboard/buyer/rfqs/${rfq.id}/quotations/${quote.id}`}
+                    >
+                      View {quote.supplier_company_name ?? "quotation"}
+                    </Link>
+                  </Button>
+                ))}
+              </div>
+            ) : null}
+          </DashboardPanel>
+        </div>
+      ) : null}
 
       <div className="grid gap-6 xl:grid-cols-[1.4fr_0.8fr]">
         <DashboardPanel
