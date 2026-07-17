@@ -297,6 +297,119 @@ export type AwardEvent = {
   created_at: string;
 };
 
+/* -------------------------------------------------------------------------- */
+/*                              PURCHASE ORDERS                               */
+/* -------------------------------------------------------------------------- */
+
+export type PurchaseOrderStatus =
+  | "draft"
+  | "issued"
+  | "accepted"
+  | "rejected"
+  | "cancelled";
+
+export type PurchaseOrder = {
+  id: string;
+  po_number: string;
+  revision_no: number;
+  buyer_company_id: string;
+  supplier_company_id: string;
+  award_id: string;
+  rfq_id: string;
+  thread_id: string;
+  source_offer_id: string;
+  status: PurchaseOrderStatus;
+  buyer_company_name: string;
+  supplier_company_name: string;
+  buyer_country: string;
+  supplier_country: string;
+  buyer_address: string;
+  supplier_address: string;
+  buyer_tax_id: string;
+  supplier_tax_id: string;
+  buyer_contact_name: string;
+  buyer_contact_email: string;
+  supplier_contact_name: string;
+  supplier_contact_email: string;
+  product_name: string;
+  category: string;
+  currency: string;
+  unit_price: number | null;
+  price_unit: string;
+  total_price: number | null;
+  quantity_value: number | null;
+  quantity_unit: string;
+  moq_quantity: number | null;
+  moq_unit: string;
+  incoterm: string;
+  payment_terms: string;
+  lead_time_min: number | null;
+  lead_time_max: number | null;
+  lead_time_unit: string;
+  target_country: string;
+  delivery_port: string;
+  packaging_requirement: string;
+  validity_until: string | null;
+  commercial_notes: string;
+  linked_product_id: string | null;
+  created_by: string | null;
+  issued_by: string | null;
+  accepted_by: string | null;
+  rejected_by: string | null;
+  cancelled_by: string | null;
+  issued_at: string | null;
+  accepted_at: string | null;
+  rejected_at: string | null;
+  cancelled_at: string | null;
+  reject_reason: string | null;
+  cancel_reason: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PurchaseOrderItem = {
+  id: string;
+  purchase_order_id: string;
+  line_no: number;
+  product_name: string;
+  category: string;
+  description: string;
+  quantity_value: number | null;
+  quantity_unit: string;
+  unit_price: number | null;
+  price_unit: string;
+  line_total: number | null;
+  currency: string;
+  linked_product_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PurchaseOrderEvent = {
+  id: string;
+  purchase_order_id: string;
+  event_type: string;
+  actor_type: "user" | "admin" | "system" | "ai";
+  actor_user_id: string | null;
+  from_status: string | null;
+  to_status: string | null;
+  message: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+};
+
+export type PurchaseOrderDocument = {
+  id: string;
+  purchase_order_id: string;
+  uploaded_by: string | null;
+  document_type: string;
+  file_name: string;
+  storage_path: string;
+  mime_type: string;
+  file_size_bytes: number | null;
+  created_at: string;
+};
+
 export type Product = {
   id: string;
 
@@ -730,6 +843,34 @@ export type Database = {
         Relationships: [];
       };
 
+      purchase_orders: {
+        Row: PurchaseOrder;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+
+      purchase_order_items: {
+        Row: PurchaseOrderItem;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+
+      purchase_order_events: {
+        Row: PurchaseOrderEvent;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+
+      purchase_order_documents: {
+        Row: PurchaseOrderDocument;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+
       products: {
         Row: Product;
 
@@ -1020,6 +1161,68 @@ export type Database = {
       revoke_award: {
         Args: { p_award_id: string; p_reason?: string | null };
         Returns: QuotationAward;
+      };
+
+      create_purchase_order_draft: {
+        Args: {
+          p_award_id: string;
+          p_payment_terms?: string | null;
+          p_notes?: string | null;
+        };
+        Returns: PurchaseOrder;
+      };
+
+      update_purchase_order_draft: {
+        Args: {
+          p_purchase_order_id: string;
+          p_payment_terms?: string | null;
+          p_notes?: string | null;
+          p_quantity_value?: number | null;
+          p_quantity_unit?: string | null;
+          p_unit_price?: number | null;
+          p_total_price?: number | null;
+          p_incoterm?: string | null;
+          p_lead_time_min?: number | null;
+          p_lead_time_max?: number | null;
+          p_lead_time_unit?: string | null;
+          p_delivery_port?: string | null;
+          p_target_country?: string | null;
+        };
+        Returns: PurchaseOrder;
+      };
+
+      issue_purchase_order: {
+        Args: { p_purchase_order_id: string };
+        Returns: PurchaseOrder;
+      };
+
+      accept_purchase_order: {
+        Args: { p_purchase_order_id: string };
+        Returns: PurchaseOrder;
+      };
+
+      reject_purchase_order: {
+        Args: { p_purchase_order_id: string; p_reason: string };
+        Returns: PurchaseOrder;
+      };
+
+      cancel_purchase_order: {
+        Args: { p_purchase_order_id: string; p_reason?: string | null };
+        Returns: PurchaseOrder;
+      };
+
+      get_purchase_order: {
+        Args: { p_purchase_order_id: string };
+        Returns: Record<string, unknown> | null;
+      };
+
+      list_purchase_orders: {
+        Args: {
+          p_status?: string | null;
+          p_limit?: number;
+          p_offset?: number;
+        };
+        Returns: Record<string, unknown>;
       };
 
       submit_product_for_review: {

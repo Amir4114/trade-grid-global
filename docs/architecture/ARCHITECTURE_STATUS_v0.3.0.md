@@ -155,6 +155,7 @@ Buyer creates RFQ → publishes
 | 7 | RFQ foundation | 014 | Implemented (dashboard buyer/supplier; public `/rfq` still mock) |
 | 8 | Quotation system | 015 | Implemented |
 | 9 | Award & supplier selection | 016 | Implemented in code (apply migration to live DB before production use) |
+| 10 | Purchase Order system (Module 3.1) | 017 | Implemented in code (apply migration to live DB before production use) |
 
 ### Module detail (current)
 

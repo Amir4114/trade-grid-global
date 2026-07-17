@@ -3,7 +3,7 @@
 All notable changes to Trade Grid Global are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
-Product Git tag: `v0.3.0-procurement-complete`. npm `package.json` version: **`0.3.0`**.
+Product target tag: `v0.4.0-purchase-orders`. npm `package.json` version: **`0.4.0`**.
 
 Dates use commit / tag dates from the repository history where available.
 
@@ -15,6 +15,30 @@ Dates use commit / tag dates from the repository history where available.
 
 - Repository housekeeping: root README, CONTRIBUTING, LICENSE.md, improved `.env.example`, docs version alignment.
 - Expanded enterprise documentation under `docs/` (architecture diagrams, development standards, operations, product runbooks).
+
+---
+
+## [v0.4.0] — 2026-07-18
+
+Target tag: **`v0.4.0-purchase-orders`**.  
+npm version: `0.4.0`
+
+### Added
+
+- Migration `017_purchase_order_system.sql`: `purchase_orders`, `purchase_order_items`, `purchase_order_events`, `purchase_order_documents`, private bucket `purchase-order-docs`
+- RPCs: `create_purchase_order_draft`, `update_purchase_order_draft`, `issue_purchase_order`, `accept_purchase_order`, `reject_purchase_order`, `cancel_purchase_order`, `get_purchase_order`, `list_purchase_orders`
+- Extended `revoke_award` (additive replace): blocks revoke when issued/accepted PO exists; auto-cancels draft POs
+- Service layer `lib/purchase-orders/*`
+- Buyer Orders UI (replaces mock): list, create from award, detail, issue/cancel
+- Supplier Orders UI: list, accept/reject, timeline
+- Notifications: `purchase_order.created|issued|accepted|rejected|cancelled` (`purchase_order.completed` reserved, not emitted in 3.1)
+- Script: `scripts/verify-purchase-order-system.mjs`
+- Phase 0 locks in `docs/architecture/ARCHITECTURE_DECISIONS.md` (AD-3.1-*)
+
+### Changed
+
+- Procurement path now: RFQ → Quotation → Award → Purchase Order (issue/accept)
+- Mock buyer Orders page removed
 
 ---
 

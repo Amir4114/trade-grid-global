@@ -74,11 +74,18 @@ export default function SupplierAwardHistory() {
                     {new Date(row.awarded_at).toLocaleString()} · {row.status}
                   </div>
                 </div>
-                <Button asChild size="sm" variant="outline">
-                  <Link href={`/dashboard/supplier/quotations/${row.thread_id}`}>
-                    Open quotation
-                  </Link>
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button asChild size="sm" variant="outline">
+                    <Link href={`/dashboard/supplier/quotations/${row.thread_id}`}>
+                      Open quotation
+                    </Link>
+                  </Button>
+                  {row.status === "active" ? (
+                    <Button asChild size="sm" variant="outline">
+                      <Link href="/dashboard/supplier/orders">Orders</Link>
+                    </Button>
+                  ) : null}
+                </div>
               </li>
             ))}
           </ul>

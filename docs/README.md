@@ -4,8 +4,8 @@ B2B Food & FMCG trading platform focused on **trust**, **verification**, and **p
 
 | | |
 |--|--|
-| **Current version** | `0.3.0` / tag `v0.3.0-procurement-complete` |
-| **Latest milestone** | RFQ → Quotation → Award complete |
+| **Current version** | `0.4.0` / target tag `v0.4.0-purchase-orders` |
+| **Latest milestone** | RFQ → Quotation → Award → Purchase Order (apply `017`) |
 | **Root README** | [../README.md](../README.md) |
 | **Contributing** | [../CONTRIBUTING.md](../CONTRIBUTING.md) |
 
@@ -32,6 +32,7 @@ B2B Food & FMCG trading platform focused on **trust**, **verification**, and **p
 | Security model | [architecture/SECURITY_MODEL.md](./architecture/SECURITY_MODEL.md) |
 | API / RPC reference | [architecture/API_REFERENCE.md](./architecture/API_REFERENCE.md) |
 | Decision log | [architecture/DECISION_LOG.md](./architecture/DECISION_LOG.md) |
+| Architecture decisions (locked ADRs) | [architecture/ARCHITECTURE_DECISIONS.md](./architecture/ARCHITECTURE_DECISIONS.md) |
 
 ### Planning
 
@@ -43,6 +44,7 @@ B2B Food & FMCG trading platform focused on **trust**, **verification**, and **p
 | Milestones | [planning/MILESTONES.md](./planning/MILESTONES.md) |
 | Backlog | [planning/BACKLOG.md](./planning/BACKLOG.md) |
 | Future features | [planning/FUTURE_FEATURES.md](./planning/FUTURE_FEATURES.md) |
+| Module 3.1 PO design | [planning/design/MODULE_3_1_PURCHASE_ORDER_DESIGN.md](./planning/design/MODULE_3_1_PURCHASE_ORDER_DESIGN.md) |
 
 ### Deployment
 

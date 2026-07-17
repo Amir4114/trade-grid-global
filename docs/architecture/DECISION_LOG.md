@@ -8,6 +8,8 @@ Record architectural decisions that shape Trade Grid Global so future modules do
 
 Decisions evidenced by migrations `001`–`016` and current app structure. Not a full ADR tool.
 
+**Module 3.1 Phase 0 lock:** Formal locked decisions live in [ARCHITECTURE_DECISIONS.md](./ARCHITECTURE_DECISIONS.md) (AD-3.1-001 … AD-3.1-025). This log remains the short index for platform-wide D001–D008.
+
 ## Table of contents
 
 1. [Current Status](#current-status)
@@ -87,7 +89,7 @@ Decisions evidenced by migrations `001`–`016` and current app structure. Not a
 
 ## Future notes
 
-Promote entries to numbered ADR files when the team wants stricter change control.
+Module 3.1 uses [ARCHITECTURE_DECISIONS.md](./ARCHITECTURE_DECISIONS.md). Promote additional modules there (AD-3.2-*, etc.) rather than expanding this lite log indefinitely.
 
 ---
 

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -143,8 +144,19 @@ export default function BuyerAwardComparePanel({
         {award ? (
           <ul className="mt-3 space-y-3 text-sm">
             <li className="rounded-lg border border-neutral-200 px-3 py-2">
-              <div className="font-medium text-neutral-900">
-                Award {award.status === "active" ? "(active)" : "(revoked)"}
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="font-medium text-neutral-900">
+                  Award {award.status === "active" ? "(active)" : "(revoked)"}
+                </div>
+                {award.status === "active" ? (
+                  <Button asChild size="sm">
+                    <Link
+                      href={`/dashboard/buyer/orders/new?awardId=${award.id}`}
+                    >
+                      Create purchase order
+                    </Link>
+                  </Button>
+                ) : null}
               </div>
               <div className="text-xs text-neutral-500">
                 {new Date(award.awarded_at).toLocaleString()}

@@ -24,7 +24,7 @@ Dashboard procurement path. Public `/rfq` marketing page is mock — not this wo
 | RFQ create/publish/close/cancel | Implemented |
 | Quotation draft/submit/revise/withdraw | Implemented |
 | Compare & award | Implemented |
-| PO after award | **Not implemented.** |
+| PO after award | **Implemented** (Module 3.1 / migration `017` — apply on each environment) |
 
 ## Happy path
 

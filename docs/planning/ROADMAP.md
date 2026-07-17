@@ -12,16 +12,16 @@ Milestones: [MILESTONES.md](./MILESTONES.md) · Backlog: [BACKLOG.md](./BACKLOG.
 
 | Field | Value |
 |-------|-------|
-| **Product / Git tag** | `v0.3.0-procurement-complete` |
-| **npm version** | `0.3.0` |
-| **Completed** | Module 1 Foundation + Module 2 Procurement (through award) |
-| **Next build** | Module 3 — Trade Execution (Purchase Orders first) |
+| **Product / Git tag** | `v0.4.0-purchase-orders` (target; prior `v0.3.0-procurement-complete`) |
+| **npm version** | `0.4.0` |
+| **Completed** | Module 1 + Module 2 + Module 3.1 Purchase Orders |
+| **Next build** | Module 3.2 — Order Lifecycle / fulfillment |
 | **Explicitly deferred** | Finance, production AI, live analytics |
 
-Procurement path live today:
+Procurement path:
 
-`RFQ → Quotation → Award`  
-**Not implemented:** Purchase Orders onward.
+`RFQ → Quotation → Award → Purchase Order`  
+**Not implemented:** Fulfillment lifecycle, logistics, payments.
 
 ---
 
@@ -86,7 +86,7 @@ Module 1 (companies, products optional link, notifications).
 
 ## Module 3 — Trade Execution
 
-**Status:** **Not implemented.**
+**Status:** Module 3.1 Purchase Orders **implemented** (migration `017`). Remainder **Not implemented.**
 
 ### Objectives
 
@@ -96,11 +96,11 @@ Convert awards into executable trade instruments and operational fulfillment vis
 
 | Feature | Status |
 |---------|--------|
-| Purchase Orders | **Not implemented.** |
-| Order Lifecycle / Order Management | **Not implemented.** (buyer Orders page is mock data) |
+| Purchase Orders (3.1) | **Implemented** (apply `017`) |
+| Order Lifecycle / fulfillment (3.2) | **Not implemented.** |
 | Logistics | **Not implemented.** |
 | Shipping | **Not implemented.** |
-| Trade documents (packing list, CoO, etc. as order artifacts) | **Not implemented.** |
+| Trade documents (packing list, CoO, etc. as order artifacts) | Partial metadata table; upload UX limited |
 
 ### Dependencies
 
@@ -110,12 +110,12 @@ Module 2 awards (`quotation_awards`, winning `offer_id` / commercial snapshot).
 
 **High** (new tables, RLS, state machines, dual-party dashboards).
 
-### Recommended first slice
+### Recommended next slice (3.2)
 
-1. Purchase Order creation from an active award  
-2. Buyer/supplier order views + status timeline  
-3. Document attachments on the order  
-4. Logistics/shipping events later in the same module
+1. Fulfillment states on accepted PO (or child `orders` entity)  
+2. Logistics/shipping events  
+3. Richer document upload UX on PO  
+4. Optional `completed` transition
 
 ---
 

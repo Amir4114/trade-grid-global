@@ -40,6 +40,7 @@ Related: [ARCHITECTURE_STATUS_v0.3.0.md](./ARCHITECTURE_STATUS_v0.3.0.md) · [AP
 | `014_rfq_foundation.sql` | RFQ tables + `rfq-docs` |
 | `015_quotation_system.sql` | Quotation tables + `quotation-docs` |
 | `016_award_system.sql` | Awards + award events |
+| `017_purchase_order_system.sql` | Purchase orders, items, events, documents, `purchase-order-docs` |
 
 ---
 
@@ -410,9 +411,38 @@ RLS: mirrors award visibility (buyer/supplier/admin SELECT)
 
 ---
 
+## `purchase_orders`
+
+| | |
+|--|--|
+| **Purpose** | Buyer-issued commercial commitment after award (Module 3.1) |
+| **Migration** | `017` |
+
+Key columns: `po_number` (`TGG-PO-YYYY-######`), `revision_no`, party FKs + snapshots, `award_id` / `rfq_id` / `thread_id` / `source_offer_id`, `status` (`draft`\|`issued`\|`accepted`\|`rejected`\|`cancelled`), commercial snapshot (prices, qty, Incoterm, payment terms, lead time, destination), lifecycle timestamps
+
+**Constraint:** unique `award_id` where status in (`draft`,`issued`,`accepted`)
+
+RLS: buyer SELECT own; supplier SELECT when status ≠ `draft`; admin SELECT — mutations RPC-only
+
+RPCs: `create_purchase_order_draft`, `update_purchase_order_draft`, `issue_purchase_order`, `accept_purchase_order`, `reject_purchase_order`, `cancel_purchase_order`, `get_purchase_order`, `list_purchase_orders`
+
+Storage: private bucket `purchase-order-docs` path `pos/<buyer_company_id>/<po_id>/…`
+
+---
+
+## `purchase_order_items` / `purchase_order_events` / `purchase_order_documents`
+
+| Table | Purpose |
+|-------|---------|
+| `purchase_order_items` | Line items (v1 typically one line from award snapshot) |
+| `purchase_order_events` | Append-only audit (UPDATE/DELETE forbidden by trigger) |
+| `purchase_order_documents` | File metadata for PO attachments |
+
+---
+
 ## Domains without tables
 
-Orders, invoices, payments, negotiation messages, shipments, AI match stores, subscriptions — **Not implemented.**
+Fulfillment lifecycle beyond PO accept, invoices, payments, negotiation messages, shipments, AI match stores, subscriptions — **Not implemented.**
 
 ---
 
@@ -428,4 +458,8 @@ erDiagram
   quotation_threads ||--o| quotation_awards : wins
   quotation_offers ||--o| quotation_awards : selected
   quotation_awards ||--o{ award_events : audits
+  quotation_awards ||--o{ purchase_orders : sources
+  purchase_orders ||--o{ purchase_order_items : lines
+  purchase_orders ||--o{ purchase_order_events : audits
+  purchase_orders ||--o{ purchase_order_documents : files
 ```

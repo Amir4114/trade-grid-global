@@ -6,6 +6,7 @@ export type NotificationEntityType =
   | "account"
   | "rfq"
   | "quotation"
+  | "purchase_order"
   | null;
 
 /** Canonical notification type strings for Phase 1 and future AI/verification events. */
@@ -31,6 +32,12 @@ export type NotificationType =
   | "quotation.awarded"
   | "quotation.not_selected"
   | "rfq.awarded"
+  | "purchase_order.created"
+  | "purchase_order.issued"
+  | "purchase_order.accepted"
+  | "purchase_order.rejected"
+  | "purchase_order.cancelled"
+  | "purchase_order.completed"
   // Future AI / background verification (metadata-only conventions for now)
   | "verification.ai_started"
   | "verification.ai_completed"
@@ -79,6 +86,11 @@ export const ARRIVAL_TOAST_TYPES = new Set<string>([
   "quotation.awarded",
   "quotation.not_selected",
   "rfq.awarded",
+  "purchase_order.created",
+  "purchase_order.issued",
+  "purchase_order.accepted",
+  "purchase_order.rejected",
+  "purchase_order.cancelled",
 ]);
 
 export function formatRelativeTime(value: string): string {

@@ -6,8 +6,8 @@ Not a generic consumer marketplace. Focused on verification, structured RFQs, qu
 
 | | |
 |--|--|
-| **Current version** | `0.3.0` (`package.json`) |
-| **Latest release / Git tag** | `v0.3.0-procurement-complete` |
+| **Current version** | `0.4.0` (`package.json`) |
+| **Latest release / Git tag** | `v0.3.0-procurement-complete` (target `v0.4.0-purchase-orders`) |
 | **Milestone** | Procurement complete through supplier award |
 | **Branch** | `main` |
 
@@ -49,7 +49,7 @@ Full detail: [`docs/architecture/ARCHITECTURE_STATUS_v0.3.0.md`](./docs/architec
 - Supplier quotations (draft / submit / revise / withdraw)
 - Buyer compare & award; supplier award history
 
-**Not implemented yet:** purchase orders, invoices, payments, logistics, production AI.
+**Not implemented yet:** fulfillment lifecycle beyond PO accept, invoices, payments, logistics, production AI.
 
 ---
 
@@ -126,7 +126,7 @@ Optional for verification scripts:
 | Module | Status |
 |--------|--------|
 | Foundation (auth, products, notifications, verification) | Complete |
-| Procurement (RFQ → quotation → award) | Complete (`v0.3.0-procurement-complete`) |
+| Procurement (RFQ → quotation → award → PO) | Complete in code (`v0.4.0`; apply migration `017`) |
 
 ---
 
@@ -146,7 +146,7 @@ See [`docs/planning/ROADMAP.md`](./docs/planning/ROADMAP.md).
 ## Roadmap
 
 **Now:** Trust + procurement through award.  
-**Next:** Purchase Orders after award (Module 3).  
+**Next:** Order lifecycle / fulfillment (Module 3.2) on accepted POs.  
 **Later:** Finance → AI → Analytics.
 
 ---

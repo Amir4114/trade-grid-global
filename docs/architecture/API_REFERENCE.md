@@ -336,8 +336,8 @@ await supabase.rpc("submit_quotation", {
 |--|--|
 | **Purpose** | Revoke active award; reopen RFQ to `quoted`; restore offers for re-award |
 | **Permissions** | Owning buyer |
-| **Business rules** | Preserves award history (`revoked`); does not delete rows |
-| **Failure** | Not active; not owner |
+| **Business rules** | Preserves award history (`revoked`); does not delete rows; **blocked** if any PO for the award is `issued` or `accepted`; auto-cancels open `draft` POs (017) |
+| **Failure** | Not active; not owner; issued/accepted PO exists |
 
 **Example**
 
@@ -351,12 +351,76 @@ await supabase.rpc("award_supplier", {
 
 ---
 
+## Purchase orders
+
+### `create_purchase_order_draft(p_award_id uuid, p_payment_terms text default null, p_notes text default null)`
+
+| | |
+|--|--|
+| **Purpose** | Create draft PO with commercial + party snapshots from active award |
+| **Returns** | `purchase_orders` row (`draft`) |
+| **Permissions** | Buyer owning the award’s RFQ |
+| **Business rules** | Active award; RFQ `awarded`; at most one non-terminal PO per award; assigns `TGG-PO-YYYY-######` |
+| **Side effects** | Line item sync; `purchase_order.created` event + buyer notification |
+
+### `update_purchase_order_draft(...)`
+
+| | |
+|--|--|
+| **Purpose** | Edit draft commercial fields; increments `revision_no` |
+| **Permissions** | Owning buyer |
+| **Failure** | Not draft; not owner |
+
+### `issue_purchase_order(p_purchase_order_id uuid)`
+
+| | |
+|--|--|
+| **Purpose** | `draft` → `issued`; locks commercial fields; notifies supplier |
+| **Permissions** | Owning buyer |
+| **Failure** | Not draft; award not active |
+
+### `accept_purchase_order(p_purchase_order_id uuid)` / `reject_purchase_order(p_purchase_order_id uuid, p_reason text)`
+
+| | |
+|--|--|
+| **Purpose** | Supplier response on issued PO |
+| **Permissions** | Supplier company on PO |
+| **Failure** | Not issued; wrong company; reject without reason |
+
+### `cancel_purchase_order(p_purchase_order_id uuid, p_reason text default null)`
+
+| | |
+|--|--|
+| **Purpose** | Buyer cancel `draft` or `issued` |
+| **Failure** | Accepted/rejected/cancelled; not owner |
+
+### `get_purchase_order(p_purchase_order_id uuid)` / `list_purchase_orders(p_status, p_limit, p_offset)`
+
+| | |
+|--|--|
+| **Purpose** | Aggregated detail JSON / paginated list for buyer, supplier (non-draft), or admin |
+| **Returns** | `jsonb` |
+
+**Example**
+
+```ts
+await supabase.rpc("create_purchase_order_draft", {
+  p_award_id: awardId,
+  p_payment_terms: "Net 30",
+});
+await supabase.rpc("issue_purchase_order", { p_purchase_order_id: poId });
+```
+
+---
+
 ## Internal helpers (selected)
 
 | Function | Purpose |
 |----------|---------|
 | `_append_rfq_event` | RFQ audit insert |
 | `_append_quotation_event` | Quotation audit insert |
+| `_append_purchase_order_event` | PO audit insert |
+| `_next_purchase_order_number` | `TGG-PO-YYYY-######` |
 | `_append_award_event` | Award audit insert |
 | `_recompute_rfq_quote_status` | open ↔ quoted based on active submits |
 | `_assert_supplier_can_quote` | Enforce quote eligibility |

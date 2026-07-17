@@ -1,28 +1,29 @@
 # Release Notes
 
-## Current release: `v0.3.0-procurement-complete`
+## Current release target: `v0.4.0-purchase-orders`
 
 | Field | Value |
 |-------|-------|
-| **Version** | `0.3.0` / tag `v0.3.0-procurement-complete` |
-| **Release date** | 2026-07-18 (git tag date) |
-| **Git tag** | `v0.3.0-procurement-complete` |
-| **Tagged commit** | `7cd98e1` — Complete procurement workflow with supplier award system |
-| **npm version** | `0.3.0` |
+| **Version** | `0.4.0` / tag `v0.4.0-purchase-orders` (tag after commit) |
+| **Release date** | 2026-07-18 |
+| **Prior tag** | `v0.3.0-procurement-complete` |
+| **npm version** | `0.4.0` |
 | **Branch** | `main` |
 
 ---
 
 ## Highlights
 
-1. **Award & supplier selection** — Buyers compare quotations and award a winning supplier.
-2. **RFQ lock after award** — Awarded RFQs cannot accept new quotations.
-3. **Auditable awards** — `quotation_awards` + `award_events`; history retained (`active` / `revoked`).
-4. **Notifications** — Winner, losers, and buyer receive trusted award notifications.
-5. **Supplier award surfaces** — Win/lose messaging and award history page.
-6. **Procurement path complete:** `Create RFQ → Publish → Quote → Compare → Award`
+1. **Purchase orders** — Draft → issue → accept/reject/cancel from active awards.
+2. **Commercial snapshots** — Party + commercial terms frozen; locked after issue.
+3. **PO numbering** — `TGG-PO-YYYY-000001` with draft revision numbers.
+4. **Trusted notifications** — `purchase_order.*` via existing notification infrastructure.
+5. **Buyer & supplier Orders UI** — Replaces mock buyer Orders page.
+6. **Award revoke guards** — Cannot revoke while issued/accepted PO exists.
 
-Purchase orders, payments, negotiation chat, logistics, and production AI remain **Not implemented.**
+Procurement path: `Create RFQ → Publish → Quote → Compare → Award → Purchase Order`
+
+Payments, logistics, amendments, and production AI remain **Not implemented.**
 
 ---
 
@@ -30,10 +31,10 @@ Purchase orders, payments, negotiation chat, logistics, and production AI remain
 
 | Migration | Role in this release |
 |-----------|----------------------|
-| `001`–`015` | Prerequisites (auth → quotations) |
-| **`016_award_system.sql`** | **Required** — awards schema, RLS, RPCs |
+| `001`–`016` | Prerequisites (auth → awards) |
+| **`017_purchase_order_system.sql`** | **Required** — PO schema, RLS, RPCs, storage |
 
-Apply in order via Supabase SQL Editor or CLI. Migration `016` is additive.
+Apply in order via Supabase SQL Editor or CLI. Migration `017` is additive.
 
 After apply, confirm:
 
