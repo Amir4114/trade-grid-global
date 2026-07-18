@@ -410,6 +410,84 @@ export type PurchaseOrderDocument = {
   created_at: string;
 };
 
+/* -------------------------------------------------------------------------- */
+/*                              FULFILLMENT                                   */
+/* -------------------------------------------------------------------------- */
+
+export type FulfillmentOrderStatus =
+  | "opened"
+  | "in_production"
+  | "quality_check"
+  | "packaging"
+  | "ready_to_ship"
+  | "shipped"
+  | "in_transit"
+  | "delivered"
+  | "completed"
+  | "cancelled"
+  | "failed";
+
+export type FulfillmentOrder = {
+  id: string;
+  fulfillment_number: string;
+  purchase_order_id: string;
+  buyer_company_id: string;
+  supplier_company_id: string;
+  status: FulfillmentOrderStatus;
+  is_paused: boolean;
+  is_disputed: boolean;
+  production_location: string;
+  tracking_reference: string;
+  cancel_reason: string | null;
+  fail_reason: string | null;
+  dispute_reason: string | null;
+  opened_at: string;
+  production_started_at: string | null;
+  production_completed_at: string | null;
+  qc_started_at: string | null;
+  qc_completed_at: string | null;
+  packaging_started_at: string | null;
+  packaging_completed_at: string | null;
+  ready_to_ship_at: string | null;
+  shipped_at: string | null;
+  in_transit_at: string | null;
+  delivered_at: string | null;
+  completed_at: string | null;
+  cancelled_at: string | null;
+  failed_at: string | null;
+  disputed_at: string | null;
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type FulfillmentOrderEvent = {
+  id: string;
+  fulfillment_order_id: string;
+  event_type: string;
+  actor_type: "user" | "admin" | "system" | "ai";
+  actor_user_id: string | null;
+  from_status: string | null;
+  to_status: string | null;
+  message: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+};
+
+export type FulfillmentOrderDocument = {
+  id: string;
+  fulfillment_order_id: string;
+  uploaded_by: string | null;
+  document_type: string;
+  stage: string;
+  file_name: string;
+  storage_path: string;
+  mime_type: string;
+  file_size_bytes: number | null;
+  created_at: string;
+};
+
 export type Product = {
   id: string;
 
@@ -871,6 +949,27 @@ export type Database = {
         Relationships: [];
       };
 
+      fulfillment_orders: {
+        Row: FulfillmentOrder;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+
+      fulfillment_order_events: {
+        Row: FulfillmentOrderEvent;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+
+      fulfillment_order_documents: {
+        Row: FulfillmentOrderDocument;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+
       products: {
         Row: Product;
 
@@ -1217,6 +1316,113 @@ export type Database = {
       };
 
       list_purchase_orders: {
+        Args: {
+          p_status?: string | null;
+          p_limit?: number;
+          p_offset?: number;
+        };
+        Returns: Record<string, unknown>;
+      };
+
+      create_fulfillment: {
+        Args: { p_purchase_order_id: string };
+        Returns: FulfillmentOrder;
+      };
+
+      start_production: {
+        Args: {
+          p_fulfillment_id: string;
+          p_production_location?: string | null;
+        };
+        Returns: FulfillmentOrder;
+      };
+
+      pause_production: {
+        Args: { p_fulfillment_id: string; p_reason?: string | null };
+        Returns: FulfillmentOrder;
+      };
+
+      resume_production: {
+        Args: { p_fulfillment_id: string };
+        Returns: FulfillmentOrder;
+      };
+
+      complete_production: {
+        Args: { p_fulfillment_id: string };
+        Returns: FulfillmentOrder;
+      };
+
+      pass_qc: {
+        Args: { p_fulfillment_id: string };
+        Returns: FulfillmentOrder;
+      };
+
+      fail_qc: {
+        Args: {
+          p_fulfillment_id: string;
+          p_reason: string;
+          p_terminal?: boolean;
+        };
+        Returns: FulfillmentOrder;
+      };
+
+      pack_order: {
+        Args: { p_fulfillment_id: string };
+        Returns: FulfillmentOrder;
+      };
+
+      mark_ready: {
+        Args: { p_fulfillment_id: string };
+        Returns: FulfillmentOrder;
+      };
+
+      mark_shipped: {
+        Args: {
+          p_fulfillment_id: string;
+          p_tracking_reference?: string | null;
+        };
+        Returns: FulfillmentOrder;
+      };
+
+      mark_in_transit: {
+        Args: {
+          p_fulfillment_id: string;
+          p_tracking_reference?: string | null;
+        };
+        Returns: FulfillmentOrder;
+      };
+
+      mark_delivered: {
+        Args: { p_fulfillment_id: string };
+        Returns: FulfillmentOrder;
+      };
+
+      complete_fulfillment: {
+        Args: { p_fulfillment_id: string };
+        Returns: FulfillmentOrder;
+      };
+
+      cancel_fulfillment: {
+        Args: { p_fulfillment_id: string; p_reason?: string | null };
+        Returns: FulfillmentOrder;
+      };
+
+      fail_production: {
+        Args: { p_fulfillment_id: string; p_reason: string };
+        Returns: FulfillmentOrder;
+      };
+
+      raise_fulfillment_dispute: {
+        Args: { p_fulfillment_id: string; p_reason: string };
+        Returns: FulfillmentOrder;
+      };
+
+      get_fulfillment: {
+        Args: { p_fulfillment_id: string };
+        Returns: Record<string, unknown> | null;
+      };
+
+      list_fulfillments: {
         Args: {
           p_status?: string | null;
           p_limit?: number;

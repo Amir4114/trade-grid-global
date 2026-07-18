@@ -386,6 +386,7 @@ await supabase.rpc("award_supplier", {
 | **Purpose** | Supplier response on issued PO |
 | **Permissions** | Supplier company on PO |
 | **Failure** | Not issued; wrong company; reject without reason |
+| **Side effects (accept)** | Auto-creates `fulfillment_orders` row in `opened` (AD-3.2-004) + `fulfillment.opened` event/notifications |
 
 ### `cancel_purchase_order(p_purchase_order_id uuid, p_reason text default null)`
 
@@ -413,6 +414,58 @@ await supabase.rpc("issue_purchase_order", { p_purchase_order_id: poId });
 
 ---
 
+## Fulfillment orders (Module 3.2 Phase A)
+
+Operational lifecycle after accepted PO. Commercial fields remain on `purchase_orders`.
+
+### `create_fulfillment(p_purchase_order_id uuid)`
+
+| | |
+|--|--|
+| **Purpose** | Idempotent create when fulfillment missing (normally auto-created on accept) |
+| **Returns** | `fulfillment_orders` row |
+| **Permissions** | Buyer, supplier on PO, or admin |
+| **Failure** | PO not accepted; unauthorized |
+
+### Lifecycle transitions
+
+| RPC | From → To | Actor |
+|-----|-----------|-------|
+| `start_production(p_fulfillment_id, p_production_location?)` | `opened` → `in_production` | Supplier |
+| `pause_production` / `resume_production` | Flag `is_paused` while `in_production` | Supplier |
+| `complete_production` | `in_production` → `quality_check` | Supplier |
+| `pass_qc` | `quality_check` → `packaging` | Supplier |
+| `fail_qc(p_fulfillment_id, p_reason, p_terminal?)` | Rework → `in_production` or terminal → `failed` | Supplier |
+| `pack_order` / `mark_ready` | `packaging` → `ready_to_ship` | Supplier |
+| `mark_shipped(p_fulfillment_id, p_tracking_reference?)` | `ready_to_ship` → `shipped` | Supplier |
+| `mark_in_transit` | `shipped` → `in_transit` | Supplier |
+| `mark_delivered` | `shipped`\|`in_transit` → `delivered` | Buyer or supplier |
+| `complete_fulfillment` | `delivered` → `completed` | Buyer |
+| `cancel_fulfillment` | Pre-ship (buyer) / `opened` (supplier) → `cancelled` | Party |
+| `fail_production` | `in_production` → `failed` | Supplier |
+| `raise_fulfillment_dispute` | Sets `is_disputed` (hold) | Buyer or supplier |
+
+### `get_fulfillment(p_fulfillment_id uuid)` / `list_fulfillments(p_status, p_limit, p_offset)`
+
+| | |
+|--|--|
+| **Purpose** | Detail JSON (order + events + documents) / paginated list |
+| **Permissions** | Owning buyer/supplier or admin |
+
+**Example**
+
+```ts
+await supabase.rpc("start_production", {
+  p_fulfillment_id: fulfillmentId,
+  p_production_location: "Mumbai plant",
+});
+await supabase.rpc("complete_fulfillment", { p_fulfillment_id: fulfillmentId });
+```
+
+App wrappers: `lib/fulfillment/service.ts` (backend contract; no UI in Phase A).
+
+---
+
 ## Internal helpers (selected)
 
 | Function | Purpose |
@@ -421,6 +474,9 @@ await supabase.rpc("issue_purchase_order", { p_purchase_order_id: poId });
 | `_append_quotation_event` | Quotation audit insert |
 | `_append_purchase_order_event` | PO audit insert |
 | `_next_purchase_order_number` | `TGG-PO-YYYY-######` |
+| `_append_fulfillment_event` | Fulfillment audit insert |
+| `_next_fulfillment_order_number` | `TGG-FF-YYYY-######` |
+| `_create_fulfillment_for_po` | Shared create used by accept + `create_fulfillment` |
 | `_append_award_event` | Award audit insert |
 | `_recompute_rfq_quote_status` | open ↔ quoted based on active submits |
 | `_assert_supplier_can_quote` | Enforce quote eligibility |

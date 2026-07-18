@@ -45,6 +45,7 @@ B2B Food & FMCG trading platform focused on **trust**, **verification**, and **p
 | Backlog | [planning/BACKLOG.md](./planning/BACKLOG.md) |
 | Future features | [planning/FUTURE_FEATURES.md](./planning/FUTURE_FEATURES.md) |
 | Module 3.1 PO design | [planning/design/MODULE_3_1_PURCHASE_ORDER_DESIGN.md](./planning/design/MODULE_3_1_PURCHASE_ORDER_DESIGN.md) |
+| Module 3.2 Order Lifecycle design | [planning/design/MODULE_3_2_ORDER_LIFECYCLE_DESIGN.md](./planning/design/MODULE_3_2_ORDER_LIFECYCLE_DESIGN.md) |
 
 ### Deployment
 

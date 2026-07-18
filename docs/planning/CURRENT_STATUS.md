@@ -2,7 +2,7 @@
 
 Living operational status for Trade Grid Global.  
 Architecture detail: [ARCHITECTURE_STATUS_v0.3.0.md](../architecture/ARCHITECTURE_STATUS_v0.3.0.md)  
-Locked PO decisions: [ARCHITECTURE_DECISIONS.md](../architecture/ARCHITECTURE_DECISIONS.md)
+Locked decisions: [ARCHITECTURE_DECISIONS.md](../architecture/ARCHITECTURE_DECISIONS.md)
 
 ---
 
@@ -10,7 +10,8 @@ Locked PO decisions: [ARCHITECTURE_DECISIONS.md](../architecture/ARCHITECTURE_DE
 
 | Field | Value |
 |-------|-------|
-| **Product version** | `v0.4.0-purchase-orders` (implementation complete in repo) |
+| **Product version (stable)** | `v0.4.0-purchase-orders` |
+| **In progress** | `v0.5.0-order-lifecycle` — Module 3.2 **Phase A (database foundation)** |
 | **Latest Git tag** | `v0.3.0-procurement-complete` (tag `v0.4.0-purchase-orders` pending commit) |
 | **Current branch** | `main` |
 | **npm package.json version** | `0.4.0` |
@@ -19,10 +20,12 @@ Locked PO decisions: [ARCHITECTURE_DECISIONS.md](../architecture/ARCHITECTURE_DE
 
 ## Current milestone
 
-**Purchase Order System (Module 3.1) implemented in code.**
+**Module 3.2 Order Lifecycle — Phase A (DB + RPC contract) implemented in code.**
 
-Buyer can create draft POs from active awards, issue to supplier; supplier can accept/reject; commercial snapshot locked after issue.  
-Logistics, payments, amendments, and `completed` status remain **Not implemented** (deferred per AD-3.1-012 / 020–022).
+- `fulfillment_orders` is the operational child of an accepted Purchase Order.
+- PO remains immutable commercial truth; fulfillment owns production → QC → pack → ship → deliver → complete.
+- Auto-create on `accept_purchase_order` (AD-3.2-004).
+- **No React UI / nav / pages in Phase A** (deferred to backend/UI phases).
 
 ---
 
@@ -39,6 +42,7 @@ Logistics, payments, amendments, and `completed` status remain **Not implemented
 | Quotation system | Complete |
 | Award & supplier selection | Complete (ensure migration `016` applied) |
 | Purchase Order system (Module 3.1) | Complete in code (ensure migration `017` applied) |
+| Order Fulfillment DB foundation (Module 3.2 Phase A) | Complete in code (ensure migration `018` applied) |
 
 ---
 
@@ -46,7 +50,8 @@ Logistics, payments, amendments, and `completed` status remain **Not implemented
 
 | Area | Script | Notes |
 |------|--------|-------|
-| Purchase orders | `verify-purchase-order-system.mjs` | Requires migration `017` applied |
+| Fulfillment | `verify-order-fulfillment-system.mjs` | Requires migrations `017` + `018` |
+| Purchase orders | `verify-purchase-order-system.mjs` | Requires `017` |
 | Awards | `verify-award-system.mjs` | Requires `016` |
 | Quotations | `verify-quotation-system.mjs` | Requires `014`+`015` |
 | RFQ | `verify-rfq-foundation.mjs` | Requires `014` |
@@ -59,17 +64,17 @@ Notification assertions often **SKIP** without `SUPABASE_SERVICE_ROLE_KEY`.
 
 | Blocker | Impact |
 |---------|--------|
-| Migration `017` must be applied on each Supabase project before POs work | PO RPCs/tables missing until applied |
-| Migration `016` must remain applied | Award prerequisite |
+| Migration `018` must be applied before fulfillment RPCs work | Tables/RPCs missing until applied |
+| Migration `017` must remain applied | PO accept auto-creates fulfillment |
 | No `SUPABASE_SERVICE_ROLE_KEY` / `DATABASE_URL` in local agent env | Cannot auto-apply SQL or assert all notifications |
 | Public `/rfq` not wired to live `rfqs` | Marketing RFQ surface disconnected |
-| Mock dashboard pages remain for inquiries / some admin analytics | Not live domains |
+| Fulfillment UI not started (Phase A scope) | Operators cannot drive lifecycle from dashboard yet |
 
 ---
 
 ## Immediate next objective
 
-**Module 3.2 — Order Lifecycle / fulfillment** on accepted POs (see [ROADMAP.md](./ROADMAP.md)).
+**Module 3.2 Phase B — backend/service hardening + buyer/supplier Fulfillment UI** (still no Logistics 3.3 / Claims 3.4).
 
 ---
 
@@ -78,7 +83,8 @@ Notification assertions often **SKIP** without `SUPABASE_SERVICE_ROLE_KEY`.
 | Scope | Estimate |
 |-------|----------|
 | Trust + procurement through PO accept | High (code complete; apply `017`) |
-| Fulfillment / logistics / payments | Not started |
+| Fulfillment database + RPC contract | High (code complete; apply `018`) |
+| Fulfillment UI / logistics / payments | Not started |
 
 ---
 

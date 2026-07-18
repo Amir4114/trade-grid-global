@@ -686,11 +686,13 @@ flowchart TD
 
 | Module | Status |
 |--------|--------|
-| Purchase Orders / Orders | **Not implemented.** (buyer Orders page is mock data) |
+| Purchase Orders / Orders | **Implemented** (Module 3.1 / migration `017`; UI live). Ensure `017` applied. |
+| Order Fulfillment (Module 3.2) | **Phase A DB+RPC complete** in code (migration `018`). UI **Not implemented.** |
 | Invoices | **Not implemented.** |
 | Payments / Escrow / Trade financing | **Not implemented.** |
 | Negotiation / messaging chat | **Not implemented.** |
-| Logistics / shipment visibility | **Not implemented.** |
+| Logistics / shipment visibility (3.3) | **Not implemented.** (fulfillment has ship/transit statuses only) |
+| Claims (3.4) | **Not implemented.** (minimal dispute hold flag only) |
 | AI supplier matching / trade assistant / risk | **Not implemented.** (`/ai-sourcing` mock only) |
 | Live admin RFQ moderation console | **Not implemented.** (mock table) |
 | Live analytics | **Not implemented.** (mock metrics) |

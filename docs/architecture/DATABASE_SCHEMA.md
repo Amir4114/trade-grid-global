@@ -41,6 +41,7 @@ Related: [ARCHITECTURE_STATUS_v0.3.0.md](./ARCHITECTURE_STATUS_v0.3.0.md) · [AP
 | `015_quotation_system.sql` | Quotation tables + `quotation-docs` |
 | `016_award_system.sql` | Awards + award events |
 | `017_purchase_order_system.sql` | Purchase orders, items, events, documents, `purchase-order-docs` |
+| `018_order_fulfillment_system.sql` | Fulfillment orders, events, documents, `fulfillment-docs` |
 
 ---
 
@@ -440,9 +441,39 @@ Storage: private bucket `purchase-order-docs` path `pos/<buyer_company_id>/<po_i
 
 ---
 
+## `fulfillment_orders`
+
+| | |
+|--|--|
+| **Purpose** | Operational execution after accepted PO (Module 3.2). Commercial terms stay on `purchase_orders`. |
+| **Migration** | `018` |
+
+Key columns: `fulfillment_number` (`TGG-FF-YYYY-######`), unique `purchase_order_id`, party FKs, `status`, `is_paused`, `is_disputed`, operational timestamps (UTC), cancel/fail/dispute reasons
+
+**Statuses:** `opened` → `in_production` → `quality_check` → `packaging` → `ready_to_ship` → `shipped` → `in_transit` → `delivered` → `completed` (+ `cancelled` / `failed`)
+
+RLS: buyer/supplier SELECT own; admin SELECT — mutations RPC-only
+
+RPCs: `create_fulfillment`, `start_production`, `pause_production`, `resume_production`, `complete_production`, `pass_qc`, `fail_qc`, `pack_order`, `mark_ready`, `mark_shipped`, `mark_in_transit`, `mark_delivered`, `complete_fulfillment`, `cancel_fulfillment`, `fail_production`, `raise_fulfillment_dispute`, `get_fulfillment`, `list_fulfillments`
+
+Auto-create: `accept_purchase_order` calls `_create_fulfillment_for_po` (AD-3.2-004)
+
+Storage: private bucket `fulfillment-docs` path `fulfillment/<buyer_company_id>/<fulfillment_id>/…`
+
+---
+
+## `fulfillment_order_events` / `fulfillment_order_documents`
+
+| Table | Purpose |
+|-------|---------|
+| `fulfillment_order_events` | Append-only audit (UPDATE/DELETE forbidden by trigger) |
+| `fulfillment_order_documents` | File metadata for fulfillment attachments |
+
+---
+
 ## Domains without tables
 
-Fulfillment lifecycle beyond PO accept, invoices, payments, negotiation messages, shipments, AI match stores, subscriptions — **Not implemented.**
+Invoices, payments, negotiation messages, shipment legs (Module 3.3), claims (Module 3.4), AI match stores, subscriptions — **Not implemented.**
 
 ---
 
@@ -462,4 +493,7 @@ erDiagram
   purchase_orders ||--o{ purchase_order_items : lines
   purchase_orders ||--o{ purchase_order_events : audits
   purchase_orders ||--o{ purchase_order_documents : files
+  purchase_orders ||--o| fulfillment_orders : executes
+  fulfillment_orders ||--o{ fulfillment_order_events : audits
+  fulfillment_orders ||--o{ fulfillment_order_documents : files
 ```

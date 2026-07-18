@@ -2,9 +2,45 @@
 
 **Purpose:** Official architectural contract for locked product/engineering decisions.  
 **Companion:** Informal historical log remains in [DECISION_LOG.md](./DECISION_LOG.md) (D001–D008).  
-**Module 3.1 source:** [../planning/design/MODULE_3_1_PURCHASE_ORDER_DESIGN.md](../planning/design/MODULE_3_1_PURCHASE_ORDER_DESIGN.md)
+**Module 3.1 source:** [../planning/design/MODULE_3_1_PURCHASE_ORDER_DESIGN.md](../planning/design/MODULE_3_1_PURCHASE_ORDER_DESIGN.md)  
+**Module 3.2 source:** [../planning/design/MODULE_3_2_ORDER_LIFECYCLE_DESIGN.md](../planning/design/MODULE_3_2_ORDER_LIFECYCLE_DESIGN.md)
 
 **Status legend:** `LOCKED` = binding for implementation · `SUPERSEDED` · `DEPRECATED`
+
+---
+
+## Index — Module 3.2 Order Lifecycle
+
+| Decision ID | Title | Status |
+|-------------|-------|--------|
+| AD-3.2-001 | Fulfillment is a child entity of accepted PO | LOCKED |
+| AD-3.2-002 | Purchase Order remains immutable commercial truth | LOCKED |
+| AD-3.2-003 | One fulfillment per accepted PO; fulfillment owns ops status | LOCKED |
+| AD-3.2-004 | Auto-create fulfillment on PO accept | LOCKED |
+| AD-3.2-005 | Cancel rights until shipped (buyer/supplier rules) | LOCKED |
+| AD-3.2-006 | Production pause is event/flag, not status | LOCKED |
+| AD-3.2-007 | Keep both shipped and in_transit statuses | LOCKED |
+| AD-3.2-008 | Delivery dual control (supplier assert / buyer confirm) | LOCKED |
+| AD-3.2-009 | Buyer marks completed (no auto-complete in 3.2) | LOCKED |
+| AD-3.2-010 | QC mandatory on happy path | LOCKED |
+| AD-3.2-011 | No reopen of completed in 3.2 | LOCKED |
+| AD-3.2-012 | Full claims deferred to Module 3.4 | LOCKED |
+| AD-3.2-013 | No admin force transitions in 3.2 | LOCKED |
+| AD-3.2-014 | Minimal delivery dispute hold in 3.2 | LOCKED |
+| AD-3.2-015 | No SLA/expiry jobs in 3.2 | LOCKED |
+| AD-3.2-016 | Orders nav with PO \| Fulfillment segments | LOCKED |
+| AD-3.2-017 | Lost shipment: hold + dispute, not auto-fail | LOCKED |
+| AD-3.2-018 | Additive migration 018+ / fulfillment RPC naming | LOCKED |
+| AD-3.2-019 | No hard document gate before ship in 3.2 MVP | LOCKED |
+| AD-3.2-020 | Multi-factory/warehouse deferred | LOCKED |
+| AD-3.2-021 | Append-only fulfillment events | LOCKED |
+| AD-3.2-022 | UTC operational timestamps | LOCKED |
+| AD-3.2-023 | RPC-only fulfillment writes | LOCKED |
+| AD-3.2-024 | No physical deletes of fulfillment records | LOCKED |
+| AD-3.2-025 | Shipments belong to Logistics Module 3.3 | LOCKED |
+| AD-3.2-026 | Trusted notifications for fulfillment events | LOCKED |
+| AD-3.2-027 | No payments capture in Module 3.2 | LOCKED |
+| AD-3.2-028 | Do not redesign RFQ / quotation / award / PO schemas | LOCKED |
 
 ---
 
@@ -235,7 +271,7 @@
 | **Decision** | Buyer existing **Orders** nav (`/dashboard/buyer/orders`) becomes the PO list/detail surface. Supplier gains an **Orders** nav pointing at supplier PO list. No separate “Purchase Orders” vs “Orders” split in 3.1. |
 | **Reason** | Replaces mock Orders page with real work; avoids dual nav confusion before fulfillment exists. |
 | **Alternatives considered** | Separate “Purchase Orders” nav (deferred until fulfillment “Orders” needs a distinct name); hide under RFQ only (rejected — poor discoverability). |
-| **Future review** | Rename/split if Module 3.2 introduces a distinct fulfillment Order entity. |
+| **Future review** | **Resolved by AD-3.2-016** — keep Orders nav; PO \| Fulfillment segments. |
 | **Date** | 2026-07-18 |
 
 ### AD-3.1-015 — Line items schema + UI list; no multi-SKU picker
@@ -361,7 +397,7 @@
 | **Decision** | For Module 3.1 and onward planning: an `accepted` PO is the mutually acknowledged commercial baseline. Module 3.2 may add lifecycle/fulfillment states or a related `orders` entity, but must not invent a second conflicting commercial truth that ignores the accepted PO snapshot. |
 | **Reason** | Closes the “Orders vs PO” entity ambiguity for 3.1 without designing 3.2 tables prematurely. |
 | **Alternatives considered** | Introduce separate `orders` table in 3.1 as alias (rejected — premature); treat award as fulfillment baseline (rejected — award is selection, not issued commitment). |
-| **Future review** | Module 3.2 chooses whether fulfillment rows are PO statuses or a child `orders` record. |
+| **Future review** | **Resolved by AD-3.2-001** — child `fulfillment_orders`; PO statuses remain commercial. |
 | **Date** | 2026-07-18 |
 
 ### AD-3.1-024 — Additive migration only
@@ -394,21 +430,448 @@
 
 ---
 
+## Decisions — Module 3.2
+
+### AD-3.2-001 — Fulfillment is a child entity of accepted PO
+
+| Field | Value |
+|-------|-------|
+| **Decision ID** | AD-3.2-001 |
+| **Module** | 3.2 Order Lifecycle |
+| **Title** | Fulfillment is a child entity of accepted PO |
+| **Status** | LOCKED |
+| **Decision** | Introduce `fulfillment_orders` (name final at implement) as a child of an **accepted** `purchase_orders` row. Do not overload PO status with production/ship/deliver. |
+| **Reason** | Separates commercial agreement from operational execution (AD-3.1-023). |
+| **Alternatives considered** | Statuses on PO (rejected); event-only (rejected). |
+| **Future review** | None for entity split. |
+| **Date** | 2026-07-18 |
+
+### AD-3.2-002 — Purchase Order remains immutable commercial truth
+
+| Field | Value |
+|-------|-------|
+| **Decision ID** | AD-3.2-002 |
+| **Module** | 3.2 Order Lifecycle |
+| **Title** | Purchase Order remains immutable commercial truth |
+| **Status** | LOCKED |
+| **Decision** | Fulfillment transitions must never mutate PO commercial snapshot fields (prices, qty, Incoterms, parties, payment-terms text). |
+| **Reason** | Preserves AD-3.1-003 / AD-3.1-005. |
+| **Alternatives considered** | Re-price during fulfillment (rejected). |
+| **Future review** | PO amendments remain a separate future module. |
+| **Date** | 2026-07-18 |
+
+### AD-3.2-003 — One fulfillment per accepted PO; fulfillment owns ops status
+
+| Field | Value |
+|-------|-------|
+| **Decision ID** | AD-3.2-003 |
+| **Module** | 3.2 Order Lifecycle |
+| **Title** | One fulfillment per accepted PO; fulfillment owns ops status |
+| **Status** | LOCKED |
+| **Decision** | Exactly one fulfillment record per accepted PO in Module 3.2. Operational status lives only on fulfillment. |
+| **Reason** | Single operational truth; avoids duplicate execution paths. |
+| **Alternatives considered** | Multiple concurrent fulfillments (deferred to split-ship 3.4). |
+| **Future review** | Partial/split shipments in 3.4. |
+| **Date** | 2026-07-18 |
+
+### AD-3.2-004 — Auto-create fulfillment on PO accept
+
+| Field | Value |
+|-------|-------|
+| **Decision ID** | AD-3.2-004 |
+| **Module** | 3.2 Order Lifecycle |
+| **Title** | Auto-create fulfillment on PO accept |
+| **Status** | LOCKED |
+| **Decision** | When a PO transitions to `accepted`, create fulfillment in `opened` via trusted path (same accept RPC extension or immediate follow-on SECURITY DEFINER call). |
+| **Reason** | No orphan accepted POs; clear buyer visibility. |
+| **Alternatives considered** | Explicit start action (rejected for MVP). |
+| **Future review** | None. |
+| **Date** | 2026-07-18 |
+
+### AD-3.2-005 — Cancel rights until shipped
+
+| Field | Value |
+|-------|-------|
+| **Decision ID** | AD-3.2-005 |
+| **Module** | 3.2 Order Lifecycle |
+| **Title** | Cancel rights until shipped |
+| **Status** | LOCKED |
+| **Decision** | Buyer may cancel with reason before `shipped`. Supplier may cancel only from `opened`. After `shipped`, cancel forbidden — dispute/claims path only. |
+| **Reason** | Balances abort flexibility with post-dispatch integrity. |
+| **Alternatives considered** | Cancel anytime (rejected); no cancel after production (too rigid). |
+| **Future review** | Offline/legal cost allocation for mid-production cancel. |
+| **Date** | 2026-07-18 |
+
+### AD-3.2-006 — Production pause is event/flag
+
+| Field | Value |
+|-------|-------|
+| **Decision ID** | AD-3.2-006 |
+| **Module** | 3.2 Order Lifecycle |
+| **Title** | Production pause is event/flag, not status |
+| **Status** | LOCKED |
+| **Decision** | Pause/resume recorded as events (and optional `is_paused`); status remains `in_production`. |
+| **Reason** | Simpler state machine; analytics still possible. |
+| **Alternatives considered** | Dedicated `paused` status (rejected). |
+| **Future review** | None. |
+| **Date** | 2026-07-18 |
+
+### AD-3.2-007 — Keep shipped and in_transit
+
+| Field | Value |
+|-------|-------|
+| **Decision ID** | AD-3.2-007 |
+| **Module** | 3.2 Order Lifecycle |
+| **Title** | Keep both shipped and in_transit statuses |
+| **Status** | LOCKED |
+| **Decision** | Retain distinct `shipped` (handed off) and `in_transit` (en route). |
+| **Reason** | Logistics 3.3 can attach tracking without renaming. |
+| **Alternatives considered** | Collapse statuses (rejected). |
+| **Future review** | Auto-advance when carrier events exist. |
+| **Date** | 2026-07-18 |
+
+### AD-3.2-008 — Delivery dual control
+
+| Field | Value |
+|-------|-------|
+| **Decision ID** | AD-3.2-008 |
+| **Module** | 3.2 Order Lifecycle |
+| **Title** | Delivery dual control |
+| **Status** | LOCKED |
+| **Decision** | Supplier may mark `delivered`; buyer may also mark `delivered`. Completion requires buyer action (AD-3.2-009). |
+| **Reason** | Reduces false closes; supports disputes. |
+| **Alternatives considered** | Supplier-only delivery (rejected). |
+| **Future review** | Mandatory POD attachment. |
+| **Date** | 2026-07-18 |
+
+### AD-3.2-009 — Buyer marks completed
+
+| Field | Value |
+|-------|-------|
+| **Decision ID** | AD-3.2-009 |
+| **Module** | 3.2 Order Lifecycle |
+| **Title** | Buyer marks completed |
+| **Status** | LOCKED |
+| **Decision** | Only the buyer transitions `delivered` → `completed` in Module 3.2. No system auto-complete in MVP. Fulfills AD-3.1-012. |
+| **Reason** | Explicit operational close for trust and future payments. |
+| **Alternatives considered** | Auto-complete after N days (deferred). |
+| **Future review** | Quiet-period auto-complete. |
+| **Date** | 2026-07-18 |
+
+### AD-3.2-010 — QC mandatory
+
+| Field | Value |
+|-------|-------|
+| **Decision ID** | AD-3.2-010 |
+| **Module** | 3.2 Order Lifecycle |
+| **Title** | QC mandatory on happy path |
+| **Status** | LOCKED |
+| **Decision** | Happy path must pass through `quality_check` before `packaging`. Skipping QC is forbidden in 3.2. |
+| **Reason** | Food/FMCG trust; inspection culture. |
+| **Alternatives considered** | Optional QC (rejected for MVP). |
+| **Future review** | Category exceptions via new ADR only. |
+| **Date** | 2026-07-18 |
+
+### AD-3.2-011 — No reopen completed
+
+| Field | Value |
+|-------|-------|
+| **Decision ID** | AD-3.2-011 |
+| **Module** | 3.2 Order Lifecycle |
+| **Title** | No reopen of completed in 3.2 |
+| **Status** | LOCKED |
+| **Decision** | `completed` is terminal; no reopen RPCs in 3.2. |
+| **Reason** | Audit integrity. |
+| **Alternatives considered** | Buyer reopen (rejected for MVP). |
+| **Future review** | Dual-control admin reopen. |
+| **Date** | 2026-07-18 |
+
+### AD-3.2-012 — Claims deferred to 3.4
+
+| Field | Value |
+|-------|-------|
+| **Decision ID** | AD-3.2-012 |
+| **Module** | 3.2 Order Lifecycle |
+| **Title** | Full claims deferred to Module 3.4 |
+| **Status** | LOCKED |
+| **Decision** | Do not implement claims/returns/refunds state machines in 3.2. |
+| **Reason** | Scope cut; dispute hold covers false completion. |
+| **Alternatives considered** | Mini-claims in 3.2 (rejected). |
+| **Future review** | Module 3.4. |
+| **Date** | 2026-07-18 |
+
+### AD-3.2-013 — No admin force transitions
+
+| Field | Value |
+|-------|-------|
+| **Decision ID** | AD-3.2-013 |
+| **Module** | 3.2 Order Lifecycle |
+| **Title** | No admin force transitions in 3.2 |
+| **Status** | LOCKED |
+| **Decision** | Admin SELECT for support; no force status RPCs. |
+| **Reason** | Aligns with AD-3.1-018. |
+| **Alternatives considered** | Support force-complete (rejected). |
+| **Future review** | Dual-control break-glass. |
+| **Date** | 2026-07-18 |
+
+### AD-3.2-014 — Minimal delivery dispute hold
+
+| Field | Value |
+|-------|-------|
+| **Decision ID** | AD-3.2-014 |
+| **Module** | 3.2 Order Lifecycle |
+| **Title** | Minimal delivery dispute hold in 3.2 |
+| **Status** | LOCKED |
+| **Decision** | Buyer may set a dispute hold after ship/transit/delivery; blocks `completed`; notifies supplier; append-only event. Resolution workflow is Module 3.4. |
+| **Reason** | Safety without inventing claims finance. |
+| **Alternatives considered** | Full claim UI in 3.2 (rejected). |
+| **Future review** | Legal dispute copy; 3.4 resolution. |
+| **Date** | 2026-07-18 |
+
+### AD-3.2-015 — No SLA/expiry jobs in 3.2
+
+| Field | Value |
+|-------|-------|
+| **Decision ID** | AD-3.2-015 |
+| **Module** | 3.2 Order Lifecycle |
+| **Title** | No SLA/expiry jobs in 3.2 |
+| **Status** | LOCKED |
+| **Decision** | No automatic status changes from timers in Module 3.2. |
+| **Reason** | Avoid silent operational closes. |
+| **Alternatives considered** | Stuck-order auto-cancel (rejected). |
+| **Future review** | Ops SLA module. |
+| **Date** | 2026-07-18 |
+
+### AD-3.2-016 — Orders nav with PO \| Fulfillment
+
+| Field | Value |
+|-------|-------|
+| **Decision ID** | AD-3.2-016 |
+| **Module** | 3.2 Order Lifecycle |
+| **Title** | Orders nav with PO \| Fulfillment segments |
+| **Status** | LOCKED |
+| **Decision** | Keep top-level **Orders** nav (AD-3.1-014); add in-page segments/tabs for Purchase Orders and Fulfillment. |
+| **Reason** | Avoid nav sprawl; clear UX split. |
+| **Alternatives considered** | Separate top-level Fulfillment nav (deferred). |
+| **Future review** | Product rename. |
+| **Date** | 2026-07-18 |
+
+### AD-3.2-017 — Lost shipment hold policy
+
+| Field | Value |
+|-------|-------|
+| **Decision ID** | AD-3.2-017 |
+| **Module** | 3.2 Order Lifecycle |
+| **Title** | Lost shipment: hold + dispute, not auto-fail |
+| **Status** | LOCKED |
+| **Decision** | Suspected loss keeps operational status (`in_transit`) with dispute hold; terminal `failed` only via explicit action + reason. |
+| **Reason** | Investigation before terminal failure. |
+| **Alternatives considered** | Auto-fail on lost flag (rejected). |
+| **Future review** | Carrier loss codes in 3.3/3.4. |
+| **Date** | 2026-07-18 |
+
+### AD-3.2-018 — Additive migration 018+ / naming
+
+| Field | Value |
+|-------|-------|
+| **Decision ID** | AD-3.2-018 |
+| **Module** | 3.2 Order Lifecycle |
+| **Title** | Additive migration 018+ / fulfillment RPC naming |
+| **Status** | LOCKED |
+| **Decision** | Implement in new migration (e.g. `018_order_lifecycle.sql`). Do not edit `001`–`017`. Use clear `fulfillment_*` RPC names. |
+| **Reason** | Migration safety; domain clarity. |
+| **Alternatives considered** | Edit `017` in place (forbidden). |
+| **Future review** | None. |
+| **Date** | 2026-07-18 |
+
+### AD-3.2-019 — No hard document gate before ship
+
+| Field | Value |
+|-------|-------|
+| **Decision ID** | AD-3.2-019 |
+| **Module** | 3.2 Order Lifecycle |
+| **Title** | No hard document gate before ship in 3.2 MVP |
+| **Status** | LOCKED |
+| **Decision** | Shipping is not blocked solely for missing attachments; UI recommends CoA/packing list. |
+| **Reason** | Unblocks MVP; evidence still supported. |
+| **Alternatives considered** | Hard CoA gate (deferred). |
+| **Future review** | Category-based mandatory docs. |
+| **Date** | 2026-07-18 |
+
+### AD-3.2-020 — Multi-factory deferred
+
+| Field | Value |
+|-------|-------|
+| **Decision ID** | AD-3.2-020 |
+| **Module** | 3.2 Order Lifecycle |
+| **Title** | Multi-factory/warehouse deferred |
+| **Status** | LOCKED |
+| **Decision** | No multi-site allocation model in 3.2; optional free-text production location note allowed. |
+| **Reason** | MVP focus. |
+| **Alternatives considered** | Full warehouse master (rejected for 3.2). |
+| **Future review** | Site master data. |
+| **Date** | 2026-07-18 |
+
+### AD-3.2-021 — Append-only fulfillment events
+
+| Field | Value |
+|-------|-------|
+| **Decision ID** | AD-3.2-021 |
+| **Module** | 3.2 Order Lifecycle |
+| **Title** | Append-only fulfillment events |
+| **Status** | LOCKED |
+| **Decision** | Every material transition writes an immutable fulfillment event; no client UPDATE/DELETE. |
+| **Reason** | Same audit pattern as PO/award. |
+| **Alternatives considered** | Mutable history (rejected). |
+| **Future review** | Partitioning if volume requires. |
+| **Date** | 2026-07-18 |
+
+### AD-3.2-022 — UTC operational timestamps
+
+| Field | Value |
+|-------|-------|
+| **Decision ID** | AD-3.2-022 |
+| **Module** | 3.2 Order Lifecycle |
+| **Title** | UTC operational timestamps |
+| **Status** | LOCKED |
+| **Decision** | Persist all fulfillment milestones as UTC `timestamptz`; UI localizes. |
+| **Reason** | Cross-border trade; matches AD-3.1-009. |
+| **Alternatives considered** | Local TZ columns (rejected). |
+| **Future review** | None. |
+| **Date** | 2026-07-18 |
+
+### AD-3.2-023 — RPC-only fulfillment writes
+
+| Field | Value |
+|-------|-------|
+| **Decision ID** | AD-3.2-023 |
+| **Module** | 3.2 Order Lifecycle |
+| **Title** | RPC-only fulfillment writes |
+| **Status** | LOCKED |
+| **Decision** | All mutations via SECURITY DEFINER RPCs with `search_path`, ownership checks, status guards. RLS SELECT only. Extends D003. |
+| **Reason** | Fail-closed lifecycle. |
+| **Alternatives considered** | Client UPDATEs (rejected). |
+| **Future review** | None. |
+| **Date** | 2026-07-18 |
+
+### AD-3.2-024 — No physical deletes
+
+| Field | Value |
+|-------|-------|
+| **Decision ID** | AD-3.2-024 |
+| **Module** | 3.2 Order Lifecycle |
+| **Title** | No physical deletes of fulfillment records |
+| **Status** | LOCKED |
+| **Decision** | Terminal statuses + events; no product DELETE RPCs for fulfillment headers/events. |
+| **Reason** | Dispute readiness. |
+| **Alternatives considered** | Hard delete drafts (N/A — auto-created). |
+| **Future review** | Legal erasure process. |
+| **Date** | 2026-07-18 |
+
+### AD-3.2-025 — Shipments belong to Logistics 3.3
+
+| Field | Value |
+|-------|-------|
+| **Decision ID** | AD-3.2-025 |
+| **Module** | 3.2 Order Lifecycle |
+| **Title** | Shipments belong to Logistics Module 3.3 |
+| **Status** | LOCKED |
+| **Decision** | Do not implement carrier/shipment/leg tables as the core of 3.2. Fulfillment may store lightweight tracking text; first-class `shipments` wait for 3.3. |
+| **Reason** | Scope boundary; avoid fake TMS. |
+| **Alternatives considered** | Full TMS in 3.2 (rejected). |
+| **Future review** | Module 3.3. |
+| **Date** | 2026-07-18 |
+
+### AD-3.2-026 — Trusted fulfillment notifications
+
+| Field | Value |
+|-------|-------|
+| **Decision ID** | AD-3.2-026 |
+| **Module** | 3.2 Order Lifecycle |
+| **Title** | Trusted notifications for fulfillment events |
+| **Status** | LOCKED |
+| **Decision** | Emit `fulfillment.*` only via `_create_system_notification` from trusted RPCs (D007). |
+| **Reason** | Prevent forged progress spam. |
+| **Alternatives considered** | Client inserts (rejected). |
+| **Future review** | None for trust model. |
+| **Date** | 2026-07-18 |
+
+### AD-3.2-027 — No payments in Module 3.2
+
+| Field | Value |
+|-------|-------|
+| **Decision ID** | AD-3.2-027 |
+| **Module** | 3.2 Order Lifecycle |
+| **Title** | No payments capture in Module 3.2 |
+| **Status** | LOCKED |
+| **Decision** | No invoices, escrow, or payout capture in 3.2. Module 4 consumes delivery/completion signals. |
+| **Reason** | Finance boundary. |
+| **Alternatives considered** | Deposit at delivered (rejected). |
+| **Future review** | Module 4.0. |
+| **Date** | 2026-07-18 |
+
+### AD-3.2-028 — No redesign of upstream modules
+
+| Field | Value |
+|-------|-------|
+| **Decision ID** | AD-3.2-028 |
+| **Module** | 3.2 Order Lifecycle |
+| **Title** | Do not redesign RFQ / quotation / award / PO schemas |
+| **Status** | LOCKED |
+| **Decision** | Module 3.2 is additive. May extend `accept_purchase_order` (or equivalent) only as needed to auto-create fulfillment. Must not redesign RFQ, quotation, award, or PO commercial tables. |
+| **Reason** | Preserve platform architecture and AD-3.1 contract. |
+| **Alternatives considered** | Merge fulfillment into PO row (rejected — AD-3.2-001). |
+| **Future review** | None. |
+| **Date** | 2026-07-18 |
+
+---
+
 ## Remaining stakeholder items (non-blocking)
 
-These are **not** open architectural forks for Module 3.1. They are Future Review items already recorded on locked decisions:
+These are **not** open architectural forks. They are Future Review items on locked decisions:
 
-| Item | Why it needs stakeholders later | Blocks 3.1 implementation? |
-|------|----------------------------------|----------------------------|
-| Exact ToS / UI legal copy for Accept | Counsel wordsmithing of disclosure text | **No** — AD-3.1-019 locked engineering posture |
-| Admin break-glass unwind | Support ops + legal process | **No** — out of 3.1 |
-| Separate fulfillment “Orders” entity name | Product naming when 3.2 ships | **No** — AD-3.1-014 / AD-3.1-023 |
+| Item | Module | Why later | Blocks implementation? |
+|------|--------|-----------|------------------------|
+| Exact ToS / UI legal copy for PO Accept | 3.1 | Counsel wordsmithing | **No** |
+| Mid-production cancel cost allocation | 3.2 | Legal/commercial negotiation offline | **No** — AD-3.2-005 |
+| Dispute / claim settlement copy | 3.2→3.4 | Legal + finance | **No** — AD-3.2-014 / 012 |
+| Mandatory CoA before ship | 3.2+ | Compliance product | **No** — AD-3.2-019 |
+| Admin break-glass | 3.1/3.2 | Support process | **No** |
+| Quiet-period auto-complete | 3.2+ | Ops preference | **No** — AD-3.2-009 |
+
+---
+
+## Conflict check vs Module 3.1
+
+| Check | Result |
+|-------|--------|
+| No RFQ redesign | Pass (AD-3.2-028) |
+| No Quotation redesign | Pass |
+| No Award redesign | Pass |
+| No PO commercial redesign | Pass (AD-3.2-002) |
+| AD-3.1-012 completed in lifecycle | Pass (AD-3.2-009) |
+| AD-3.1-023 commercial baseline | Pass (AD-3.2-001/002) |
+| AD-3.1-014 nav | Pass (AD-3.2-016) |
+
+---
+
+## Future readiness
+
+| Downstream module | Supported by |
+|-------------------|--------------|
+| 3.3 Logistics | AD-3.2-007, AD-3.2-025 |
+| 3.4 Claims | AD-3.2-012, AD-3.2-014, AD-3.2-017 |
+| 4.0 Payments | AD-3.2-009, AD-3.2-027 |
+| 4.x Documents | AD-3.2-019 + private bucket pattern |
+| 5.x AI | Event stream on append-only events |
+| 6.x Analytics | Status dwell + milestone timestamps |
 
 ---
 
 ## References
 
 - [MODULE_3_1_PURCHASE_ORDER_DESIGN.md](../planning/design/MODULE_3_1_PURCHASE_ORDER_DESIGN.md)
+- [MODULE_3_2_ORDER_LIFECYCLE_DESIGN.md](../planning/design/MODULE_3_2_ORDER_LIFECYCLE_DESIGN.md)
 - [DECISION_LOG.md](./DECISION_LOG.md)
 - [SECURITY_MODEL.md](./SECURITY_MODEL.md)
 - [ARCHITECTURE_STATUS_v0.3.0.md](./ARCHITECTURE_STATUS_v0.3.0.md)

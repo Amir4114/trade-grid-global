@@ -11,6 +11,15 @@ Dates use commit / tag dates from the repository history where available.
 
 ## [Unreleased]
 
+### Added
+
+- Migration `018_order_fulfillment_system.sql`: `fulfillment_orders`, `fulfillment_order_events`, `fulfillment_order_documents`, private bucket `fulfillment-docs`
+- Fulfillment lifecycle RPCs (`create_fulfillment`, production/QC/pack/ship/deliver/complete/cancel/fail/dispute, `get_fulfillment`, `list_fulfillments`)
+- Extended `accept_purchase_order` to auto-create fulfillment (AD-3.2-004)
+- Service wrappers `lib/fulfillment/service.ts` + typed models / notification types
+- Script: `scripts/verify-order-fulfillment-system.mjs`
+- Docs: DATABASE_SCHEMA / API_REFERENCE / CURRENT_STATUS updated for Module 3.2 Phase A
+
 ### Changed
 
 - Repository housekeeping: root README, CONTRIBUTING, LICENSE.md, improved `.env.example`, docs version alignment.
@@ -21,7 +30,8 @@ Dates use commit / tag dates from the repository history where available.
 ## [v0.4.0] — 2026-07-18
 
 Target tag: **`v0.4.0-purchase-orders`**.  
-npm version: `0.4.0`
+npm version: `0.4.0`  
+Release package: [`releases/v0.4.0-purchase-orders/`](../releases/v0.4.0-purchase-orders/release-notes.md)
 
 ### Added
 
