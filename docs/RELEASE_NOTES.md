@@ -1,13 +1,13 @@
 # Release Notes
 
-## `v0.5.0-order-lifecycle`: Phase A tagged; full release in progress
+## `v0.5.0-order-lifecycle`: Fulfillment Phase B verified and frozen
 
 | Field             | Value                                                        |
 | ----------------- | ------------------------------------------------------------ |
 | **Target**        | `v0.5.0-order-lifecycle`                                     |
 | **Phase A tag**   | `v0.5.0-phase-a`                                             |
-| **Current phase** | Phase A DB + RPC contract tagged; Phase B UI not implemented |
-| **Migration**     | **`018_order_fulfillment_system.sql`** (requires `017`)      |
+| **Current phase** | Fulfillment gates passed; global tag awaits Trust migration `020` |
+| **Migration**     | **`018` + `023`** (requires Purchase Order migration `017`)  |
 | **npm version**   | Still `0.4.0` until full 3.2 release                         |
 
 ### Phase A highlights
@@ -18,7 +18,13 @@
 4. **Append-only events** + private `fulfillment-docs` bucket.
 5. **Verify script** — `scripts/verify-order-fulfillment-system.mjs`.
 
-Frontend for fulfillment is **out of scope** for Phase A.
+### Phase B highlights
+
+1. **Operational workspace** — Buyer and Supplier Orders now expose a Fulfillment segment that consumes existing notification deep links.
+2. **Role-controlled execution** — suppliers drive production/QC/packing/dispatch and record milestones; buyers track progress, confirm delivery/completion, and raise permitted disputes.
+3. **Chronological timeline** — all state changes, supplemental milestones, and comments render from immutable events.
+4. **Database hardening** — cancellation reasons are mandatory; aggregate reads use deterministic operational chronology.
+5. **Boundary preservation** — port/customs workflows, carrier APIs, payments, claims, AI, and Analytics remain outside Module 3.2.
 
 Architecture: [DOMAIN_MODEL.md](./architecture/DOMAIN_MODEL.md) · Domain contract: [Fulfillment](./domains/fulfillment/README.md) · Verification: [VERIFICATION_MATRIX.md](./VERIFICATION_MATRIX.md)
 
@@ -89,6 +95,27 @@ Migrations `019` and `020` must both be applied before these controls are active
 - Migration `022_pending_company_document_management.sql` adds only the narrow
   owner policy required for ordered deletion of pending, unsubmitted evidence.
 
+### Marketplace Foundation final polish — M1.1
+
+- The shared workspace shell now renders a role-aware Buyer, Supplier, or Admin
+  header on every workspace page, including company identity, canonical
+  verification state, section context, and live RLS-filtered summary counts.
+- Workspace Overview remains the default post-login route and presents company
+  health, verification guidance, pending tasks, quick actions, recent activity,
+  and recent notifications without forcing users into forms.
+- The public company directory now reads the existing `public_suppliers` view.
+  Canonical `/company/{name--companyId}` pages add SEO metadata, structured
+  headings, published products, public certifications, statistics, and a
+  guest-safe contact CTA.
+- Public pages disclose only fields already authorized by `public_suppliers` and
+  `public_products`; confidential company markets and owner-only profile data
+  are not inferred or exposed.
+- Marketplace routes include responsive loading skeletons, empty states, and
+  recoverable errors. All role Analytics routes use one placeholder with no
+  charts or metric implementation.
+- M1.1 adds no migration and changes no Auth, signup, Trust, RLS, RPC, trigger,
+  or database contract.
+
 ### Marketplace experience redesign — Phase 1
 
 - Start Trading replaces Join Free and offers Guest, Buyer, and Supplier entry.
@@ -144,8 +171,9 @@ Payments, logistics UI, amendments, and production AI remain **Not implemented.*
 | **`020_verification_case_evidence_lock.sql`**     | **Required for v0.4.1** — immutable case evidence and decision integrity                          |
 | **`021_atomic_marketplace_signup.sql`**           | **Required before production signup** — atomic marketplace account provisioning                   |
 | **`022_pending_company_document_management.sql`** | **Required for Phase 1 document deletion** — pending, owner-scoped, non-case-linked evidence only |
+| **`023_fulfillment_phase_b_operations.sql`**      | **Required for Phase B** — milestones, comments, chronology, cancellation hardening               |
 
-Apply in order via Supabase SQL Editor or CLI. Migrations `017`–`022` are additive.
+Apply in order via Supabase SQL Editor or CLI. Migrations `017`–`023` are additive.
 
 After apply, confirm:
 
@@ -197,7 +225,8 @@ npm run build
 
 ## Known limitations
 
-- Fulfillment UI, first-class logistics/shipments, claims, invoices, and payments — **Not implemented.**
+- First-class logistics/shipments, claims, invoices, and payments — **Not implemented.**
+- Fulfillment document upload/retention workflow — **Not implemented**; private metadata/storage foundation only.
 - Buyer Orders / Inquiries / Saved Suppliers / Admin Analytics / Admin RFQs pages still use mock `lib/marketplace/data` where noted in architecture status.
 - Public `/rfq` marketing page uses mock data; live RFQs are dashboard-based.
 - Offer-level payment terms / certification columns — **Not implemented.**
@@ -207,7 +236,9 @@ npm run build
 
 ## Future work
 
-Immediate: **Module 3.2 Phase B** — Fulfillment service hardening and buyer/supplier UI.
+Immediate: apply Trust migration `020`, rerun its verifier, and then design
+Logistics 3.3 as a separate domain. Fulfillment is frozen; logistics fields must
+not be added to it.
 See [planning/ROADMAP.md](./planning/ROADMAP.md).
 
 ---
@@ -222,6 +253,11 @@ See [planning/ROADMAP.md](./planning/ROADMAP.md).
 6. Loser sees awarded-to-another-supplier message
 7. Post-award quotation submit fails
 8. Notifications for award / not_selected / rfq.awarded
+9. Supplier accepts PO and Fulfillment appears automatically
+10. Supplier advances production → QC → packing and records a milestone
+11. Buyer sees chronological timeline and receives milestone/status updates
+12. Supplier ships; buyer confirms delivery and completes
+13. Cross-company users cannot read or mutate the Fulfillment
 
 ---
 

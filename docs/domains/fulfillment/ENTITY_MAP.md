@@ -33,9 +33,11 @@ Commercial prices, quantities, currency, Incoterms, payment terms, and line item
 
 - **Purpose:** Immutable audit history for material actions and transitions.
 - **Parent:** `fulfillment_order_id`.
-- **Data:** Event type, actor type/user, from/to state, message, metadata, timestamp.
+- **Data:** Event type, actor type/user, from/to state, message, metadata, timestamp. Phase B milestone events carry canonical `milestone_type` and `occurred_at`; comments carry `comment_author`.
 - **Mutation:** Trusted append helper only; update/delete blocked by trigger.
 - **Consumers:** Detail timeline, support, Analytics, future event export.
+
+Milestones do not need a separate entity in Phase B: they have no independent lifecycle, owner, or relationship. Keeping them as typed events makes the timeline and audit record the same source of truth. Status-derived milestones (production started, packing complete, shipment departed, delivered) remain existing lifecycle events; supplemental milestones never advance the state machine.
 
 ## `fulfillment_order_documents`
 
@@ -43,26 +45,26 @@ Commercial prices, quantities, currency, Incoterms, payment terms, and line item
 - **Parent:** `fulfillment_order_id`.
 - **Data:** Uploader, document type, stage, filename, storage path, MIME type, size, timestamp.
 - **Storage:** Private `fulfillment-docs`, path `fulfillment/<buyer_company_id>/<fulfillment_id>/…`.
-- **Status:** Table and storage foundation exist, but clients have no INSERT grant/policy or registration RPC for document metadata; rich Phase B upload workflow is not implemented.
+- **Status:** Table and storage foundation exist, but clients have no INSERT grant/policy or registration RPC for document metadata; governed upload remains deferred.
 
 Typical evidence includes production plans, QC/CoA reports, packing lists, dispatch documents, and proof of delivery. Commercial PO files stay in the PO document domain.
 
 ## Upstream references
 
-| Entity | Why referenced | Ownership |
-|---|---|---|
+| Entity            | Why referenced                                       | Ownership  |
+| ----------------- | ---------------------------------------------------- | ---------- |
 | `purchase_orders` | Entry condition, commercial baseline, source parties | Commercial |
-| `companies` | Tenant authorization and list filtering | Identity |
-| `auth.users` | Actor/uploader attribution | Identity |
+| `companies`       | Tenant authorization and list filtering              | Identity   |
+| `auth.users`      | Actor/uploader attribution                           | Identity   |
 
 ## Future entities
 
-| Entity | Module | Boundary |
-|---|---|---|
-| `shipments` and legs | Logistics 3.3 | Carrier movement, tracking, customs; may be one-to-many |
-| Claims/returns | Claims 3.4 | Exception resolution, evidence, remedies |
-| Sites/warehouses | Later Operations | Structured production/allocation locations |
-| Invoices/payments | Finance 4.x | Monetary obligations and settlement |
+| Entity               | Module           | Boundary                                                |
+| -------------------- | ---------------- | ------------------------------------------------------- |
+| `shipments` and legs | Logistics 3.3    | Carrier movement, tracking, customs; may be one-to-many |
+| Claims/returns       | Claims 3.4       | Exception resolution, evidence, remedies                |
+| Sites/warehouses     | Later Operations | Structured production/allocation locations              |
+| Invoices/payments    | Finance 4.x      | Monetary obligations and settlement                     |
 
 Future entities must reference stable IDs and preserve Fulfillment as current operational execution truth.
 
@@ -75,4 +77,4 @@ Future entities must reference stable IDs and preserve Fulfillment as current op
 
 ---
 
-**Last Updated:** 2026-07-18
+**Last Updated:** 2026-07-19

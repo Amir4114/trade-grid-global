@@ -1,6 +1,6 @@
 # Fulfillment Security
 
-Security contract for Fulfillment Phase A.
+Security contract for Fulfillment Phases A and B.
 
 ## Trust boundaries
 
@@ -12,12 +12,12 @@ Security contract for Fulfillment Phase A.
 
 ## Authorization
 
-| Actor | Read | Mutate |
-|---|---|---|
-| Buyer company | Own Fulfillment, events, documents | Pre-ship cancel, delivery, completion, dispute per state |
-| Supplier company | Own Fulfillment, events, documents | Production/QC/packing/shipping/delivery, limited cancel/fail; cannot impose dispute hold |
-| Admin | All rows for support | No force transition in Module 3.2 |
-| Other company | No rows | No actions |
+| Actor            | Read                               | Mutate                                                                                                         |
+| ---------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Buyer company    | Own Fulfillment, events, documents | Pre-ship cancel, delivery, completion, dispute, and comments per state                                         |
+| Supplier company | Own Fulfillment, events, documents | Production/QC/packing/shipping/delivery, milestones, comments, limited cancel/fail; cannot impose dispute hold |
+| Admin            | All rows for support               | No force transition in Module 3.2                                                                              |
+| Other company    | No rows                            | No actions                                                                                                     |
 
 Authorization derives from stable company IDs on the Fulfillment and accepted PO chain. UI visibility is not an authorization control.
 
@@ -59,30 +59,31 @@ Rich upload UI and category-specific mandatory-document gates are deferred. Thei
 
 ## Threats and controls
 
-| Threat | Control |
-|---|---|
-| Competitor reads an order | Buyer/supplier company RLS and negative verification |
-| Buyer advances supplier production | Role checks in transition RPCs |
-| Supplier self-completes | Buyer-only completion RPC guard |
-| Client skips mandatory QC | Ordered state guards; direct update denied |
-| Client forges operational notification | Trusted notification helper only |
-| Event history tampering | Append-only trigger and no client mutation grants |
-| PO repricing through execution | Separate entity and no commercial fields on Fulfillment |
-| Admin privilege misuse | Read-only admin support; no force RPCs |
-| Public document leakage | Private bucket and path-scoped policies |
-| Counterparty overwrites/deletes evidence | Known Phase A limitation: shared party-level object mutation; define uploader/retention policy in Phase B |
-| Privileged header deletion removes events | Operational prohibition; future hardening should prevent header delete/cascade audit loss |
+| Threat                                    | Control                                                                                                   |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Competitor reads an order                 | Buyer/supplier company RLS and negative verification                                                      |
+| Buyer advances supplier production        | Role checks in transition RPCs                                                                            |
+| Supplier self-completes                   | Buyer-only completion RPC guard                                                                           |
+| Client skips mandatory QC                 | Ordered state guards; direct update denied                                                                |
+| Client forges operational notification    | Trusted notification helper only                                                                          |
+| Buyer advances a milestone                | Supplier-only milestone RPC                                                                               |
+| Outsider injects comments                 | Parent party ownership in trusted comment RPC                                                             |
+| Event history tampering                   | Append-only trigger and no client mutation grants                                                         |
+| PO repricing through execution            | Separate entity and no commercial fields on Fulfillment                                                   |
+| Admin privilege misuse                    | Read-only admin support; no force RPCs                                                                    |
+| Public document leakage                   | Private bucket and path-scoped policies                                                                   |
+| Counterparty overwrites/deletes evidence  | Known Phase A limitation: shared party-level object mutation; define uploader/retention policy in Phase B |
+| Privileged header deletion removes events | Operational prohibition; future hardening should prevent header delete/cascade audit loss                 |
 
 ## Verification evidence
 
-`verify-order-fulfillment-system.mjs` checks cross-company read denial, actor restrictions, mandatory QC, direct insert denial, append-only events when service role is available, aggregate access, and selected notifications.
+`verify-order-fulfillment-system.mjs` checks cross-company read/write denial, actor restrictions, mandatory QC, milestones/comments, cancellation reasons, disputes, chronological aggregates, direct insert denial, append-only events when service role is available, and selected notifications.
 
 Known coverage gaps:
 
 - Service-role-dependent assertions skip without `SUPABASE_SERVICE_ROLE_KEY`.
-- No automated browser/E2E Fulfillment UI exists because Phase B UI is not implemented.
 - Storage upload/read edge cases need deeper verification with the Phase B document workflow.
-- Dispute actor/hold, supplier cancellation, pause/resume, and terminal failure paths lack explicit automated coverage.
+- Supplier cancellation, pause/resume, and terminal production failure paths need deeper negative-path coverage.
 - Concurrency/race load testing is not yet a dedicated suite.
 
 ## Security review trigger
@@ -98,4 +99,4 @@ A new ADR and focused security review are required before admin force actions, e
 
 ---
 
-**Last Updated:** 2026-07-18
+**Last Updated:** 2026-07-19

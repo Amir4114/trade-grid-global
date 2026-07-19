@@ -82,54 +82,40 @@ async function createSupplierFixture(suffix) {
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email,
     password,
+    options: {
+      data: {
+        tradegrid_marketplace_signup: true,
+        marketplace_role: "supplier",
+        full_name: `Settings ${suffix}`,
+        company_name: `Settings Test Co ${suffix}`,
+      },
+    },
   })
   if (authError) throw new Error(authError.message)
   const userId = authData.user?.id
+  if (!userId) throw new Error("Signup returned no user")
 
-  if (serviceClient) {
-    await serviceClient
-      .from("profiles")
-      .upsert({ id: userId, email, role: "supplier" }, { onConflict: "id" })
-    await serviceClient.from("companies").upsert(
-      {
-        user_id: userId,
-        company_name: `Settings Test Co ${suffix}`,
-        country: "India",
-        business_type: "Exporter",
-        company_structure: "Private Limited Company",
-        account_type: "supplier",
-        verification_status: "pending",
-        onboarding_completed: true,
-      },
-      { onConflict: "user_id" }
-    )
-  } else {
-    await supabase
-      .from("profiles")
-      .upsert({ id: userId, email, role: "supplier" }, { onConflict: "id" })
-    await supabase.from("companies").upsert(
-      {
-        user_id: userId,
-        company_name: `Settings Test Co ${suffix}`,
-        country: "India",
-        business_type: "Exporter",
-        company_structure: "Private Limited Company",
-        account_type: "supplier",
-        verification_status: "pending",
-        onboarding_completed: true,
-      },
-      { onConflict: "user_id" }
-    )
-  }
+  await signIn(email)
+  const writer = serviceClient ?? supabase
+  const companyUpdate = await writer
+    .from("companies")
+    .update({
+      country: "India",
+      business_type: "Exporter",
+      company_structure: "Private Limited Company",
+      onboarding_completed: true,
+      ...(serviceClient ? { verification_status: "pending" } : {}),
+    })
+    .eq("user_id", userId)
+  if (companyUpdate.error) throw new Error(companyUpdate.error.message)
 
-  const client = serviceClient ?? supabase
-  const { data: company } = await client
+  const { data: company, error: companyError } = await writer
     .from("companies")
     .select("*")
     .eq("user_id", userId)
     .single()
+  if (companyError) throw new Error(companyError.message)
 
-  await signIn(email)
   return { email, userId, company }
 }
 

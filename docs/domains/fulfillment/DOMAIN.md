@@ -24,6 +24,7 @@ Responsibilities:
 - Require QC on the happy path.
 - Record pause, rework, cancellation, failure, and dispute facts.
 - Preserve operational milestone timestamps and append-only events.
+- Record supplemental milestones and party comments as typed event facts.
 - Provide party-scoped reads and trusted notifications.
 
 ## Business workflow
@@ -54,16 +55,16 @@ Cancellation and failure are explicit terminal outcomes. A dispute is a hold fla
 
 ## Dependencies
 
-| Dependency | Contract |
-|---|---|
-| Identity | Buyer/supplier company ownership and admin read support |
+| Dependency      | Contract                                                              |
+| --------------- | --------------------------------------------------------------------- |
+| Identity        | Buyer/supplier company ownership and admin read support               |
 | Purchase Orders | Accepted PO identifier and parties; commercial truth remains upstream |
-| Notifications | Trusted `_create_system_notification` path |
-| Storage | Private `fulfillment-docs` bucket |
+| Notifications   | Trusted `_create_system_notification` path                            |
+| Storage         | Private `fulfillment-docs` bucket                                     |
 
 ## Consumers
 
-- Buyer and supplier operational dashboards (Phase B).
+- Buyer and supplier operational dashboards.
 - Logistics 3.3 for shipment/carrier detail.
 - Claims 3.4 for dispute resolution.
 - Financial domain for delivery/completion evidence.
@@ -79,6 +80,7 @@ Cancellation and failure are explicit terminal outcomes. A dispute is a hold fla
 6. Material actions create append-only events.
 7. Client table mutations are forbidden; lifecycle writes are RPC-only.
 8. All persisted operational timestamps use UTC `timestamptz`.
+9. Supplemental milestones and comments never overwrite history or bypass the status engine.
 
 ## Future extensions
 
@@ -99,4 +101,4 @@ These extensions attach to Fulfillment or its PO; they must not create a second 
 
 ---
 
-**Last Updated:** 2026-07-18
+**Last Updated:** 2026-07-19

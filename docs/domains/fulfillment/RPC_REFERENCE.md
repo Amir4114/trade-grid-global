@@ -4,42 +4,51 @@ Domain-focused summary of client-callable Fulfillment RPCs. Parameter-level plat
 
 ## Creation and reads
 
-| RPC | Purpose | Actor |
-|---|---|---|
+| RPC                  | Purpose                                                                                          | Actor                               |
+| -------------------- | ------------------------------------------------------------------------------------------------ | ----------------------------------- |
 | `create_fulfillment` | Idempotently create the missing child for an accepted PO; normal path is automatic PO acceptance | Buyer, supplier, or admin on the PO |
-| `get_fulfillment` | Return authorized Fulfillment with events/documents | Buyer, supplier, admin |
-| `list_fulfillments` | Return role-scoped, filtered, paginated rows | Buyer, supplier, admin |
+| `get_fulfillment`    | Return authorized Fulfillment with events/documents                                              | Buyer, supplier, admin              |
+| `list_fulfillments`  | Return role-scoped, filtered, paginated rows                                                     | Buyer, supplier, admin              |
 
 `accept_purchase_order` is a Commercial RPC with an Operational side effect: it invokes the trusted create helper so an accepted PO cannot be orphaned.
 
 ## Lifecycle RPCs
 
-| RPC | Contract |
-|---|---|
-| `start_production` | Supplier: `opened` → `in_production`; optional production location |
-| `pause_production` | Supplier: set pause while in production |
-| `resume_production` | Supplier: clear pause while in production |
-| `complete_production` | Supplier: `in_production` → `quality_check` |
-| `pass_qc` | Supplier: `quality_check` → `packaging` |
-| `fail_qc` | Supplier: reasoned rework to production or terminal failure |
-| `pack_order` | Supplier: `packaging` → `ready_to_ship` |
-| `mark_ready` | SQL compatibility alias for readiness; no dedicated wrapper exists in `lib/fulfillment/service.ts` |
-| `mark_shipped` | Supplier: `ready_to_ship` → `shipped`; optional tracking reference |
-| `mark_in_transit` | Supplier: `shipped` → `in_transit` |
-| `mark_delivered` | Buyer or supplier: shipped/transit → delivered |
-| `complete_fulfillment` | Buyer only: `delivered` → `completed`; blocked while `is_disputed` |
-| `cancel_fulfillment` | Buyer pre-ship or supplier from opened; reason is currently optional in SQL, contrary to the locked policy |
-| `fail_production` | Supplier: production → failed; reason required |
-| `raise_fulfillment_dispute` | Buyer only after shipment: set dispute hold and append event |
+| RPC                         | Contract                                                             |
+| --------------------------- | -------------------------------------------------------------------- |
+| `start_production`          | Supplier: `opened` → `in_production`; optional production location   |
+| `pause_production`          | Supplier: set pause while in production                              |
+| `resume_production`         | Supplier: clear pause while in production                            |
+| `complete_production`       | Supplier: `in_production` → `quality_check`                          |
+| `pass_qc`                   | Supplier: `quality_check` → `packaging`                              |
+| `fail_qc`                   | Supplier: reasoned rework to production or terminal failure          |
+| `pack_order`                | Supplier: `packaging` → `ready_to_ship`                              |
+| `mark_ready`                | Readiness alias with a typed wrapper in `lib/fulfillment/service.ts` |
+| `mark_shipped`              | Supplier: `ready_to_ship` → `shipped`; optional tracking reference   |
+| `mark_in_transit`           | Supplier: `shipped` → `in_transit`                                   |
+| `mark_delivered`            | Buyer or supplier: shipped/transit → delivered                       |
+| `complete_fulfillment`      | Buyer only: `delivered` → `completed`; blocked while `is_disputed`   |
+| `cancel_fulfillment`        | Buyer pre-ship or supplier from opened; non-empty reason required    |
+| `fail_production`           | Supplier: production → failed; reason required                       |
+| `raise_fulfillment_dispute` | Buyer only after shipment: set dispute hold and append event         |
+
+## Timeline collaboration RPCs
+
+| RPC                         | Contract                                                                                                     |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `add_fulfillment_milestone` | Supplier owner appends an allowed typed milestone with notes and occurrence time; terminal records reject it |
+| `add_fulfillment_comment`   | Buyer or supplier owner appends a non-empty comment event                                                    |
+
+Neither RPC changes status. Both derive the actor from `auth.uid()`, append through the trusted event helper, and notify only the counterparty.
 
 ## Trusted internal helpers
 
-| Helper | Purpose |
-|---|---|
-| `_create_fulfillment_for_po` | Shared one-per-accepted-PO creation |
-| `_next_fulfillment_order_number` | Generate `TGG-FF-YYYY-######` |
-| `_append_fulfillment_event` | Append immutable audit fact |
-| `_forbid_fulfillment_event_mutation` | Reject event update/delete |
+| Helper                               | Purpose                             |
+| ------------------------------------ | ----------------------------------- |
+| `_create_fulfillment_for_po`         | Shared one-per-accepted-PO creation |
+| `_next_fulfillment_order_number`     | Generate `TGG-FF-YYYY-######`       |
+| `_append_fulfillment_event`          | Append immutable audit fact         |
+| `_forbid_fulfillment_event_mutation` | Reject event update/delete          |
 
 Internal helpers are not client APIs and have client execution revoked.
 
@@ -61,9 +70,9 @@ Every mutator:
 - Fulfillment not found or hidden by authorization.
 - Wrong actor/company.
 - Invalid current status or pause/dispute guard.
-- Missing required failure, QC, or dispute reason; cancellation currently permits omission.
+- Missing required failure, QC, cancellation, dispute, or comment text.
 - Duplicate creation or terminal record.
-- Migration `018` not applied in the target environment.
+- Migration `018` or Phase B migration `023` not applied in the target environment.
 
 Clients should present actionable domain errors without exposing another company’s data.
 
@@ -80,4 +89,4 @@ Clients should present actionable domain errors without exposing another company
 
 ---
 
-**Last Updated:** 2026-07-18
+**Last Updated:** 2026-07-19

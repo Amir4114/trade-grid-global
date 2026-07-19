@@ -456,7 +456,7 @@ await supabase.rpc("issue_purchase_order", { p_purchase_order_id: poId })
 
 ---
 
-## Fulfillment orders (Module 3.2 Phase A)
+## Fulfillment orders (Module 3.2 Phases A and B)
 
 Operational lifecycle after accepted PO. Commercial fields remain on `purchase_orders`.
 
@@ -487,6 +487,15 @@ Operational lifecycle after accepted PO. Commercial fields remain on `purchase_o
 | `fail_production`                                            | `in_production` → `failed`                           | Supplier          |
 | `raise_fulfillment_dispute`                                  | Sets `is_disputed` (hold) after shipment             | Buyer             |
 
+### Timeline operations
+
+| RPC                                                                                       | Purpose                                            | Actor                   |
+| ----------------------------------------------------------------------------------------- | -------------------------------------------------- | ----------------------- |
+| `add_fulfillment_milestone(p_fulfillment_id, p_milestone_type, p_notes?, p_occurred_at?)` | Append canonical milestone event; status unchanged | Supplier owner          |
+| `add_fulfillment_comment(p_fulfillment_id, p_comment)`                                    | Append immutable operational comment               | Buyer or supplier owner |
+
+Supplemental milestone types: `container_loaded`, `shipment_booked`, `departed_port`, `arrived_destination`. Production started, packing complete, and delivered are existing lifecycle events and cannot be duplicated through this RPC. These are timeline facts; port/customs workflows remain Logistics 3.3.
+
 ### `get_fulfillment(p_fulfillment_id uuid)` / `list_fulfillments(p_status, p_limit, p_offset)`
 
 |                 |                                                           |
@@ -504,7 +513,7 @@ await supabase.rpc("start_production", {
 await supabase.rpc("complete_fulfillment", { p_fulfillment_id: fulfillmentId })
 ```
 
-App wrappers: `lib/fulfillment/service.ts` (backend contract; no UI in Phase A).
+App wrappers: `lib/fulfillment/service.ts`. Buyer and supplier UI consumes these through the Orders → Fulfillment segment.
 
 ---
 

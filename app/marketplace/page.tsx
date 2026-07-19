@@ -3,17 +3,21 @@ import { cookies } from "next/headers"
 import { LockKeyhole } from "lucide-react"
 import PageShell from "@/components/layout/PageShell"
 import ProductCard from "@/components/marketplace/ProductCard"
+import { PublicCompanyCard } from "@/components/marketplace/PublicCompanyCard"
 import RFQCard from "@/components/marketplace/RFQCard"
-import SupplierCard from "@/components/marketplace/SupplierCard"
 import BuyerCard from "@/components/profiles/BuyerCard"
 import { Button } from "@/components/ui/button"
-import { buyers, products, rfqs, suppliers } from "@/lib/marketplace/data"
+import { buyers, products, rfqs } from "@/lib/marketplace/data"
+import { listPublicCompanies } from "@/lib/marketplace/public-company"
 import {
   GUEST_SESSION_COOKIE,
   verifyGuestSessionToken,
 } from "@/lib/guest/session"
 
 export default async function MarketplacePage() {
+  const publicCompanies = await listPublicCompanies({
+    verification: "verified",
+  })
   const cookieStore = await cookies()
   const guestToken = cookieStore.get(GUEST_SESSION_COOKIE)?.value
   let guestSession = null
@@ -48,7 +52,7 @@ export default async function MarketplacePage() {
         <div className="grid gap-5 md:grid-cols-4">
           {[
             ["Products", products.length, "/products"],
-            ["Suppliers", suppliers.length, "/suppliers"],
+            ["Companies", publicCompanies.length, "/suppliers"],
             ["Buyers", buyers.length, "/buyers"],
             ["RFQs", rfqs.length, "/rfq"],
           ].map(([label, value, href]) => (
@@ -69,11 +73,17 @@ export default async function MarketplacePage() {
               <Link href="/suppliers">View all</Link>
             </Button>
           </div>
-          <div className="grid gap-5 md:grid-cols-3">
-            {suppliers.slice(0, 3).map((supplier) => (
-              <SupplierCard key={supplier.id} supplier={supplier} />
-            ))}
-          </div>
+          {publicCompanies.length > 0 ? (
+            <div className="grid gap-5 md:grid-cols-3">
+              {publicCompanies.slice(0, 3).map((company) => (
+                <PublicCompanyCard key={company.company_id} company={company} />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-neutral-300 bg-white p-8 text-sm text-neutral-500">
+              Verified companies with published catalogs will appear here.
+            </div>
+          )}
         </section>
         <section>
           <div className="mb-4 flex items-center justify-between">

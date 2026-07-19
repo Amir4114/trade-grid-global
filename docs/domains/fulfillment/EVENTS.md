@@ -4,24 +4,26 @@ Fulfillment events are append-only audit facts. They are distinct from inbox not
 
 ## Event catalog
 
-| Event | Meaning | Typical state effect |
-|---|---|---|
-| `fulfillment.opened` | Operational record created from accepted PO | — → `opened` |
-| `fulfillment.production_started` | Supplier started production | `opened` → `in_production` |
-| `fulfillment.production_paused` | Temporary production hold | Pause flag |
-| `fulfillment.production_resumed` | Production resumed | Clear pause flag |
-| `fulfillment.qc_started` | Production completed and inspection began | `in_production` → `quality_check` |
-| `fulfillment.qc_passed` | Inspection passed | `quality_check` → `packaging` |
-| `fulfillment.qc_rework` | Inspection requires rework | `quality_check` → `in_production` |
-| `fulfillment.qc_failed` | Inspection failed | Rework or `failed` |
-| `fulfillment.packed` | Packing completed | `packaging` → `ready_to_ship` |
-| `fulfillment.shipped` | Goods dispatched | `ready_to_ship` → `shipped` |
-| `fulfillment.in_transit` | Goods marked en route | `shipped` → `in_transit` |
-| `fulfillment.delivered` | Arrival recorded | `shipped`/`in_transit` → `delivered` |
-| `fulfillment.completed` | Buyer confirmed close | `delivered` → `completed` |
-| `fulfillment.cancelled` | Permitted pre-ship cancellation | → `cancelled` |
-| `fulfillment.failed` | Explicit terminal operational failure | → `failed` |
-| `fulfillment.disputed` | Buyer raised a post-shipment operational dispute hold | Dispute flag |
+| Event                             | Meaning                                               | Typical state effect                 |
+| --------------------------------- | ----------------------------------------------------- | ------------------------------------ |
+| `fulfillment.opened`              | Operational record created from accepted PO           | — → `opened`                         |
+| `fulfillment.production_started`  | Supplier started production                           | `opened` → `in_production`           |
+| `fulfillment.production_paused`   | Temporary production hold                             | Pause flag                           |
+| `fulfillment.production_resumed`  | Production resumed                                    | Clear pause flag                     |
+| `fulfillment.qc_started`          | Production completed and inspection began             | `in_production` → `quality_check`    |
+| `fulfillment.qc_passed`           | Inspection passed                                     | `quality_check` → `packaging`        |
+| `fulfillment.qc_rework`           | Inspection requires rework                            | `quality_check` → `in_production`    |
+| `fulfillment.qc_failed`           | Inspection failed                                     | Rework or `failed`                   |
+| `fulfillment.packed`              | Packing completed                                     | `packaging` → `ready_to_ship`        |
+| `fulfillment.shipped`             | Goods dispatched                                      | `ready_to_ship` → `shipped`          |
+| `fulfillment.in_transit`          | Goods marked en route                                 | `shipped` → `in_transit`             |
+| `fulfillment.delivered`           | Arrival recorded                                      | `shipped`/`in_transit` → `delivered` |
+| `fulfillment.completed`           | Buyer confirmed close                                 | `delivered` → `completed`            |
+| `fulfillment.cancelled`           | Permitted pre-ship cancellation                       | → `cancelled`                        |
+| `fulfillment.failed`              | Explicit terminal operational failure                 | → `failed`                           |
+| `fulfillment.disputed`            | Buyer raised a post-shipment operational dispute hold | Dispute flag                         |
+| `fulfillment.milestone_completed` | Supplier recorded a canonical supplemental milestone  | No state change                      |
+| `fulfillment.comment_added`       | Trade party added an operational comment              | No state change                      |
 
 ## Event record contract
 
@@ -34,6 +36,8 @@ Each event records:
 - Human-readable message.
 - Structured, non-sensitive metadata.
 - UTC creation time.
+
+Milestone events additionally carry `milestone_type` and UTC `occurred_at` metadata. The aggregate read orders events by operational occurrence time, then append time and event ID for deterministic chronology. Status-derived milestones continue to use their existing event names.
 
 Events are inserted through `_append_fulfillment_event`; update/delete is blocked. Corrections use a compensating future event, never history rewriting.
 
@@ -49,7 +53,7 @@ Notification rules:
 4. Action URLs must use the application safe-URL policy.
 5. A notification is delivery UX; the event row remains the audit fact.
 
-Current Phase A naming intentionally differs for some facts: packaging stores `fulfillment.packed` while notifying `fulfillment.ready_to_ship`; QC rework stores `fulfillment.qc_rework` while the notification uses `fulfillment.qc_failed`. Production resume is event-only. Deep links target the future Orders/Fulfillment tab, which has no Phase B UI consumer yet.
+Some lifecycle fact and notification names intentionally differ: packaging stores `fulfillment.packed` while notifying `fulfillment.ready_to_ship`; QC rework stores `fulfillment.qc_rework` while the notification uses `fulfillment.qc_failed`. Production resume is event-only. Phase B milestone/comment notifications use matching event type strings and deep-link into the Fulfillment segment.
 
 ## Consumers
 
@@ -69,4 +73,4 @@ No external event bus is implemented. Any future publication must define deliver
 
 ---
 
-**Last Updated:** 2026-07-18
+**Last Updated:** 2026-07-19

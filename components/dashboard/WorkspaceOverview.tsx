@@ -61,6 +61,26 @@ export function WorkspaceOverview({
     role === "buyer"
       ? (company?.target_markets.length ?? 0)
       : (company?.export_markets.length ?? 0)
+  const healthChecks = [
+    Boolean(company?.company_name),
+    Boolean(company?.country),
+    Boolean(company?.business_type),
+    Boolean(company?.company_structure),
+    (company?.categories.length ?? 0) > 0,
+    marketCount > 0,
+  ]
+  const companyHealth = Math.round(
+    (healthChecks.filter(Boolean).length / healthChecks.length) * 100
+  )
+  const pendingTasks = [
+    !company?.onboarding_completed ? "Complete company onboarding" : null,
+    company?.verification_status === "pending"
+      ? "Submit verification evidence"
+      : null,
+    company?.verification_status === "rejected"
+      ? "Review verification feedback"
+      : null,
+  ].filter((task): task is string => Boolean(task))
   const actions = quickActions[role].map((action, index) =>
     index === 2 &&
     (company?.verification_status === "under_review" ||
@@ -77,12 +97,12 @@ export function WorkspaceOverview({
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
       <div className="grid gap-4 sm:grid-cols-2">
         <StatCard
-          label="Onboarding"
-          value={company?.onboarding_completed ? "Complete" : "In progress"}
+          label="Company health"
+          value={`${companyHealth}%`}
           detail={
-            company?.onboarding_completed
-              ? "Company profile is ready"
-              : `Current step: ${company?.onboarding_step || "business information"}`
+            companyHealth === 100
+              ? "Core company profile is complete"
+              : "Complete profile details to improve marketplace trust"
           }
           accent
         />
@@ -129,6 +149,25 @@ export function WorkspaceOverview({
               </Button>
             )
           })}
+        </div>
+        <div className="mt-5 border-t border-neutral-200 pt-5">
+          <p className="text-xs font-semibold tracking-wide text-neutral-500 uppercase">
+            Pending Tasks
+          </p>
+          {pendingTasks.length > 0 ? (
+            <ul className="mt-3 space-y-2 text-sm text-neutral-700">
+              {pendingTasks.map((task) => (
+                <li key={task} className="flex gap-2">
+                  <span className="mt-2 size-1.5 shrink-0 rounded-full bg-amber-500" />
+                  {task}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-3 text-sm text-neutral-500">
+              No company setup tasks require attention.
+            </p>
+          )}
         </div>
       </DashboardPanel>
     </div>

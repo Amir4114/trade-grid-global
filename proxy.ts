@@ -54,8 +54,10 @@ export async function proxy(request: NextRequest) {
 
   if (isProtectedPath(pathname) && !user) {
     const loginUrl = request.nextUrl.clone()
+    const nextPath = `${pathname}${request.nextUrl.search}`
     loginUrl.pathname = "/login"
-    loginUrl.searchParams.set("next", pathname)
+    loginUrl.search = ""
+    loginUrl.searchParams.set("next", nextPath)
     return redirectWithSession(loginUrl, supabaseResponse)
   }
 

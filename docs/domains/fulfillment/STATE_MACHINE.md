@@ -31,39 +31,46 @@ stateDiagram-v2
 
 ## States
 
-| State | Meaning | Primary next actor |
-|---|---|---|
-| `opened` | Operational record created, production not started | Supplier |
-| `in_production` | Manufacturing/processing underway | Supplier |
-| `quality_check` | Mandatory inspection stage | Supplier |
-| `packaging` | Goods being packed to PO requirements | Supplier |
-| `ready_to_ship` | Packed and cleared for dispatch | Supplier |
-| `shipped` | Handed off/left supplier control | Supplier |
-| `in_transit` | En route; lightweight until Logistics 3.3 | Supplier/system later |
-| `delivered` | Arrival asserted by buyer or supplier | Buyer |
-| `completed` | Buyer-confirmed operational close | Terminal |
-| `cancelled` | Permitted pre-shipment abort | Terminal |
-| `failed` | Explicit terminal operational failure | Terminal |
+| State           | Meaning                                            | Primary next actor    |
+| --------------- | -------------------------------------------------- | --------------------- |
+| `opened`        | Operational record created, production not started | Supplier              |
+| `in_production` | Manufacturing/processing underway                  | Supplier              |
+| `quality_check` | Mandatory inspection stage                         | Supplier              |
+| `packaging`     | Goods being packed to PO requirements              | Supplier              |
+| `ready_to_ship` | Packed and cleared for dispatch                    | Supplier              |
+| `shipped`       | Handed off/left supplier control                   | Supplier              |
+| `in_transit`    | En route; lightweight until Logistics 3.3          | Supplier/system later |
+| `delivered`     | Arrival asserted by buyer or supplier              | Buyer                 |
+| `completed`     | Buyer-confirmed operational close                  | Terminal              |
+| `cancelled`     | Permitted pre-shipment abort                       | Terminal              |
+| `failed`        | Explicit terminal operational failure              | Terminal              |
 
 ## Transition contract
 
-| Action | From → To / effect | Actor | Guard |
-|---|---|---|---|
-| Start production | `opened` → `in_production` | Supplier | Own Fulfillment |
-| Pause/resume | Flag while `in_production` | Supplier | No status change |
-| Complete production | `in_production` → `quality_check` | Supplier | Not paused |
-| Pass QC | `quality_check` → `packaging` | Supplier | QC cannot be skipped |
-| Fail QC for rework | `quality_check` → `in_production` | Supplier | Reason required |
-| Terminal QC fail | `quality_check` → `failed` | Supplier | Reason required |
-| Pack | `packaging` → `ready_to_ship` | Supplier | Ordered path |
-| Mark shipped | `ready_to_ship` → `shipped` | Supplier | Ordered path |
-| Mark in transit | `shipped` → `in_transit` | Supplier | Ordered path |
-| Mark delivered | `shipped`/`in_transit` → `delivered` | Buyer or supplier | Own party |
-| Complete | `delivered` → `completed` | Buyer | No dispute hold |
-| Cancel | Pre-ship → `cancelled` | Buyer | Not shipped; policy expects a reason, current RPC permits omission |
-| Cancel | `opened` → `cancelled` | Supplier | Policy expects a reason, current RPC permits omission |
-| Production failure | `in_production` → `failed` | Supplier | Reason |
-| Raise dispute | Flag/event | Buyer | Post-shipment only; blocks completion |
+| Action              | From → To / effect                   | Actor             | Guard                                 |
+| ------------------- | ------------------------------------ | ----------------- | ------------------------------------- |
+| Start production    | `opened` → `in_production`           | Supplier          | Own Fulfillment                       |
+| Pause/resume        | Flag while `in_production`           | Supplier          | No status change                      |
+| Complete production | `in_production` → `quality_check`    | Supplier          | Not paused                            |
+| Pass QC             | `quality_check` → `packaging`        | Supplier          | QC cannot be skipped                  |
+| Fail QC for rework  | `quality_check` → `in_production`    | Supplier          | Reason required                       |
+| Terminal QC fail    | `quality_check` → `failed`           | Supplier          | Reason required                       |
+| Pack                | `packaging` → `ready_to_ship`        | Supplier          | Ordered path                          |
+| Mark shipped        | `ready_to_ship` → `shipped`          | Supplier          | Ordered path                          |
+| Mark in transit     | `shipped` → `in_transit`             | Supplier          | Ordered path                          |
+| Mark delivered      | `shipped`/`in_transit` → `delivered` | Buyer or supplier | Own party                             |
+| Complete            | `delivered` → `completed`            | Buyer             | No dispute hold                       |
+| Cancel              | Pre-ship → `cancelled`               | Buyer             | Not shipped; reason required          |
+| Cancel              | `opened` → `cancelled`               | Supplier          | Reason required                       |
+| Production failure  | `in_production` → `failed`           | Supplier          | Reason                                |
+| Raise dispute       | Flag/event                           | Buyer             | Post-shipment only; blocks completion |
+
+## Non-state timeline operations
+
+- Suppliers append canonical milestones through `add_fulfillment_milestone`; terminal Fulfillments reject new milestones.
+- Buyers and suppliers append comments through `add_fulfillment_comment`.
+- These operations create immutable events and update activity time but do not mutate lifecycle status.
+- `departed_port` and `arrived_destination` are manual operational facts only. Port/customs state machines remain Logistics 3.3.
 
 ## Forbidden behavior
 
@@ -89,4 +96,4 @@ Transition RPCs lock/read the current record, validate expected state and actor,
 
 ---
 
-**Last Updated:** 2026-07-18
+**Last Updated:** 2026-07-19

@@ -46,19 +46,19 @@ Ownership/status indexes, paginated list RPCs, immutable snapshots, and domain s
 
 ## Consistency findings
 
-| Finding | Impact | Disposition |
-|---|---|---|
-| Living status docs disagreed on whether PO/Fulfillment exist | Engineers may build from obsolete assumptions | Targeted living docs aligned in this sprint |
-| `ARCHITECTURE_STATUS_v0.3.0.md` contains later edits but retains v0.3 framing and many stale sections | Ambiguous “master” status | Reclassified as historical snapshot in architecture index |
-| `ROADMAP.md`, `MILESTONES.md`, `BACKLOG.md`, and `FUTURE_FEATURES.md` lagged `CURRENT_STATUS.md` | Planning priorities were misleading | Updated in this sprint |
-| `GLOSSARY.md` said PO/Order was not implemented | Terminology conflict | Updated with PO/Fulfillment/Orders definitions |
-| `TESTING.md` omitted PO and Fulfillment scripts | Verification discovery gap | Updated and linked to verification matrix |
-| Current architecture references cited migrations 001–016 | Architecture coverage ended before current baseline | Current references updated to 001–021; v0.3 snapshot remains historical |
-| “Order”, “Order Lifecycle”, and “Fulfillment” are sometimes interchangeable | Risks reintroducing PO/operations ambiguity | Canonical rule: PO = commercial; Fulfillment = operational; Orders = UI umbrella |
-| Release target, npm version, and existing Git tag are mixed in prose | Readers may infer an uncreated tag exists | Standards now require explicit target/pending labels |
-| `v0.5.0-phase-a` exists without a matching release package | Verification and limitation evidence is not preserved beside the tag | Record as release-process debt; do not fabricate a historical package in this sprint |
-| Exact scripts `verify-authentication` and `verify-marketplace` do not exist | Requested commands cannot run literally | Canonical equivalents documented |
-| Windows search output used mixed path separators | Could look like duplicate files | Git inventory confirmed no normalized duplicate tracked paths |
+| Finding                                                                                               | Impact                                                               | Disposition                                                                          |
+| ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Living status docs disagreed on whether PO/Fulfillment exist                                          | Engineers may build from obsolete assumptions                        | Targeted living docs aligned in this sprint                                          |
+| `ARCHITECTURE_STATUS_v0.3.0.md` contains later edits but retains v0.3 framing and many stale sections | Ambiguous “master” status                                            | Reclassified as historical snapshot in architecture index                            |
+| `ROADMAP.md`, `MILESTONES.md`, `BACKLOG.md`, and `FUTURE_FEATURES.md` lagged `CURRENT_STATUS.md`      | Planning priorities were misleading                                  | Updated in this sprint                                                               |
+| `GLOSSARY.md` said PO/Order was not implemented                                                       | Terminology conflict                                                 | Updated with PO/Fulfillment/Orders definitions                                       |
+| `TESTING.md` omitted PO and Fulfillment scripts                                                       | Verification discovery gap                                           | Updated and linked to verification matrix                                            |
+| Current architecture references cited migrations 001–016                                              | Architecture coverage ended before current baseline                  | Current references updated to 001–021; v0.3 snapshot remains historical              |
+| “Order”, “Order Lifecycle”, and “Fulfillment” are sometimes interchangeable                           | Risks reintroducing PO/operations ambiguity                          | Canonical rule: PO = commercial; Fulfillment = operational; Orders = UI umbrella     |
+| Release target, npm version, and existing Git tag are mixed in prose                                  | Readers may infer an uncreated tag exists                            | Standards now require explicit target/pending labels                                 |
+| `v0.5.0-phase-a` exists without a matching release package                                            | Verification and limitation evidence is not preserved beside the tag | Record as release-process debt; do not fabricate a historical package in this sprint |
+| Exact scripts `verify-authentication` and `verify-marketplace` do not exist                           | Requested commands cannot run literally                              | Canonical equivalents documented                                                     |
+| Windows search output used mixed path separators                                                      | Could look like duplicate files                                      | Git inventory confirmed no normalized duplicate tracked paths                        |
 
 ## Technical debt
 
@@ -71,9 +71,8 @@ Ownership/status indexes, paginated list RPCs, immutable snapshots, and domain s
 7. Mock marketplace/admin pages can be mistaken for live trust surfaces.
 8. One-user-per-company model limits enterprise account delegation.
 9. No event publication/versioning contract, observability baseline, or event retention policy.
-10. Fulfillment Phase B UI and rich document workflow remain unimplemented.
+10. Fulfillment rich document ownership/retention and upload workflow remains unimplemented.
 11. Fulfillment storage permits either party to update/delete shared-path objects, while document metadata has no supported client registration path.
-12. Fulfillment cancellation reason is optional in SQL despite the locked “with reason” policy.
 
 ## Documentation gaps
 
@@ -88,14 +87,14 @@ Ownership/status indexes, paginated list RPCs, immutable snapshots, and domain s
 1. Update stale living documents and label historical snapshots unambiguously.
 2. Add a CI documentation gate for relative links, duplicate headings, and forbidden stale status phrases.
 3. Introduce isolated Supabase test environments and a verification matrix job.
-4. Add browser E2E after Fulfillment Phase B, starting with RFQ → PO → Fulfillment.
+4. Add automated browser E2E for RFQ → PO → Fulfillment.
 5. Create domain folders for Identity and Commercial using the new template.
 6. Define event export/versioning before external integrations.
 7. Add observability for RPC failures, lifecycle dwell time, and authorization denials without logging sensitive terms.
 8. Design multi-user company membership before large enterprise onboarding.
 9. Define event/document retention and partitioning triggers before high volume.
 10. Keep Logistics, Claims, and Financial entities separate from Fulfillment.
-11. Harden Fulfillment evidence ownership/retention, add document metadata RPCs, and align cancellation validation before Phase B is declared complete.
+11. Harden Fulfillment evidence ownership/retention and add document metadata RPCs before enabling uploads.
 
 ## Lessons learned
 
@@ -108,38 +107,38 @@ Ownership/status indexes, paginated list RPCs, immutable snapshots, and domain s
 
 ## Engineering review
 
-| Lens | Assessment |
-|---|---|
-| Architecture | Strong source-of-truth split and trusted lifecycle pattern |
-| Documentation | Substantive but historically inconsistent; permanent foundation now defined |
-| Maintainability | Improved by domain ownership and cross-references |
-| Scalability | Sound database foundations; operations/observability need maturation |
-| Consistency | Canonical terminology established; stale documents remain debt until refreshed |
-| Future-proofing | Good extension points for Logistics, Claims, Finance, Analytics, and AI |
-| Knowledge transfer | Improved through index, template, domain map, and verification inventory |
-| Repository organization | Coherent top-level structure; domain documentation adoption should continue |
+| Lens                    | Assessment                                                                     |
+| ----------------------- | ------------------------------------------------------------------------------ |
+| Architecture            | Strong source-of-truth split and trusted lifecycle pattern                     |
+| Documentation           | Substantive but historically inconsistent; permanent foundation now defined    |
+| Maintainability         | Improved by domain ownership and cross-references                              |
+| Scalability             | Sound database foundations; operations/observability need maturation           |
+| Consistency             | Canonical terminology established; stale documents remain debt until refreshed |
+| Future-proofing         | Good extension points for Logistics, Claims, Finance, Analytics, and AI        |
+| Knowledge transfer      | Improved through index, template, domain map, and verification inventory       |
+| Repository organization | Coherent top-level structure; domain documentation adoption should continue    |
 
 ## Quality gate record
 
-| Gate | Result | Evidence / limitation |
-|---|---|---|
-| Architecture | Pass | Index, domain model, standards, template, Fulfillment contract |
-| Typecheck | Pass | `npm run typecheck` |
-| Lint | Pass with 6 pre-existing warnings | 0 errors; image/unused-disable warnings outside docs |
-| Build | Pass | Next.js production build completed |
-| Migration | N/A | Documentation-only; no SQL or migration changes |
-| Authentication verification | Pass | `verify-auth-flow.mjs` |
-| Marketplace foundation | Pass with 2 skips | `verify-product-system.mjs`; service-role admin checks skipped |
-| RFQ verification | Pass with 5 skips | Service-role notification checks skipped |
-| Quotation verification | Pass with 3 skips | Service-role notification checks skipped |
-| Award verification | Pass with 3 skips | Service-role notification checks skipped |
-| Purchase Order verification | Pass with 4 skips | Service-role storage/notification checks skipped |
-| Fulfillment verification | Pass with 4 skips | Service-role storage/event/notification checks skipped |
-| Foundation sprint security review | Pass after correction | Corrected dispute completion guard and buyer-only dispute actor docs |
-| Documentation links | Pass | 76 Markdown files; no broken relative file links |
-| Browser test checklist | N/A for foundation sprint | That sprint made no UI/runtime changes; Fulfillment Phase B UI was not implemented |
-| Known limitations | Pass | Recorded in this report and domain security docs |
-| Foundation sprint ready for commit | **Yes** | Documentation-only scope confirmed for the work reviewed here |
+| Gate                               | Result                            | Evidence / limitation                                                              |
+| ---------------------------------- | --------------------------------- | ---------------------------------------------------------------------------------- |
+| Architecture                       | Pass                              | Index, domain model, standards, template, Fulfillment contract                     |
+| Typecheck                          | Pass                              | `npm run typecheck`                                                                |
+| Lint                               | Pass with 6 pre-existing warnings | 0 errors; image/unused-disable warnings outside docs                               |
+| Build                              | Pass                              | Next.js production build completed                                                 |
+| Migration                          | N/A                               | Documentation-only; no SQL or migration changes                                    |
+| Authentication verification        | Pass                              | `verify-auth-flow.mjs`                                                             |
+| Marketplace foundation             | Pass with 2 skips                 | `verify-product-system.mjs`; service-role admin checks skipped                     |
+| RFQ verification                   | Pass with 5 skips                 | Service-role notification checks skipped                                           |
+| Quotation verification             | Pass with 3 skips                 | Service-role notification checks skipped                                           |
+| Award verification                 | Pass with 3 skips                 | Service-role notification checks skipped                                           |
+| Purchase Order verification        | Pass with 4 skips                 | Service-role storage/notification checks skipped                                   |
+| Fulfillment verification           | Pass with 4 skips                 | Service-role storage/event/notification checks skipped                             |
+| Foundation sprint security review  | Pass after correction             | Corrected dispute completion guard and buyer-only dispute actor docs               |
+| Documentation links                | Pass                              | 76 Markdown files; no broken relative file links                                   |
+| Browser test checklist             | N/A for foundation sprint         | That sprint made no UI/runtime changes; Fulfillment Phase B UI was not implemented |
+| Known limitations                  | Pass                              | Recorded in this report and domain security docs                                   |
+| Foundation sprint ready for commit | **Yes**                           | Documentation-only scope confirmed for the work reviewed here                      |
 
 For the foundation sprint reviewed here, no migration, RPC, service, React,
 Supabase, script, or business-logic file changed. The later Buyer onboarding and

@@ -24,39 +24,40 @@ Items below are **Not implemented** unless another status is stated.
 
 ## Trade execution
 
-| Feature | Status |
-|---------|--------|
-| Purchase orders | Implemented in code (`017`) |
-| Fulfillment database/RPC contract | Implemented in code (`018`) |
-| Fulfillment UI and rich document workflow | **Not implemented.** |
-| Shipping / logistics visibility | **Not implemented.** |
-| Trade document packs on orders | **Not implemented.** |
-| Negotiation chat | **Not implemented.** |
+| Feature                            | Status                      |
+| ---------------------------------- | --------------------------- |
+| Purchase orders                    | Implemented in code (`017`) |
+| Fulfillment database/RPC contract  | Implemented in code (`018`) |
+| Fulfillment operations and UI      | Implemented in code (`023`) |
+| Fulfillment rich document workflow | **Not implemented.**        |
+| Shipping / logistics visibility    | **Not implemented.**        |
+| Trade document packs on orders     | **Not implemented.**        |
+| Negotiation chat                   | **Not implemented.**        |
 
 ## Finance
 
-| Feature | Status |
-|---------|--------|
-| Invoices | **Not implemented.** |
+| Feature           | Status               |
+| ----------------- | -------------------- |
+| Invoices          | **Not implemented.** |
 | Payments / escrow | **Not implemented.** |
-| Trade financing | **Not implemented.** |
+| Trade financing   | **Not implemented.** |
 
 ## AI
 
-| Feature | Status |
-|---------|--------|
-| Production AI matching / assistant | **Not implemented.** |
-| Mock `/ai-sourcing` UI | Present (mock only) |
-| AI notification emitters | **Not implemented.** (types reserved) |
+| Feature                            | Status                                |
+| ---------------------------------- | ------------------------------------- |
+| Production AI matching / assistant | **Not implemented.**                  |
+| Mock `/ai-sourcing` UI             | Present (mock only)                   |
+| AI notification emitters           | **Not implemented.** (types reserved) |
 
 ## Platform & growth
 
-| Feature | Status |
-|---------|--------|
-| Subscription billing | **Not implemented.** |
-| Premium verified tier | **Not implemented.** (vision only) |
-| Live admin analytics | **Not implemented.** (mock) |
-| RFQ auto-expiry job | **Not implemented.** |
+| Feature                 | Status                                                  |
+| ----------------------- | ------------------------------------------------------- |
+| Subscription billing    | **Not implemented.**                                    |
+| Premium verified tier   | **Not implemented.** (vision only)                      |
+| Live admin analytics    | **Not implemented.** (mock)                             |
+| RFQ auto-expiry job     | **Not implemented.**                                    |
 | Buyer counter-offers UX | **Not implemented.** (schema allows `offered_by=buyer`) |
 
 ## References

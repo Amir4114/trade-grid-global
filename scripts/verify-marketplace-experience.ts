@@ -82,6 +82,30 @@ const checks: Array<{ label: string; condition: boolean }> = [
     label: "similarly prefixed admin path is rejected",
     condition: !isRoleDashboardPath("/administer", "admin"),
   },
+  {
+    label: "Buyer fulfillment deep link survives authentication",
+    condition:
+      resolvePostAuthRedirectPath({
+        role: "buyer",
+        companyExists: true,
+        onboardingCompleted: true,
+        verificationStatus: "verified",
+        nextPath:
+          "/dashboard/buyer/orders?tab=fulfillment&id=00000000-0000-0000-0000-000000000000",
+      }) ===
+      "/dashboard/buyer/orders?tab=fulfillment&id=00000000-0000-0000-0000-000000000000",
+  },
+  {
+    label: "Cross-role fulfillment deep link is rejected",
+    condition:
+      resolvePostAuthRedirectPath({
+        role: "buyer",
+        companyExists: true,
+        onboardingCompleted: true,
+        verificationStatus: "verified",
+        nextPath: "/dashboard/supplier/orders?tab=fulfillment",
+      }) === "/dashboard/buyer",
+  },
 ]
 
 let passed = 0

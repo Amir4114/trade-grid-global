@@ -1,12 +1,9 @@
 import { BarChart3 } from "lucide-react"
 
 import DashboardShell from "@/components/dashboard/DashboardShell"
+import type { UserRole } from "@/lib/database/types"
 
-export function WorkspaceAnalyticsPlaceholder({
-  role,
-}: {
-  role: "buyer" | "supplier"
-}) {
+export function WorkspaceAnalyticsPlaceholder({ role }: { role: UserRole }) {
   return (
     <DashboardShell
       role={role}

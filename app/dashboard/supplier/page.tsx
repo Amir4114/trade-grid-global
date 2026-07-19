@@ -1,15 +1,13 @@
 "use client"
 
-import DashboardPanel from "@/components/dashboard/DashboardPanel"
 import DashboardShell from "@/components/dashboard/DashboardShell"
-import DataTable from "@/components/dashboard/DataTable"
+import { WorkspaceNotificationPreview } from "@/components/dashboard/WorkspaceNotificationPreview"
 import { WorkspaceOverview } from "@/components/dashboard/WorkspaceOverview"
+import { WorkspaceRecentActivity } from "@/components/dashboard/WorkspaceRecentActivity"
 import { useCompany } from "@/contexts/AuthProvider"
-import { quotes, rfqs } from "@/lib/marketplace/data"
 
 export default function SupplierDashboardPage() {
   const { company } = useCompany()
-  const openRfqs = rfqs.filter((item) => item.status === "Open").length
 
   return (
     <DashboardShell
@@ -19,22 +17,9 @@ export default function SupplierDashboardPage() {
     >
       <WorkspaceOverview role="supplier" company={company} />
 
-      <div className="mt-6">
-        <DashboardPanel
-          title="Matching RFQs"
-          description={`${openRfqs} open RFQs · ${quotes.length} quotations in the current workspace`}
-        >
-          <DataTable
-            columns={[
-              { key: "productName", label: "Product" },
-              { key: "buyerCompany", label: "Buyer" },
-              { key: "quantity", label: "Quantity" },
-              { key: "status", label: "Status" },
-              { key: "deadline", label: "Deadline" },
-            ]}
-            rows={rfqs.slice(0, 6)}
-          />
-        </DashboardPanel>
+      <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <WorkspaceRecentActivity role="supplier" company={company} />
+        <WorkspaceNotificationPreview />
       </div>
     </DashboardShell>
   )

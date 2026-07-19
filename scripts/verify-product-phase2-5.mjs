@@ -52,27 +52,39 @@ function fatal(message) {
 
 async function signUpCompany(label, role) {
   const email = `p25-${role}-${label}-${stamp}@tradegrid.test`
-  const { data, error } = await supabase.auth.signUp({ email, password })
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        tradegrid_marketplace_signup: true,
+        marketplace_role: role,
+        full_name: `${label} Test`,
+        company_name: `${label} Co`,
+      },
+    },
+  })
   if (error) fatal(`${label} signup failed: ${error.message}`)
   const userId = data.user?.id
-  await supabase
-    .from("profiles")
-    .upsert({ id: userId, email, role }, { onConflict: "id" })
-  await supabase.from("companies").upsert(
-    {
-      user_id: userId,
-      company_name: `${label} Co`,
-      account_type: role,
+  if (!userId) fatal(`${label} signup returned no user`)
+
+  const companyUpdate = await supabase
+    .from("companies")
+    .update({
       onboarding_completed: false,
       onboarding_step: "business_info",
-    },
-    { onConflict: "user_id" }
-  )
-  const { data: company } = await supabase
+    })
+    .eq("user_id", userId)
+  if (companyUpdate.error)
+    fatal(`${label} company update failed: ${companyUpdate.error.message}`)
+
+  const { data: company, error: companyError } = await supabase
     .from("companies")
     .select("id")
     .eq("user_id", userId)
     .single()
+  if (companyError)
+    fatal(`${label} company load failed: ${companyError.message}`)
   return { email, userId, companyId: company?.id }
 }
 

@@ -18,8 +18,13 @@ Dates use commit / tag dates from the repository history where available.
 - Migration `020_verification_case_evidence_lock.sql` for immutable case evidence, review-before-decision, reasoned rejection/replacement, material identity invalidation, and canonical trust constraints.
 - Migration `021_atomic_marketplace_signup.sql` for transactional Auth/profile/company provisioning and authenticated recovery of legacy incomplete registrations.
 - Migration `022_pending_company_document_management.sql` for owner deletion of pending, unsubmitted company evidence using ordered Storage/metadata authorization.
+- Migration `023_fulfillment_phase_b_operations.sql` for supplier milestones, party comments, chronological fulfillment aggregates, and required cancellation reasons.
 - Admin short-lived signed document review links and shared verification recovery states.
 - Locked Trust & Verification architecture decisions and domain lifecycle contract.
+- SEO-ready public company pages over the existing `public_suppliers` and
+  `public_products` disclosure boundary.
+- Marketplace route skeletons and recoverable error states.
+- Buyer and Supplier Fulfillment workspaces with status filters, linked PO context, progress, milestones, immutable timeline, comments, and role-permitted lifecycle actions.
 
 ### Changed
 
@@ -56,6 +61,18 @@ Dates use commit / tag dates from the repository history where available.
 - Redirected successful verification submissions to role Workspace Overview.
 - Added under-review workspace access guidance, trust-sensitive action gates,
   verification progress cards, and Buyer/Supplier Analytics placeholders.
+- Replaced the generic dashboard header with one shared Buyer/Supplier/Admin
+  workspace header that derives role summaries from existing RLS-filtered data.
+- Expanded Workspace Overview with company health, pending tasks, recent
+  activity, notifications, and role-specific quick actions.
+- Replaced the fixture-backed supplier directory with the production public
+  supplier projection and canonical friendly company URLs.
+- Consolidated all role Analytics routes on one explicit no-metrics placeholder.
+- Froze Marketplace Foundation presentation architecture in AD-ME-003 and
+  AD-ME-004 without database or security-contract changes.
+- Completed Fulfillment Phase B over the existing Phase A aggregate: milestones
+  and comments are typed append-only events, Logistics statuses remain deferred,
+  and notification deep links now resolve to the operational workspace.
 
 ---
 

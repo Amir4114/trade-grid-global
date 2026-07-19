@@ -49,6 +49,7 @@ Domain context: [DOMAIN_MODEL.md](./DOMAIN_MODEL.md) · [Fulfillment Entity Map]
 | `020_verification_case_evidence_lock.sql`     | Case-scoped evidence, canonical status/risk constraints, review-before-decision, rejection replacement, and material identity invalidation |
 | `021_atomic_marketplace_signup.sql`           | Atomic Auth/profile/company provisioning plus one-time recovery for legacy incomplete registrations                                        |
 | `022_pending_company_document_management.sql` | Owner preview/replacement support and ordered deletion of pending, unsubmitted company evidence only                                       |
+| `023_fulfillment_phase_b_operations.sql`      | Fulfillment milestones/comments, chronological aggregate reads, and cancellation reason enforcement                                        |
 
 ---
 
@@ -478,7 +479,7 @@ Storage: private bucket `purchase-order-docs` path `pos/<buyer_company_id>/<po_i
 |               |                                                                                                   |
 | ------------- | ------------------------------------------------------------------------------------------------- |
 | **Purpose**   | Operational execution after accepted PO (Module 3.2). Commercial terms stay on `purchase_orders`. |
-| **Migration** | `018`                                                                                             |
+| **Migration** | `018` foundation; `023` Phase B event operations and hardening                                    |
 
 Key columns: `fulfillment_number` (`TGG-FF-YYYY-######`), unique `purchase_order_id`, party FKs, `status`, `is_paused`, `is_disputed`, operational timestamps (UTC), cancel/fail/dispute reasons
 
@@ -486,7 +487,7 @@ Key columns: `fulfillment_number` (`TGG-FF-YYYY-######`), unique `purchase_order
 
 RLS: buyer/supplier SELECT own; admin SELECT — mutations RPC-only
 
-RPCs: `create_fulfillment`, `start_production`, `pause_production`, `resume_production`, `complete_production`, `pass_qc`, `fail_qc`, `pack_order`, `mark_ready`, `mark_shipped`, `mark_in_transit`, `mark_delivered`, `complete_fulfillment`, `cancel_fulfillment`, `fail_production`, `raise_fulfillment_dispute`, `get_fulfillment`, `list_fulfillments`
+RPCs: `create_fulfillment`, `add_fulfillment_milestone`, `add_fulfillment_comment`, `start_production`, `pause_production`, `resume_production`, `complete_production`, `pass_qc`, `fail_qc`, `pack_order`, `mark_ready`, `mark_shipped`, `mark_in_transit`, `mark_delivered`, `complete_fulfillment`, `cancel_fulfillment`, `fail_production`, `raise_fulfillment_dispute`, `get_fulfillment`, `list_fulfillments`
 
 Auto-create: `accept_purchase_order` calls `_create_fulfillment_for_po` (AD-3.2-004)
 

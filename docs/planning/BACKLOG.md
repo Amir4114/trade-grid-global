@@ -19,36 +19,37 @@ Actionable items visible from the current codebase/docs. Tracker tooling (Jira/L
 
 ## Current Status
 
-| Item | Status |
-|------|--------|
+| Item                         | Status               |
+| ---------------------------- | -------------------- |
 | Formal ticket system in repo | **Not implemented.** |
-| This backlog snapshot | Documentation only |
+| This backlog snapshot        | Documentation only   |
 
 ## P0 — Before / with Module 3
 
-| ID | Item | Status |
-|----|------|--------|
-| B001 | Confirm migration `016` applied on all envs | Ops |
-| B002 | Design and implement PO schema from `quotation_awards` | Complete in code (`017`) |
-| B003 | Replace mock buyer Orders page with live Purchase Orders | Complete |
-| B004 | Fulfillment Phase B buyer/supplier UI and document workflow | Planned |
+| ID   | Item                                                           | Status                   |
+| ---- | -------------------------------------------------------------- | ------------------------ |
+| B001 | Confirm migration `016` applied on all envs                    | Ops                      |
+| B002 | Design and implement PO schema from `quotation_awards`         | Complete in code (`017`) |
+| B003 | Replace mock buyer Orders page with live Purchase Orders       | Complete                 |
+| B004 | Fulfillment Phase B buyer/supplier UI                          | Complete in code (`023`) |
+| B005 | Fulfillment document ownership, retention, and upload workflow | Planned                  |
 
 ## P1 — Product quality
 
-| ID | Item | Status |
-|----|------|--------|
-| B010 | Wire or retire public `/rfq` mock | **Not implemented.** |
-| B011 | Label/remove mock Inquiries, Saved Suppliers, Admin Analytics/RFQs | Open |
-| B012 | Supplier certifications CRUD (beyond static placeholder) | **Not implemented.** |
-| B013 | Offer payment-terms / cert fields (schema change) | **Not implemented.** |
+| ID   | Item                                                               | Status               |
+| ---- | ------------------------------------------------------------------ | -------------------- |
+| B010 | Wire or retire public `/rfq` mock                                  | **Not implemented.** |
+| B011 | Label/remove mock Inquiries, Saved Suppliers, Admin Analytics/RFQs | Open                 |
+| B012 | Supplier certifications CRUD (beyond static placeholder)           | **Not implemented.** |
+| B013 | Offer payment-terms / cert fields (schema change)                  | **Not implemented.** |
 
 ## P2 — Platform
 
-| ID | Item | Status |
-|----|------|--------|
-| B020 | Linked Supabase CLI project in repo | **Not implemented.** |
+| ID   | Item                                 | Status               |
+| ---- | ------------------------------------ | -------------------- |
+| B020 | Linked Supabase CLI project in repo  | **Not implemented.** |
 | B021 | E2E test suite beyond verify scripts | **Not implemented.** |
-| B022 | Observability (Sentry etc.) | **Not implemented.** |
+| B022 | Observability (Sentry etc.)          | **Not implemented.** |
 
 ## References
 

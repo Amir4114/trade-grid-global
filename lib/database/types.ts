@@ -1347,6 +1347,24 @@ export type Database = {
         Returns: FulfillmentOrder
       }
 
+      add_fulfillment_milestone: {
+        Args: {
+          p_fulfillment_id: string
+          p_milestone_type: string
+          p_notes?: string | null
+          p_occurred_at?: string | null
+        }
+        Returns: FulfillmentOrderEvent
+      }
+
+      add_fulfillment_comment: {
+        Args: {
+          p_fulfillment_id: string
+          p_comment: string
+        }
+        Returns: FulfillmentOrderEvent
+      }
+
       start_production: {
         Args: {
           p_fulfillment_id: string

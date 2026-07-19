@@ -1,4 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js"
 
 import type {
   Database,
@@ -6,24 +6,30 @@ import type {
   FulfillmentOrderDocument,
   FulfillmentOrderEvent,
   FulfillmentOrderStatus,
-} from "@/lib/database/types";
+} from "@/lib/database/types"
 
-type Client = SupabaseClient<Database>;
+type Client = SupabaseClient<Database>
 
 export type FulfillmentDetail = {
-  fulfillment_order: FulfillmentOrder;
-  events: FulfillmentOrderEvent[];
-  documents: FulfillmentOrderDocument[];
-};
+  fulfillment_order: FulfillmentOrder
+  events: FulfillmentOrderEvent[]
+  documents: FulfillmentOrderDocument[]
+}
 
 export type FulfillmentListResult = {
-  rows: FulfillmentOrder[];
-  limit: number;
-  offset: number;
-};
+  rows: FulfillmentOrder[]
+  limit: number
+  offset: number
+}
+
+export type FulfillmentMilestoneType =
+  | "container_loaded"
+  | "shipment_booked"
+  | "departed_port"
+  | "arrived_destination"
 
 function asFulfillment(row: unknown): FulfillmentOrder {
-  return row as FulfillmentOrder;
+  return row as FulfillmentOrder
 }
 
 export async function createFulfillment(
@@ -32,9 +38,40 @@ export async function createFulfillment(
 ): Promise<FulfillmentOrder> {
   const { data, error } = await supabase.rpc("create_fulfillment", {
     p_purchase_order_id: purchaseOrderId,
-  });
-  if (error) throw new Error(error.message);
-  return asFulfillment(data);
+  })
+  if (error) throw new Error(error.message)
+  return asFulfillment(data)
+}
+
+export async function addFulfillmentMilestone(
+  supabase: Client,
+  fulfillmentId: string,
+  milestoneType: FulfillmentMilestoneType,
+  options?: { notes?: string; occurredAt?: string }
+): Promise<FulfillmentOrderEvent> {
+  const { data, error } = await supabase.rpc("add_fulfillment_milestone", {
+    p_fulfillment_id: fulfillmentId,
+    p_milestone_type: milestoneType,
+    p_notes: options?.notes?.trim() || null,
+    p_occurred_at: options?.occurredAt ?? null,
+  })
+  if (error) throw new Error(error.message)
+  return data as FulfillmentOrderEvent
+}
+
+export async function addFulfillmentComment(
+  supabase: Client,
+  fulfillmentId: string,
+  comment: string
+): Promise<FulfillmentOrderEvent> {
+  const normalized = comment.trim()
+  if (!normalized) throw new Error("A comment is required.")
+  const { data, error } = await supabase.rpc("add_fulfillment_comment", {
+    p_fulfillment_id: fulfillmentId,
+    p_comment: normalized,
+  })
+  if (error) throw new Error(error.message)
+  return data as FulfillmentOrderEvent
 }
 
 export async function startProduction(
@@ -45,9 +82,9 @@ export async function startProduction(
   const { data, error } = await supabase.rpc("start_production", {
     p_fulfillment_id: fulfillmentId,
     p_production_location: productionLocation ?? null,
-  });
-  if (error) throw new Error(error.message);
-  return asFulfillment(data);
+  })
+  if (error) throw new Error(error.message)
+  return asFulfillment(data)
 }
 
 export async function pauseProduction(
@@ -58,9 +95,9 @@ export async function pauseProduction(
   const { data, error } = await supabase.rpc("pause_production", {
     p_fulfillment_id: fulfillmentId,
     p_reason: reason ?? null,
-  });
-  if (error) throw new Error(error.message);
-  return asFulfillment(data);
+  })
+  if (error) throw new Error(error.message)
+  return asFulfillment(data)
 }
 
 export async function resumeProduction(
@@ -69,9 +106,9 @@ export async function resumeProduction(
 ): Promise<FulfillmentOrder> {
   const { data, error } = await supabase.rpc("resume_production", {
     p_fulfillment_id: fulfillmentId,
-  });
-  if (error) throw new Error(error.message);
-  return asFulfillment(data);
+  })
+  if (error) throw new Error(error.message)
+  return asFulfillment(data)
 }
 
 export async function completeProduction(
@@ -80,9 +117,9 @@ export async function completeProduction(
 ): Promise<FulfillmentOrder> {
   const { data, error } = await supabase.rpc("complete_production", {
     p_fulfillment_id: fulfillmentId,
-  });
-  if (error) throw new Error(error.message);
-  return asFulfillment(data);
+  })
+  if (error) throw new Error(error.message)
+  return asFulfillment(data)
 }
 
 export async function passQc(
@@ -91,9 +128,9 @@ export async function passQc(
 ): Promise<FulfillmentOrder> {
   const { data, error } = await supabase.rpc("pass_qc", {
     p_fulfillment_id: fulfillmentId,
-  });
-  if (error) throw new Error(error.message);
-  return asFulfillment(data);
+  })
+  if (error) throw new Error(error.message)
+  return asFulfillment(data)
 }
 
 export async function failQc(
@@ -106,9 +143,9 @@ export async function failQc(
     p_fulfillment_id: fulfillmentId,
     p_reason: reason,
     p_terminal: terminal,
-  });
-  if (error) throw new Error(error.message);
-  return asFulfillment(data);
+  })
+  if (error) throw new Error(error.message)
+  return asFulfillment(data)
 }
 
 export async function packOrder(
@@ -117,9 +154,20 @@ export async function packOrder(
 ): Promise<FulfillmentOrder> {
   const { data, error } = await supabase.rpc("pack_order", {
     p_fulfillment_id: fulfillmentId,
-  });
-  if (error) throw new Error(error.message);
-  return asFulfillment(data);
+  })
+  if (error) throw new Error(error.message)
+  return asFulfillment(data)
+}
+
+export async function markReady(
+  supabase: Client,
+  fulfillmentId: string
+): Promise<FulfillmentOrder> {
+  const { data, error } = await supabase.rpc("mark_ready", {
+    p_fulfillment_id: fulfillmentId,
+  })
+  if (error) throw new Error(error.message)
+  return asFulfillment(data)
 }
 
 export async function markShipped(
@@ -130,9 +178,9 @@ export async function markShipped(
   const { data, error } = await supabase.rpc("mark_shipped", {
     p_fulfillment_id: fulfillmentId,
     p_tracking_reference: trackingReference ?? null,
-  });
-  if (error) throw new Error(error.message);
-  return asFulfillment(data);
+  })
+  if (error) throw new Error(error.message)
+  return asFulfillment(data)
 }
 
 export async function markInTransit(
@@ -143,9 +191,9 @@ export async function markInTransit(
   const { data, error } = await supabase.rpc("mark_in_transit", {
     p_fulfillment_id: fulfillmentId,
     p_tracking_reference: trackingReference ?? null,
-  });
-  if (error) throw new Error(error.message);
-  return asFulfillment(data);
+  })
+  if (error) throw new Error(error.message)
+  return asFulfillment(data)
 }
 
 export async function markDelivered(
@@ -154,9 +202,9 @@ export async function markDelivered(
 ): Promise<FulfillmentOrder> {
   const { data, error } = await supabase.rpc("mark_delivered", {
     p_fulfillment_id: fulfillmentId,
-  });
-  if (error) throw new Error(error.message);
-  return asFulfillment(data);
+  })
+  if (error) throw new Error(error.message)
+  return asFulfillment(data)
 }
 
 export async function completeFulfillment(
@@ -165,22 +213,24 @@ export async function completeFulfillment(
 ): Promise<FulfillmentOrder> {
   const { data, error } = await supabase.rpc("complete_fulfillment", {
     p_fulfillment_id: fulfillmentId,
-  });
-  if (error) throw new Error(error.message);
-  return asFulfillment(data);
+  })
+  if (error) throw new Error(error.message)
+  return asFulfillment(data)
 }
 
 export async function cancelFulfillment(
   supabase: Client,
   fulfillmentId: string,
-  reason?: string
+  reason: string
 ): Promise<FulfillmentOrder> {
+  const normalized = reason.trim()
+  if (!normalized) throw new Error("A cancellation reason is required.")
   const { data, error } = await supabase.rpc("cancel_fulfillment", {
     p_fulfillment_id: fulfillmentId,
-    p_reason: reason ?? null,
-  });
-  if (error) throw new Error(error.message);
-  return asFulfillment(data);
+    p_reason: normalized,
+  })
+  if (error) throw new Error(error.message)
+  return asFulfillment(data)
 }
 
 export async function failProduction(
@@ -191,9 +241,9 @@ export async function failProduction(
   const { data, error } = await supabase.rpc("fail_production", {
     p_fulfillment_id: fulfillmentId,
     p_reason: reason,
-  });
-  if (error) throw new Error(error.message);
-  return asFulfillment(data);
+  })
+  if (error) throw new Error(error.message)
+  return asFulfillment(data)
 }
 
 export async function raiseFulfillmentDispute(
@@ -204,9 +254,9 @@ export async function raiseFulfillmentDispute(
   const { data, error } = await supabase.rpc("raise_fulfillment_dispute", {
     p_fulfillment_id: fulfillmentId,
     p_reason: reason,
-  });
-  if (error) throw new Error(error.message);
-  return asFulfillment(data);
+  })
+  if (error) throw new Error(error.message)
+  return asFulfillment(data)
 }
 
 export async function getFulfillment(
@@ -215,11 +265,11 @@ export async function getFulfillment(
 ): Promise<FulfillmentDetail | null> {
   const { data, error } = await supabase.rpc("get_fulfillment", {
     p_fulfillment_id: fulfillmentId,
-  });
-  if (error) throw new Error(error.message);
-  if (!data || typeof data !== "object") return null;
-  const payload = data as Record<string, unknown>;
-  if (!payload.fulfillment_order) return null;
+  })
+  if (error) throw new Error(error.message)
+  if (!data || typeof data !== "object") return null
+  const payload = data as Record<string, unknown>
+  if (!payload.fulfillment_order) return null
   return {
     fulfillment_order: asFulfillment(payload.fulfillment_order),
     events: Array.isArray(payload.events)
@@ -228,30 +278,30 @@ export async function getFulfillment(
     documents: Array.isArray(payload.documents)
       ? (payload.documents as FulfillmentOrderDocument[])
       : [],
-  };
+  }
 }
 
 export async function listFulfillments(
   supabase: Client,
   options?: {
-    status?: FulfillmentOrderStatus | null;
-    limit?: number;
-    offset?: number;
+    status?: FulfillmentOrderStatus | null
+    limit?: number
+    offset?: number
   }
 ): Promise<FulfillmentListResult> {
   const { data, error } = await supabase.rpc("list_fulfillments", {
     p_status: options?.status ?? null,
     p_limit: options?.limit ?? 50,
     p_offset: options?.offset ?? 0,
-  });
-  if (error) throw new Error(error.message);
-  const payload = (data ?? {}) as Record<string, unknown>;
+  })
+  if (error) throw new Error(error.message)
+  const payload = (data ?? {}) as Record<string, unknown>
   const rows = Array.isArray(payload.rows)
     ? payload.rows.map((row) => asFulfillment(row))
-    : [];
+    : []
   return {
     rows,
     limit: typeof payload.limit === "number" ? payload.limit : 50,
     offset: typeof payload.offset === "number" ? payload.offset : 0,
-  };
+  }
 }

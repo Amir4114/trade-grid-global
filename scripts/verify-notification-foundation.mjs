@@ -72,43 +72,45 @@ async function signIn(email) {
 
 async function createAccount(label, role) {
   const email = `notif-${role}-${label}-${stamp}@tradegrid.test`
-  const { data, error } = await supabase.auth.signUp({ email, password })
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        tradegrid_marketplace_signup: true,
+        marketplace_role: role,
+        full_name: `${label} Test`,
+        company_name: `${label} Company`,
+      },
+    },
+  })
   if (error) fatal(`${label} signup failed: ${error.message}`)
   const userId = data.user?.id
+  if (!userId) fatal(`${label} signup returned no user`)
 
-  const { error: profileError } = await supabase.from("profiles").upsert(
-    {
-      id: userId,
-      email,
-      full_name: `${label} Test`,
-      role,
-    },
-    { onConflict: "id" }
-  )
-  if (profileError) fatal(`${label} profile failed: ${profileError.message}`)
-
-  const { error: companyError } = await supabase.from("companies").upsert(
-    {
-      user_id: userId,
-      company_name: `${label} Company`,
+  const writer = serviceClient ?? supabase
+  const { error: companyError } = await writer
+    .from("companies")
+    .update({
       country: "IN",
       business_type: "Trader",
       company_structure: "Private",
-      verification_status: "pending",
-      risk_score: 50,
-      account_type: role,
       onboarding_completed: true,
       onboarding_step: "completed",
-    },
-    { onConflict: "user_id" }
-  )
+      ...(serviceClient
+        ? { verification_status: "pending", risk_score: 50 }
+        : {}),
+    })
+    .eq("user_id", userId)
   if (companyError) fatal(`${label} company failed: ${companyError.message}`)
 
-  const { data: company } = await supabase
+  const { data: company, error: companyLoadError } = await writer
     .from("companies")
     .select("id")
     .eq("user_id", userId)
     .single()
+  if (companyLoadError)
+    fatal(`${label} company load failed: ${companyLoadError.message}`)
 
   return { email, userId, companyId: company?.id }
 }

@@ -19,31 +19,32 @@ Product milestones only. Day-to-day tasks → [BACKLOG.md](./BACKLOG.md).
 
 ## Current Status
 
-| Milestone | Version / tag | Status |
-|-----------|---------------|--------|
-| Procurement complete through award | `v0.3.0-procurement-complete` / npm `0.3.0` | Shipped |
-| Purchase Orders | `v0.4.0-purchase-orders` / npm `0.4.0` | Tagged |
-| Fulfillment Phase A | `v0.5.0-phase-a` | Tagged; UI pending |
+| Milestone                          | Version / tag                               | Status             |
+| ---------------------------------- | ------------------------------------------- | ------------------ |
+| Procurement complete through award | `v0.3.0-procurement-complete` / npm `0.3.0` | Shipped            |
+| Purchase Orders                    | `v0.4.0-purchase-orders` / npm `0.4.0`      | Tagged             |
+| Fulfillment Phase A                | `v0.5.0-phase-a`                            | Tagged; UI pending |
 
 ## Shipped
 
-| Milestone | Approx. migrations | Notes |
-|-----------|-------------------|-------|
-| Auth & onboarding foundation | 001–005, 007 | v0.1 era |
-| Product system + lifecycle | 006–010 | v0.1 |
-| Notifications + settings guard + verification ops | 011–013 | v0.2 |
-| RFQ foundation | 014 | v0.2 |
-| Quotation system | 015 | v0.2 |
-| Award & supplier selection | 016 | **v0.3.0** |
-| Purchase Orders | 017 | **v0.4.0 code baseline** |
-| Fulfillment database/RPC contract | 018 | **v0.5.0 Phase A code baseline** |
+| Milestone                                         | Approx. migrations | Notes                            |
+| ------------------------------------------------- | ------------------ | -------------------------------- |
+| Auth & onboarding foundation                      | 001–005, 007       | v0.1 era                         |
+| Product system + lifecycle                        | 006–010            | v0.1                             |
+| Notifications + settings guard + verification ops | 011–013            | v0.2                             |
+| RFQ foundation                                    | 014                | v0.2                             |
+| Quotation system                                  | 015                | v0.2                             |
+| Award & supplier selection                        | 016                | **v0.3.0**                       |
+| Purchase Orders                                   | 017                | **v0.4.0 code baseline**         |
+| Fulfillment database/RPC contract                 | 018                | **v0.5.0 Phase A code baseline** |
+| Fulfillment operations/UI hardening               | 023                | **v0.5.0 Phase B code baseline** |
 
 ## Next
 
-| Milestone | Module | Status |
-|-----------|--------|--------|
-| Fulfillment buyer/supplier dashboards | Module 3.2 Phase B | Planned / **Not implemented.** |
-| Logistics shipments/carriers | Module 3.3 | Planned / **Not implemented.** |
+| Milestone                             | Module             | Status                                                     |
+| ------------------------------------- | ------------------ | ---------------------------------------------------------- |
+| Fulfillment buyer/supplier dashboards | Module 3.2 Phase B | **Release-verified and frozen.**                           |
+| Logistics shipments/carriers          | Module 3.3         | Planned / **Not implemented.**                             |
 
 ## Later
 

@@ -14,9 +14,9 @@ Fulfillment domain: [domains/fulfillment/README.md](../domains/fulfillment/READM
 | ---------------------------- | ------------------------------------------------------------------------- |
 | **Product version (stable)** | `v0.4.0-purchase-orders`                                                  |
 | **Latest tagged milestone**  | `v0.5.0-phase-a` — Module 3.2 Phase A                                     |
-| **In progress**              | `v0.5.0-order-lifecycle` — Module 3.2 **Phase B (service/UI)**            |
+| **In progress**              | `v0.5.0-order-lifecycle` — global gate pending Trust migration `020`     |
 | **Existing Git tags**        | `v0.3.0-procurement-complete`, `v0.4.0-purchase-orders`, `v0.5.0-phase-a` |
-| **Current branch**           | `main`                                                                    |
+| **Current branch**           | `release/v0.5.1-fulfillment-stabilization`                                |
 | **npm package.json version** | `0.4.0`                                                                   |
 
 ---
@@ -47,7 +47,8 @@ Buyer onboarding and settings were stabilized before Fulfillment Phase B:
 
 The loader/root-cause fix required no migration. The subsequent verification
 security and architecture reviews required additive migrations `019` and `020`;
-both must be applied before the hardened lifecycle is active.
+migration `019` is active, but migration `020` remains absent from the connected
+project and must be applied before the global release tag.
 
 ## Marketplace experience redesign — Phase 1
 
@@ -64,16 +65,38 @@ both must be applied before the hardened lifecycle is active.
 - Buyer/Supplier Analytics navigation is present as an explicit placeholder;
   no analytics data model or metrics were introduced.
 
+## Marketplace Foundation final polish — M1.1
+
+- Every Buyer, Supplier, and Admin route now uses one role-aware workspace
+  header with Profile/Company identity, canonical verification status, current
+  section context, and RLS-filtered summary counts.
+- Buyer and Supplier Overview remain the default post-login destinations and
+  now surface company health, verification, pending setup tasks, quick actions,
+  recent domain activity, and notification previews.
+- The public company directory is backed by the existing anonymous-safe
+  `public_suppliers` projection. SEO-ready `/company/{name--companyId}` pages
+  combine that projection with published products and never query owner-only
+  company fields.
+- Marketplace company/product routes now provide explicit skeleton, empty, and
+  recoverable error states.
+- Buyer, Supplier, and Admin Analytics use the same placeholder and introduce
+  no charts, metrics, schema, or pipelines.
+- Marketplace Foundation presentation decisions are locked by AD-ME-003 and
+  AD-ME-004. No migration, RLS, RPC, trigger, Auth, signup, or Trust change is
+  part of M1.1.
+
 ---
 
 ## Current milestone
 
-**Module 3.2 Order Lifecycle — Phase A (DB + RPC contract) implemented in code.**
+**Module 3.2 Order Lifecycle — Phase B release-verified and frozen.**
 
 - `fulfillment_orders` is the operational child of an accepted Purchase Order.
 - PO remains immutable commercial truth; fulfillment owns production → QC → pack → ship → deliver → complete.
 - Auto-create on `accept_purchase_order` (AD-3.2-004).
-- **No React UI / nav / pages in Phase A** (deferred to backend/UI phases).
+- Migration `023` adds append-only supplemental milestones/comments, deterministic chronological aggregate reads, and required cancellation reasons.
+- Buyer and Supplier Orders workspaces now provide Fulfillment lists, progress, timelines, milestones, comments, and role-permitted actions.
+- Final live verification passed 44 checks with 0 failures and 2 service-role-only skips; buyer and supplier browser mutation/readback flows passed.
 
 ---
 
@@ -91,6 +114,7 @@ both must be applied before the hardened lifecycle is active.
 | Award & supplier selection                           | Complete (ensure migration `016` applied)         |
 | Purchase Order system (Module 3.1)                   | Complete in code (ensure migration `017` applied) |
 | Order Fulfillment DB foundation (Module 3.2 Phase A) | Complete in code (ensure migration `018` applied) |
+| Order Fulfillment operations/UI (Module 3.2 Phase B) | Release-verified and frozen; migration `023` live |
 
 ---
 
@@ -98,13 +122,13 @@ both must be applied before the hardened lifecycle is active.
 
 Complete inventory and planned coverage: [VERIFICATION_MATRIX.md](../VERIFICATION_MATRIX.md).
 
-| Area            | Script                                | Notes                             |
-| --------------- | ------------------------------------- | --------------------------------- |
-| Fulfillment     | `verify-order-fulfillment-system.mjs` | Requires migrations `017` + `018` |
-| Purchase orders | `verify-purchase-order-system.mjs`    | Requires `017`                    |
-| Awards          | `verify-award-system.mjs`             | Requires `016`                    |
-| Quotations      | `verify-quotation-system.mjs`         | Requires `014`+`015`              |
-| RFQ             | `verify-rfq-foundation.mjs`           | Requires `014`                    |
+| Area            | Script                                | Notes                                   |
+| --------------- | ------------------------------------- | --------------------------------------- |
+| Fulfillment     | `verify-order-fulfillment-system.mjs` | Requires migrations `017`, `018`, `023` |
+| Purchase orders | `verify-purchase-order-system.mjs`    | Requires `017`                          |
+| Awards          | `verify-award-system.mjs`             | Requires `016`                          |
+| Quotations      | `verify-quotation-system.mjs`         | Requires `014`+`015`                    |
+| RFQ             | `verify-rfq-foundation.mjs`           | Requires `014`                          |
 
 Notification assertions often **SKIP** without `SUPABASE_SERVICE_ROLE_KEY`.
 
@@ -114,32 +138,28 @@ Notification assertions often **SKIP** without `SUPABASE_SERVICE_ROLE_KEY`.
 
 | Blocker                                                            | Impact                                                                                          |
 | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| Migration `018` must be applied before fulfillment RPCs work       | Tables/RPCs missing until applied                                                               |
-| Migration `017` must remain applied                                | PO accept auto-creates fulfillment                                                              |
-| Migration `019` is not auto-applied in the current environment     | Verification evidence and protected-field guards remain inactive until applied                  |
-| Migration `020` is not auto-applied in the current environment     | Case-scoped evidence and decision integrity remain inactive until applied                       |
-| Migration `021` is not auto-applied in the current environment     | New signup remains non-atomic until the Auth provisioning trigger is applied                    |
-| Migration `022` is not auto-applied in the current environment     | Pending document deletion remains unavailable until owner Storage/metadata policies are applied |
+| Migration `020` is missing from the connected environment          | Case-scoped evidence verifier is blocked; apply before the global release tag                   |
 | No `SUPABASE_SERVICE_ROLE_KEY` / `DATABASE_URL` in local agent env | Cannot auto-apply SQL or assert all notifications                                               |
 | Public `/rfq` not wired to live `rfqs`                             | Marketing RFQ surface disconnected                                                              |
-| Fulfillment UI not started (Phase A scope)                         | Operators cannot drive lifecycle from dashboard yet                                             |
 
 ---
 
 ## Immediate next objective
 
-**Module 3.2 Phase B — backend/service hardening + buyer/supplier Fulfillment UI** (still no Logistics 3.3 / Claims 3.4).
+**Apply Trust migration `020`, rerun its verifier, then design Logistics 3.3
+without adding transportation fields to frozen Fulfillment.**
 
 ---
 
 ## Overall completion estimate
 
-| Scope                                 | Estimate                          |
-| ------------------------------------- | --------------------------------- |
-| Trust + procurement through PO accept | High (code complete; apply `017`) |
-| Fulfillment database + RPC contract   | High (code complete; apply `018`) |
-| Fulfillment UI / logistics / payments | Not started                       |
+| Scope                                 | Estimate                                           |
+| ------------------------------------- | -------------------------------------------------- |
+| Trust + procurement through PO accept | High (migration `020` deployment gap remains)      |
+| Fulfillment database + RPC contract   | Release-verified and frozen                        |
+| Fulfillment UI                        | Release-verified on buyer/supplier desktop/mobile  |
+| Logistics / claims / payments         | Not started; separate future domains               |
 
 ---
 
-**Last Updated:** 2026-07-18
+**Last Updated:** 2026-07-19

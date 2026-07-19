@@ -8,12 +8,12 @@ An accepted Purchase Order records what buyer and supplier agreed. It cannot als
 
 ## Current status
 
-- Phase A database and RPC contract: **Implemented in code** by migration `018`.
-- Fulfillment service wrappers: **Implemented in code**.
-- Buyer/supplier Fulfillment UI: **Not implemented**; Phase B.
+- Phase A database and lifecycle contract: **Implemented** by migration `018`.
+- Phase B milestones, comments, timeline hardening, and cancellation policy: **Implemented** by migration `023`.
+- Typed service wrappers and buyer/supplier Fulfillment UI: **Implemented**.
 - First-class shipments, claims, and payments: **Not implemented**.
 
-Activation requires migrations `017` and `018` in the target Supabase environment.
+Activation requires migrations `017`, `018`, and `023` in the target Supabase environment.
 
 ## Documentation
 
@@ -27,7 +27,7 @@ Activation requires migrations `017` and `018` in the target Supabase environmen
 Canonical cross-domain references:
 
 - [Domain model](../../architecture/DOMAIN_MODEL.md)
-- [Locked decisions AD-3.2-*](../../architecture/ARCHITECTURE_DECISIONS.md)
+- [Locked decisions AD-3.2-\*](../../architecture/ARCHITECTURE_DECISIONS.md)
 - [Database schema](../../architecture/DATABASE_SCHEMA.md)
 - [API reference](../../architecture/API_REFERENCE.md)
 - [Product order lifecycle](../../product/ORDER_LIFECYCLE.md)
@@ -39,33 +39,29 @@ Canonical cross-domain references:
 node --use-system-ca scripts/verify-order-fulfillment-system.mjs
 ```
 
-The script covers auto-creation, mandatory QC, the happy path, actor restrictions, cancellation, QC rework, cross-company isolation, append-only events, direct-write denial, aggregate reads, and selected notifications. Service-role-dependent checks may skip. Phase B must add explicit checks that suppliers cannot raise disputes and disputed Fulfillments cannot complete.
+The script covers auto-creation, mandatory QC, the happy path, actor restrictions, reasoned cancellation, milestones, comments, chronological aggregation, dispute holds, cross-company isolation, append-only events, direct-write denial, aggregate reads, and selected notifications. Service-role-dependent checks may skip.
 
 See the [Verification Matrix](../../VERIFICATION_MATRIX.md).
 
 ## Boundary summary
 
-| Owns | Does not own |
-|---|---|
-| Operational status and milestones | PO prices, quantities, Incoterms, parties, payment terms |
-| Production, QC, packing, readiness | Carrier legs and customs workflows |
-| Lightweight shipment status/reference | Claims resolution and refunds |
-| Delivery and buyer completion | Invoices, escrow, or settlement |
-| Operational events and documents | Marketplace discovery |
+| Owns                                  | Does not own                                             |
+| ------------------------------------- | -------------------------------------------------------- |
+| Operational status and milestones     | PO prices, quantities, Incoterms, parties, payment terms |
+| Production, QC, packing, readiness    | Carrier legs and customs workflows                       |
+| Lightweight shipment status/reference | Claims resolution and refunds                            |
+| Delivery and buyer completion         | Invoices, escrow, or settlement                          |
+| Operational events and documents      | Marketplace discovery                                    |
 
-## Future Phase B
+## Phase B boundaries
 
-Phase B should add typed backend/UI hardening and buyer/supplier operational surfaces while preserving Phase A RPCs, PO immutability, mandatory QC, buyer-gated completion, and RLS isolation.
-
-Phase A gaps Phase B must resolve or explicitly accept:
-
-- No application page currently consumes the Fulfillment service or notification deep-link query parameters.
-- Storage objects can be managed by either trade party, but no client/RPC path registers `fulfillment_order_documents` metadata.
-- `cancel_fulfillment` currently accepts a missing reason despite the locked “with reason” policy.
-- The SQL alias `mark_ready` has no dedicated TypeScript service wrapper.
-- No dedicated `releases/v0.5.0-phase-a/` verification artifact exists; this sprint’s live run passed 25 checks with 4 service-role-dependent skips.
+- Orders workspaces expose Purchase Order and Fulfillment segments and consume notification deep links.
+- Supplier actions use the ordered lifecycle RPCs and may append typed milestones.
+- Both parties may append immutable operational comments; buyers remain read-only for supplier-controlled production/QC/dispatch transitions.
+- Milestones are events, not statuses. Port/customs state and carrier integrations remain Logistics 3.3.
+- Document metadata/storage foundations remain read-only in the UI until uploader ownership, retention, and evidence replacement rules are approved.
 
 ---
 
 **Owner:** Trade Operations  
-**Last Updated:** 2026-07-18
+**Last Updated:** 2026-07-19

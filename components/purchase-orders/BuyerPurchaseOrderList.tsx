@@ -1,16 +1,17 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import Link from "next/link"
+import { useEffect, useMemo, useState } from "react"
 
-import PurchaseOrderStatusBadge from "@/components/purchase-orders/PurchaseOrderStatusBadge";
-import DashboardPanel from "@/components/dashboard/DashboardPanel";
-import DashboardShell from "@/components/dashboard/DashboardShell";
-import { Button } from "@/components/ui/button";
-import type { PurchaseOrder, PurchaseOrderStatus } from "@/lib/database/types";
-import { listPurchaseOrders } from "@/lib/purchase-orders/service";
-import { formatPoMoney, formatPoQuantity } from "@/lib/purchase-orders/types";
-import { createClient } from "@/lib/supabase/client";
+import PurchaseOrderStatusBadge from "@/components/purchase-orders/PurchaseOrderStatusBadge"
+import DashboardPanel from "@/components/dashboard/DashboardPanel"
+import DashboardShell from "@/components/dashboard/DashboardShell"
+import { OrdersSegmentNav } from "@/components/fulfillment/OrdersSegmentNav"
+import { Button } from "@/components/ui/button"
+import type { PurchaseOrder, PurchaseOrderStatus } from "@/lib/database/types"
+import { listPurchaseOrders } from "@/lib/purchase-orders/service"
+import { formatPoMoney, formatPoQuantity } from "@/lib/purchase-orders/types"
+import { createClient } from "@/lib/supabase/client"
 
 const FILTERS: Array<{ label: string; value: PurchaseOrderStatus | "all" }> = [
   { label: "All", value: "all" },
@@ -19,39 +20,39 @@ const FILTERS: Array<{ label: string; value: PurchaseOrderStatus | "all" }> = [
   { label: "Accepted", value: "accepted" },
   { label: "Rejected", value: "rejected" },
   { label: "Cancelled", value: "cancelled" },
-];
+]
 
 export default function BuyerPurchaseOrderList() {
-  const supabase = useMemo(() => createClient(), []);
-  const [filter, setFilter] = useState<PurchaseOrderStatus | "all">("all");
-  const [rows, setRows] = useState<PurchaseOrder[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const supabase = useMemo(() => createClient(), [])
+  const [filter, setFilter] = useState<PurchaseOrderStatus | "all">("all")
+  const [rows, setRows] = useState<PurchaseOrder[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    let active = true;
+    let active = true
     void (async () => {
       try {
-        setLoading(true);
+        setLoading(true)
         const result = await listPurchaseOrders(supabase, {
           status: filter === "all" ? null : filter,
-        });
-        if (!active) return;
-        setRows(result.rows);
-        setError(null);
+        })
+        if (!active) return
+        setRows(result.rows)
+        setError(null)
       } catch (err) {
-        if (!active) return;
+        if (!active) return
         setError(
           err instanceof Error ? err.message : "Failed to load purchase orders."
-        );
+        )
       } finally {
-        if (active) setLoading(false);
+        if (active) setLoading(false)
       }
-    })();
+    })()
     return () => {
-      active = false;
-    };
-  }, [supabase, filter]);
+      active = false
+    }
+  }, [supabase, filter])
 
   return (
     <DashboardShell
@@ -64,6 +65,7 @@ export default function BuyerPurchaseOrderList() {
         </Button>
       }
     >
+      <OrdersSegmentNav role="buyer" active="purchase-orders" />
       <DashboardPanel title="Purchase orders">
         <div className="mb-4 flex flex-wrap gap-2">
           {FILTERS.map((item) => (
@@ -85,7 +87,9 @@ export default function BuyerPurchaseOrderList() {
         {error ? (
           <p className="py-10 text-center text-sm text-red-600">{error}</p>
         ) : loading ? (
-          <p className="py-10 text-center text-sm text-neutral-500">Loading...</p>
+          <p className="py-10 text-center text-sm text-neutral-500">
+            Loading...
+          </p>
         ) : rows.length === 0 ? (
           <div className="py-16 text-center">
             <h3 className="text-base font-semibold">No purchase orders yet</h3>
@@ -126,5 +130,5 @@ export default function BuyerPurchaseOrderList() {
         )}
       </DashboardPanel>
     </DashboardShell>
-  );
+  )
 }

@@ -1,29 +1,25 @@
-﻿"use client";
+﻿"use client"
 
-import { useState } from "react";
+import { useState } from "react"
 
-import DashboardHeader from "@/components/dashboard/DashboardHeader";
-import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
-import DashboardTopBar from "@/components/dashboard/DashboardTopBar";
-import OnboardingNotice from "@/components/dashboard/OnboardingNotice";
-import {
-  Sheet,
-  SheetContent,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import { useAuth, useCompany, useProfile } from "@/contexts/AuthProvider";
-import { getDashboardNavigation } from "@/lib/dashboard/navigation";
-import { parseProfileRole, roleLabel } from "@/lib/dashboard/roles";
-import type { UserRole } from "@/lib/marketplace/types";
+import DashboardHeader from "@/components/dashboard/DashboardHeader"
+import DashboardSidebar from "@/components/dashboard/DashboardSidebar"
+import DashboardTopBar from "@/components/dashboard/DashboardTopBar"
+import OnboardingNotice from "@/components/dashboard/OnboardingNotice"
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
+import { useAuth, useCompany, useProfile } from "@/contexts/AuthProvider"
+import { getDashboardNavigation } from "@/lib/dashboard/navigation"
+import { parseProfileRole } from "@/lib/dashboard/roles"
+import type { UserRole } from "@/lib/marketplace/types"
 
 type DashboardShellProps = {
-  role?: UserRole;
-  title: string;
-  description?: string;
-  badge?: string;
-  actions?: React.ReactNode;
-  children: React.ReactNode;
-};
+  role?: UserRole
+  title: string
+  description?: string
+  badge?: string
+  actions?: React.ReactNode
+  children: React.ReactNode
+}
 
 export default function DashboardShell({
   role: expectedRole,
@@ -33,13 +29,13 @@ export default function DashboardShell({
   actions,
   children,
 }: DashboardShellProps) {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const { user, loading: authLoading, error: authError } = useAuth();
-  const { profile, loading: profileLoading } = useProfile();
-  const { company, loading: companyLoading } = useCompany();
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const { user, loading: authLoading, error: authError } = useAuth()
+  const { profile, loading: profileLoading } = useProfile()
+  const { company, loading: companyLoading } = useCompany()
 
-  const loading = authLoading || profileLoading || companyLoading;
-  const resolvedRole = parseProfileRole(profile?.role);
+  const loading = authLoading || profileLoading || companyLoading
+  const resolvedRole = parseProfileRole(profile?.role)
 
   if (loading) {
     return (
@@ -49,7 +45,7 @@ export default function DashboardShell({
           <p className="mt-4 text-sm text-neutral-500">Loading workspace...</p>
         </div>
       </main>
-    );
+    )
   }
 
   if (authError || !user || !profile || !resolvedRole) {
@@ -59,7 +55,7 @@ export default function DashboardShell({
           {authError ?? "Unable to load your account. Please sign in again."}
         </p>
       </main>
-    );
+    )
   }
 
   if (expectedRole && expectedRole !== resolvedRole) {
@@ -69,16 +65,15 @@ export default function DashboardShell({
           You do not have access to this workspace section.
         </p>
       </main>
-    );
+    )
   }
 
-  const navItems = getDashboardNavigation(resolvedRole);
-  const displayBadge = badge ?? company?.company_name ?? roleLabel(resolvedRole);
+  const navItems = getDashboardNavigation(resolvedRole)
   const displayDescription =
     description ??
     (company?.company_name
       ? `${company.company_name} · ${company.country || "Global trade"}`
-      : undefined);
+      : undefined)
 
   return (
     <div className="min-h-screen bg-neutral-100 text-neutral-950">
@@ -113,9 +108,12 @@ export default function DashboardShell({
 
         <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
           <DashboardHeader
+            role={resolvedRole}
+            profile={profile}
+            company={company}
             title={title}
             description={displayDescription}
-            badge={displayBadge}
+            badge={badge}
             actions={actions}
           />
           <OnboardingNotice role={resolvedRole} company={company} />
@@ -123,5 +121,5 @@ export default function DashboardShell({
         </main>
       </div>
     </div>
-  );
+  )
 }

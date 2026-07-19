@@ -10,19 +10,19 @@ Milestones: [MILESTONES.md](./MILESTONES.md) · Backlog: [BACKLOG.md](./BACKLOG.
 
 ## Current Position
 
-| Field | Value |
-|-------|-------|
-| **Latest milestone tag** | `v0.5.0-phase-a` |
-| **Full-release target** | `v0.5.0-order-lifecycle` |
-| **npm version** | `0.4.0` |
-| **Completed** | Module 1 + Module 2 + Module 3.1 Purchase Orders |
-| **In progress** | Module 3.2 — Fulfillment Phase A implemented in code; Phase B UI/services next |
-| **Explicitly deferred** | Finance, production AI, live analytics |
+| Field                    | Value                                                                          |
+| ------------------------ | ------------------------------------------------------------------------------ |
+| **Latest milestone tag** | `v0.5.0-phase-a`                                                               |
+| **Full-release target**  | `v0.5.0-order-lifecycle`                                                       |
+| **npm version**          | `0.4.0`                                                                        |
+| **Completed**            | Module 1 + Module 2 + Module 3.1 Purchase Orders + verified/frozen Module 3.2   |
+| **In progress**          | Global release gate: deploy Trust migration `020`, then begin Logistics design |
+| **Explicitly deferred**  | Finance, production AI, live analytics                                         |
 
 Procurement path:
 
 `RFQ → Quotation → Award → Purchase Order`  
-**Implemented in code:** Fulfillment database/RPC contract (`018`). **Not implemented:** Fulfillment UI, first-class logistics, payments.
+**Implemented in code:** Fulfillment database/RPC contract (`018`), Phase B operations/UI (`023`). **Not implemented:** first-class logistics, claims, payments.
 
 ---
 
@@ -87,7 +87,7 @@ Module 1 (companies, products optional link, notifications).
 
 ## Module 3 — Trade Execution
 
-**Status:** Module 3.1 Purchase Orders **implemented** (`017`); Module 3.2 Fulfillment Phase A **implemented in code** (`018`); later trade-execution modules are not implemented.
+**Status:** Module 3.1 Purchase Orders **implemented** (`017`); Module 3.2 Fulfillment Phases A/B **implemented in code** (`018`, `023`); later trade-execution modules are not implemented.
 
 ### Objectives
 
@@ -95,13 +95,13 @@ Convert awards into executable trade instruments and operational fulfillment vis
 
 ### Major features
 
-| Feature | Status |
-|---------|--------|
-| Purchase Orders (3.1) | **Implemented** (apply `017`) |
-| Order Lifecycle / fulfillment (3.2) | **Phase A DB/RPC implemented in code; Phase B UI pending** |
-| Logistics | **Not implemented.** |
-| Shipping | **Not implemented.** |
-| Trade documents (packing list, CoO, etc. as order artifacts) | Partial metadata table; upload UX limited |
+| Feature                                                      | Status                                            |
+| ------------------------------------------------------------ | ------------------------------------------------- |
+| Purchase Orders (3.1)                                        | **Implemented** (apply `017`)                     |
+| Order Lifecycle / fulfillment (3.2)                          | **Phase B operations and UI implemented in code** |
+| Logistics                                                    | **Not implemented.**                              |
+| Shipping                                                     | **Not implemented.**                              |
+| Trade documents (packing list, CoO, etc. as order artifacts) | Partial metadata table; upload UX limited         |
 
 ### Dependencies
 
@@ -111,12 +111,11 @@ Module 2 awards (`quotation_awards`, winning `offer_id` / commercial snapshot).
 
 **High** (new tables, RLS, state machines, dual-party dashboards).
 
-### Recommended next slice (3.2 Phase B)
+### Remaining Module 3.2 release work
 
-1. Buyer/supplier Fulfillment lists, details, actions, and timelines
-2. Typed service hardening and rich document upload UX
-3. Browser/E2E coverage for PO acceptance through completion
-4. Preserve first-class shipments for Logistics 3.3
+1. Complete migration, regression, security, and browser verification
+2. Preserve rich document upload until uploader ownership/retention is approved
+3. Keep first-class shipments and customs workflows in Logistics 3.3
 
 ---
 
@@ -130,10 +129,10 @@ Settle commercial terms with invoices and payments while preserving auditability
 
 ### Major features
 
-| Feature | Status |
-|---------|--------|
-| Invoices | **Not implemented.** |
-| Payments | **Not implemented.** |
+| Feature                  | Status               |
+| ------------------------ | -------------------- |
+| Invoices                 | **Not implemented.** |
+| Payments                 | **Not implemented.** |
 | Escrow / trade financing | **Not implemented.** |
 
 ### Dependencies
@@ -157,10 +156,10 @@ Assist sourcing with recommendations grounded in platform data and verification 
 
 ### Major features
 
-| Feature | Status |
-|---------|--------|
-| AI supplier matching | **Not implemented.** |
-| AI recommendations | Mock only |
+| Feature                                   | Status               |
+| ----------------------------------------- | -------------------- |
+| AI supplier matching                      | **Not implemented.** |
+| AI recommendations                        | Mock only            |
 | AI trade assistant / risk / RFQ generator | **Not implemented.** |
 
 ### Dependencies
@@ -184,11 +183,11 @@ Provide reporting for admins (and later buyers/suppliers) on funnel health, SLA,
 
 ### Major features
 
-| Feature | Status |
-|---------|--------|
-| Reporting dashboards | Mock placeholder |
-| Admin intelligence | Partial via verification queue only |
-| Marketplace KPIs from live tables | **Not implemented.** |
+| Feature                           | Status                              |
+| --------------------------------- | ----------------------------------- |
+| Reporting dashboards              | Mock placeholder                    |
+| Admin intelligence                | Partial via verification queue only |
+| Marketplace KPIs from live tables | **Not implemented.**                |
 
 ### Dependencies
 

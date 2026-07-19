@@ -6,12 +6,12 @@ Describe purchase orders (Module 3.1) and fulfillment after accept (Module 3.2).
 
 ## Scope
 
-| Layer | Status |
-|-------|--------|
-| Purchase Order issue / accept / reject / cancel | **Implemented** (migration `017`) |
-| Fulfillment DB + RPCs (Phase A) | **Implemented in code** (migration `018` — apply to activate) |
-| Fulfillment UI | **Not implemented** (Phase B+) |
-| Logistics shipment legs / payments / claims | **Not implemented** (Modules 3.3 / payments / 3.4) |
+| Layer                                           | Status                                                        |
+| ----------------------------------------------- | ------------------------------------------------------------- |
+| Purchase Order issue / accept / reject / cancel | **Implemented** (migration `017`)                             |
+| Fulfillment DB + RPCs (Phase A)                 | **Implemented in code** (migration `018` — apply to activate) |
+| Fulfillment operations + UI (Phase B)           | **Implemented in code** (migration `023` + Orders workspace)  |
+| Logistics shipment legs / payments / claims     | **Not implemented** (Modules 3.3 / payments / 3.4)            |
 
 ## Table of contents
 
@@ -23,25 +23,25 @@ Describe purchase orders (Module 3.1) and fulfillment after accept (Module 3.2).
 
 ## Current Status
 
-| Item | Status |
-|------|--------|
-| PO tables & RPCs | Implemented (`017`) |
-| Buyer / supplier Orders dashboards (PO) | Implemented (live) |
-| Commercial snapshot + append-only PO events | Implemented |
-| `fulfillment_orders` + lifecycle RPCs | Implemented in code (`018`) |
-| Auto-create fulfillment on PO accept | Implemented in `018` (AD-3.2-004) |
-| Fulfillment dashboards / nav segments | **Not implemented.** |
-| Logistics / payments / amendments | **Not implemented.** |
+| Item                                        | Status                            |
+| ------------------------------------------- | --------------------------------- |
+| PO tables & RPCs                            | Implemented (`017`)               |
+| Buyer / supplier Orders dashboards (PO)     | Implemented (live)                |
+| Commercial snapshot + append-only PO events | Implemented                       |
+| `fulfillment_orders` + lifecycle RPCs       | Implemented in code (`018`)       |
+| Auto-create fulfillment on PO accept        | Implemented in `018` (AD-3.2-004) |
+| Fulfillment dashboards / nav segments       | **Implemented.**                  |
+| Logistics / payments / amendments           | **Not implemented.**              |
 
 ## Purchase Order flow (3.1)
 
-1. Active `quotation_awards`  
-2. Buyer creates draft PO (commercial + party snapshot)  
-3. Buyer issues PO → supplier notified  
-4. Supplier accepts (commercial baseline) or rejects (reason required)  
-5. Buyer may cancel draft/issued; accepted commercial fields remain immutable  
+1. Active `quotation_awards`
+2. Buyer creates draft PO (commercial + party snapshot)
+3. Buyer issues PO → supplier notified
+4. Supplier accepts (commercial baseline) or rejects (reason required)
+5. Buyer may cancel draft/issued; accepted commercial fields remain immutable
 
-Locked decisions: [ARCHITECTURE_DECISIONS.md](../architecture/ARCHITECTURE_DECISIONS.md) (AD-3.1-*).  
+Locked decisions: [ARCHITECTURE_DECISIONS.md](../architecture/ARCHITECTURE_DECISIONS.md) (AD-3.1-\*).
 Design: [MODULE_3_1_PURCHASE_ORDER_DESIGN.md](../planning/design/MODULE_3_1_PURCHASE_ORDER_DESIGN.md).
 
 ## Fulfillment (3.2)
@@ -57,16 +57,17 @@ Happy path:
 - Cancel: buyer pre-ship; supplier only from `opened` (AD-3.2-005)
 - Shipments / claims deferred (AD-3.2-025 / 012)
 
-**Apply:** `supabase/migrations/018_order_fulfillment_system.sql`  
-**Verify:** `node --use-system-ca scripts/verify-order-fulfillment-system.mjs`  
-**Service:** `lib/fulfillment/service.ts`  
-**Design:** [MODULE_3_2_ORDER_LIFECYCLE_DESIGN.md](../planning/design/MODULE_3_2_ORDER_LIFECYCLE_DESIGN.md)  
+**Apply:** `supabase/migrations/018_order_fulfillment_system.sql`
+**Then apply:** `supabase/migrations/023_fulfillment_phase_b_operations.sql`
+**Verify:** `node --use-system-ca scripts/verify-order-fulfillment-system.mjs`
+**Service:** `lib/fulfillment/service.ts`
+**Design:** [MODULE_3_2_ORDER_LIFECYCLE_DESIGN.md](../planning/design/MODULE_3_2_ORDER_LIFECYCLE_DESIGN.md)
 **Domain documentation:** [domains/fulfillment/README.md](../domains/fulfillment/README.md)
-**Locks:** AD-3.2-001 … AD-3.2-028
+**Locks:** AD-3.2-001 … AD-3.2-029
 
 ## Dependencies
 
-Module 2 awards (complete). Module 3.1 POs (complete — apply `017`). Module 3.2 Phase A (complete in code — apply `018`).
+Module 2 awards (complete). Module 3.1 POs (complete — apply `017`). Module 3.2 Phases A/B (complete in code — apply `018` + `023`).
 
 ## References
 
@@ -81,4 +82,4 @@ Module 2 awards (complete). Module 3.1 POs (complete — apply `017`). Module 3.
 
 ---
 
-**Last Updated:** 2026-07-18
+**Last Updated:** 2026-07-19
