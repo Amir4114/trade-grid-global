@@ -33,6 +33,8 @@ Roles stored on `profiles.role`. Premium tiers — **Not implemented.**
 | Create/publish RFQs | Yes | — | Read (admin RFQ UI partly mock) |
 | Quote on RFQs | — | Yes | — |
 | Award supplier | Yes | — | SELECT awards; award RPC is buyer-only |
+| Purchase Orders | Create/issue/cancel own | Accept/reject own | Read support |
+| Fulfillment Phase A | Cancel/deliver/complete own per state | Production/QC/pack/ship own per state | Read support |
 | Verification command center | — | — | Yes |
 | Notifications | Own | Own | Own + admin alerts |
 

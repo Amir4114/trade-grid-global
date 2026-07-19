@@ -4,14 +4,28 @@ B2B Food & FMCG trading platform focused on **trust**, **verification**, and **p
 
 | | |
 |--|--|
-| **Current version** | `0.4.0` / target tag `v0.4.0-purchase-orders` |
-| **Latest milestone** | RFQ → Quotation → Award → Purchase Order (apply `017`) |
+| **Package version** | `0.4.0` |
+| **Latest tagged milestone** | `v0.5.0-phase-a` — Fulfillment database/RPC foundation |
+| **Full release target** | `v0.5.0-order-lifecycle` — Phase B UI pending |
 | **Root README** | [../README.md](../README.md) |
 | **Contributing** | [../CONTRIBUTING.md](../CONTRIBUTING.md) |
 
 ---
 
 ## Documentation map
+
+### Engineering foundation
+
+| Document | Path |
+|----------|------|
+| Architecture index | [architecture/README.md](./architecture/README.md) |
+| Domain model | [architecture/DOMAIN_MODEL.md](./architecture/DOMAIN_MODEL.md) |
+| Engineering handbook | [STANDARDS.md](./STANDARDS.md) |
+| Verification matrix | [VERIFICATION_MATRIX.md](./VERIFICATION_MATRIX.md) |
+| Domain template | [templates/DOMAIN_TEMPLATE.md](./templates/DOMAIN_TEMPLATE.md) |
+| Trust & Verification domain | [domains/trust-verification/README.md](./domains/trust-verification/README.md) |
+| Fulfillment domain | [domains/fulfillment/README.md](./domains/fulfillment/README.md) |
+| Repository health report | [REPOSITORY_HEALTH_REPORT.md](./REPOSITORY_HEALTH_REPORT.md) |
 
 ### Core
 
@@ -24,7 +38,9 @@ B2B Food & FMCG trading platform focused on **trust**, **verification**, and **p
 
 | Document | Path |
 |----------|------|
-| Architecture status (master) | [architecture/ARCHITECTURE_STATUS_v0.3.0.md](./architecture/ARCHITECTURE_STATUS_v0.3.0.md) |
+| Architecture index (master) | [architecture/README.md](./architecture/README.md) |
+| Domain model | [architecture/DOMAIN_MODEL.md](./architecture/DOMAIN_MODEL.md) |
+| Architecture status (historical v0.3.0 snapshot) | [architecture/ARCHITECTURE_STATUS_v0.3.0.md](./architecture/ARCHITECTURE_STATUS_v0.3.0.md) |
 | System architecture | [architecture/SYSTEM_ARCHITECTURE.md](./architecture/SYSTEM_ARCHITECTURE.md) |
 | Database schema | [architecture/DATABASE_SCHEMA.md](./architecture/DATABASE_SCHEMA.md) |
 | ER diagram | [architecture/ER_DIAGRAM.md](./architecture/ER_DIAGRAM.md) |
@@ -111,11 +127,13 @@ B2B Food & FMCG trading platform focused on **trust**, **verification**, and **p
 
 | Capability | Status |
 |------------|--------|
-| Auth, verification, products, notifications | Implemented |
-| RFQ → quotation → award | Implemented |
-| Orders / payments / logistics / production AI | **Not implemented.** |
+| Auth, products, notifications | Implemented |
+| Trust & Verification | v0.4.1 hardening implemented in code; migrations `019`–`020` and staging certification pending |
+| RFQ → quotation → award → Purchase Order | Implemented in code through migration `017` |
+| Fulfillment database + RPC contract | Implemented in code through migration `018`; UI not implemented |
+| Payments / first-class logistics / production AI | **Not implemented.** |
 
-Detail: [planning/CURRENT_STATUS.md](./planning/CURRENT_STATUS.md) · [architecture/ARCHITECTURE_STATUS_v0.3.0.md](./architecture/ARCHITECTURE_STATUS_v0.3.0.md)
+Detail: [planning/CURRENT_STATUS.md](./planning/CURRENT_STATUS.md) · [architecture/DOMAIN_MODEL.md](./architecture/DOMAIN_MODEL.md)
 
 ---
 

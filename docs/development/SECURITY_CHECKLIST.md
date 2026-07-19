@@ -24,7 +24,7 @@ Complements [../architecture/SECURITY_MODEL.md](../architecture/SECURITY_MODEL.m
 
 ## Current Status
 
-Security model implemented through migration `016`. Checklist automation — **Not implemented.**
+Security model implemented through migration `020`. Checklist automation — **Not implemented.**
 
 ## Authentication
 
@@ -50,6 +50,7 @@ Security model implemented through migration `016`. Checklist automation — **N
 - [ ] Authn/authz before writes
 - [ ] Status machine validated
 - [ ] Internal helpers not granted to `authenticated` unless intended
+- [ ] Trust decisions use case-scoped evidence and reasoned terminal events
 
 ## Secrets
 
@@ -61,6 +62,8 @@ Security model implemented through migration `016`. Checklist automation — **N
 
 - [ ] Path ownership helpers used
 - [ ] Private buckets stay private
+- [ ] Signed URLs are short-lived and issued only after storage RLS authorization
+- [ ] Submitted evidence cannot be mutated outside the trusted decision lifecycle
 
 ## SQL review
 

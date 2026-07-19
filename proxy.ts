@@ -1,4 +1,4 @@
-import { type NextRequest } from "next/server";
+import { type NextRequest } from "next/server"
 
 import {
   fetchAuthRedirectContext,
@@ -9,23 +9,24 @@ import {
   isWrongOnboardingPath,
   resolveOnboardingEntryPath,
   resolvePostAuthRedirectPath,
-} from "@/lib/auth/redirects";
-import { getDashboardPathForRole, parseProfileRole } from "@/lib/dashboard/roles";
+  shouldRedirectOnboardingWorkspaceToDashboard,
+} from "@/lib/auth/redirects"
 import {
-  redirectWithSession,
-  updateSession,
-} from "@/lib/supabase/proxy";
+  getDashboardPathForRole,
+  parseProfileRole,
+} from "@/lib/dashboard/roles"
+import { redirectWithSession, updateSession } from "@/lib/supabase/proxy"
 
 const PUBLIC_AUTH_PATHS = [
   "/login",
   "/signup",
   "/forgot-password",
   "/admin-login",
-];
+]
 
 function isProtectedPath(pathname: string): boolean {
   if (PUBLIC_AUTH_PATHS.includes(pathname)) {
-    return false;
+    return false
   }
 
   return (
@@ -33,7 +34,7 @@ function isProtectedPath(pathname: string): boolean {
     pathname === "/admin" ||
     pathname.startsWith("/admin/") ||
     pathname.startsWith("/onboarding")
-  );
+  )
 }
 
 function redirectTo(
@@ -41,38 +42,38 @@ function redirectTo(
   pathname: string,
   supabaseResponse: Parameters<typeof redirectWithSession>[1]
 ) {
-  const redirectUrl = request.nextUrl.clone();
-  redirectUrl.pathname = pathname;
-  redirectUrl.search = "";
-  return redirectWithSession(redirectUrl, supabaseResponse);
+  const redirectUrl = request.nextUrl.clone()
+  redirectUrl.pathname = pathname
+  redirectUrl.search = ""
+  return redirectWithSession(redirectUrl, supabaseResponse)
 }
 
 export async function proxy(request: NextRequest) {
-  const { supabaseResponse, user, supabase } = await updateSession(request);
-  const { pathname } = request.nextUrl;
+  const { supabaseResponse, user, supabase } = await updateSession(request)
+  const { pathname } = request.nextUrl
 
   if (isProtectedPath(pathname) && !user) {
-    const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = "/login";
-    loginUrl.searchParams.set("next", pathname);
-    return redirectWithSession(loginUrl, supabaseResponse);
+    const loginUrl = request.nextUrl.clone()
+    loginUrl.pathname = "/login"
+    loginUrl.searchParams.set("next", pathname)
+    return redirectWithSession(loginUrl, supabaseResponse)
   }
 
-  const userId = getUserIdFromClaims(user);
+  const userId = getUserIdFromClaims(user)
 
   if (!userId) {
-    return supabaseResponse;
+    return supabaseResponse
   }
 
-  const authContext = await fetchAuthRedirectContext(supabase, userId);
-  const profileRole = parseProfileRole(authContext.role);
+  const authContext = await fetchAuthRedirectContext(supabase, userId)
+  const profileRole = parseProfileRole(authContext.role)
 
   if (!profileRole) {
-    return supabaseResponse;
+    return supabaseResponse
   }
 
-  const dashboardDestination = resolvePostAuthRedirectPath(authContext);
-  const onboardingDestination = resolveOnboardingEntryPath(authContext);
+  const dashboardDestination = resolvePostAuthRedirectPath(authContext)
+  const onboardingDestination = resolveOnboardingEntryPath(authContext)
 
   if (process.env.NODE_ENV !== "production") {
     console.log("[proxy] auth trace", {
@@ -81,27 +82,42 @@ export async function proxy(request: NextRequest) {
       userId,
       role: authContext.role,
       onboardingCompleted: authContext.onboardingCompleted,
+      verificationStatus: authContext.verificationStatus,
       dashboardDestination,
       onboardingDestination,
-    });
+    })
   }
 
   // Neutral entry points route authenticated users to their role destination.
   // /login and /signup must stay publicly accessible.
   if (pathname === "/dashboard") {
-    return redirectTo(request, dashboardDestination, supabaseResponse);
+    return redirectTo(request, dashboardDestination, supabaseResponse)
   }
 
   if (pathname === "/onboarding") {
-    return redirectTo(request, onboardingDestination, supabaseResponse);
+    return redirectTo(request, onboardingDestination, supabaseResponse)
   }
 
-  if (isOnboardingFormPath(pathname) && authContext.onboardingCompleted) {
+  if (
+    isOnboardingFormPath(pathname) &&
+    shouldRedirectOnboardingWorkspaceToDashboard(authContext)
+  ) {
     return redirectTo(
       request,
       getDashboardPathForRole(profileRole),
       supabaseResponse
-    );
+    )
+  }
+
+  if (
+    (pathname === "/admin" || pathname.startsWith("/admin/")) &&
+    profileRole !== "admin"
+  ) {
+    return redirectTo(
+      request,
+      getDashboardPathForRole(profileRole),
+      supabaseResponse
+    )
   }
 
   if (
@@ -112,7 +128,7 @@ export async function proxy(request: NextRequest) {
       request,
       getDashboardPathForRole(profileRole),
       supabaseResponse
-    );
+    )
   }
 
   if (isWrongOnboardingPath(pathname, profileRole)) {
@@ -120,10 +136,10 @@ export async function proxy(request: NextRequest) {
       request,
       getCorrectOnboardingPath(profileRole),
       supabaseResponse
-    );
+    )
   }
 
-  return supabaseResponse;
+  return supabaseResponse
 }
 
 export const config = {
@@ -135,4 +151,4 @@ export const config = {
     "/onboarding",
     "/onboarding/:path*",
   ],
-};
+}

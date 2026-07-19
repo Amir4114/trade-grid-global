@@ -1,15 +1,15 @@
 import {
   canonicalizeInternalPath,
   resolveSafeNotificationActionUrl,
-} from "../lib/notifications/safe-url";
+} from "../lib/notifications/safe-url"
 
 type Case = {
-  label: string;
-  input: string;
-  role?: "buyer" | "supplier" | "admin";
-  expectCanonical: string | null;
-  expectResolved?: string | null;
-};
+  label: string
+  input: string
+  role?: "buyer" | "supplier" | "admin"
+  expectCanonical: string | null
+  expectResolved?: string | null
+}
 
 const cases: Case[] = [
   {
@@ -65,50 +65,64 @@ const cases: Case[] = [
     expectCanonical: "/dashboard/admin/verification",
     expectResolved: "/dashboard/admin/verification",
   },
-];
+  {
+    label: "maps legacy buyer verification action to onboarding documents",
+    input: "/onboarding/verification",
+    role: "buyer",
+    expectCanonical: "/onboarding/verification",
+    expectResolved: "/onboarding/buyer?section=documents",
+  },
+  {
+    label: "allows supplier onboarding document query",
+    input: "/onboarding/supplier?section=documents",
+    role: "supplier",
+    expectCanonical: "/onboarding/supplier?section=documents",
+    expectResolved: "/onboarding/supplier?section=documents",
+  },
+]
 
-let passed = 0;
-const failures: string[] = [];
+let passed = 0
+const failures: string[] = []
 
 for (const testCase of cases) {
-  const canonical = canonicalizeInternalPath(testCase.input);
-  const canonicalOk = canonical === testCase.expectCanonical;
+  const canonical = canonicalizeInternalPath(testCase.input)
+  const canonicalOk = canonical === testCase.expectCanonical
 
   if (!canonicalOk) {
     failures.push(
       `${testCase.label}: expected canonical ${JSON.stringify(testCase.expectCanonical)}, got ${JSON.stringify(canonical)}`
-    );
-    continue;
+    )
+    continue
   }
 
   if (testCase.role !== undefined) {
     const resolved = resolveSafeNotificationActionUrl(
       testCase.input,
       testCase.role
-    );
+    )
     const expectedResolved =
       testCase.expectResolved === undefined
         ? testCase.expectCanonical
-        : testCase.expectResolved;
+        : testCase.expectResolved
 
     if (resolved !== expectedResolved) {
       failures.push(
         `${testCase.label}: expected resolved ${JSON.stringify(expectedResolved)}, got ${JSON.stringify(resolved)}`
-      );
-      continue;
+      )
+      continue
     }
   }
 
-  passed++;
-  console.log(`PASS - ${testCase.label}`);
+  passed++
+  console.log(`PASS - ${testCase.label}`)
 }
 
-console.log(`\nSafe URL verification: ${passed}/${cases.length} passed`);
+console.log(`\nSafe URL verification: ${passed}/${cases.length} passed`)
 
 if (failures.length > 0) {
-  console.log("\nFailures:");
+  console.log("\nFailures:")
   for (const failure of failures) {
-    console.log(` - ${failure}`);
+    console.log(` - ${failure}`)
   }
-  process.exit(1);
+  process.exit(1)
 }

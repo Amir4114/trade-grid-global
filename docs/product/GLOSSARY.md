@@ -33,13 +33,17 @@ Living glossary — update as Module 3+ introduces order/payment terms.
 | **Trusted notification** | Inbox row created only by SECURITY DEFINER helpers |
 | **RPC** | Postgres function exposed via Supabase (`supabase.rpc`) |
 | **RLS** | Row Level Security |
-| **PO / Order** | Purchase order / order domain — **Not implemented.** |
+| **Purchase Order (PO)** | Immutable commercial instrument created from an award; accepted PO is commercial truth |
+| **Fulfillment** | Operational execution record for an accepted PO; owns production through completion status |
+| **Orders** | UI umbrella for Purchase Orders and Fulfillment; not a separate source-of-truth entity |
 | **Escrow** | Payment hold pattern — **Not implemented.** |
 
 ## References
 
 - [PROCUREMENT_WORKFLOW.md](./PROCUREMENT_WORKFLOW.md)
 - [../architecture/DATABASE_SCHEMA.md](../architecture/DATABASE_SCHEMA.md)
+- [../architecture/DOMAIN_MODEL.md](../architecture/DOMAIN_MODEL.md)
+- [../domains/fulfillment/README.md](../domains/fulfillment/README.md)
 
 ## Future notes
 

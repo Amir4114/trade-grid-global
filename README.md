@@ -4,23 +4,23 @@
 
 Not a generic consumer marketplace. Focused on verification, structured RFQs, quotations, and auditable supplier selection.
 
-| | |
-|--|--|
-| **Current version** | `0.4.0` (`package.json`) |
-| **Latest release / Git tag** | `v0.3.0-procurement-complete` (target `v0.4.0-purchase-orders`) |
-| **Milestone** | Procurement complete through supplier award |
-| **Branch** | `main` |
+|                             |                                                           |
+| --------------------------- | --------------------------------------------------------- |
+| **Current version**         | `0.4.0` (`package.json`)                                  |
+| **Latest tagged milestone** | `v0.5.0-phase-a` (Fulfillment database/RPC foundation)    |
+| **Full release target**     | `v0.5.0-order-lifecycle` — Fulfillment Phase B UI pending |
+| **Branch**                  | `main`                                                    |
 
 ---
 
 ## Technology stack
 
-| Layer | Technology |
-|-------|------------|
-| Frontend | Next.js App Router, React 19, TypeScript, Tailwind CSS, shadcn/ui |
-| Backend | Supabase Auth, PostgreSQL, Row Level Security, Storage |
-| Domain logic | SECURITY DEFINER SQL RPCs + TypeScript services (`lib/`) |
-| Hosting | Vercel-oriented Next.js deployment |
+| Layer        | Technology                                                        |
+| ------------ | ----------------------------------------------------------------- |
+| Frontend     | Next.js App Router, React 19, TypeScript, Tailwind CSS, shadcn/ui |
+| Backend      | Supabase Auth, PostgreSQL, Row Level Security, Storage            |
+| Domain logic | SECURITY DEFINER SQL RPCs + TypeScript services (`lib/`)          |
+| Hosting      | Vercel-oriented Next.js deployment                                |
 
 ---
 
@@ -48,8 +48,10 @@ Full detail: [`docs/architecture/ARCHITECTURE_STATUS_v0.3.0.md`](./docs/architec
 - RFQ lifecycle (draft → publish → close/cancel/award)
 - Supplier quotations (draft / submit / revise / withdraw)
 - Buyer compare & award; supplier award history
+- Purchase Orders with immutable commercial snapshots
+- Fulfillment database/RPC foundation with operational audit events
 
-**Not implemented yet:** fulfillment lifecycle beyond PO accept, invoices, payments, logistics, production AI.
+**Not implemented yet:** Fulfillment UI, first-class logistics/shipments, claims, invoices, payments, and production AI.
 
 ---
 
@@ -61,7 +63,7 @@ components/           UI by domain
 contexts/             AuthProvider
 lib/                  Services, types, Supabase clients
 scripts/              Live verification scripts
-supabase/migrations/  SQL migrations 001–016
+supabase/migrations/  SQL migrations 001–022
 docs/                 Product & engineering documentation
 proxy.ts              Auth / dashboard gate
 ```
@@ -74,7 +76,7 @@ proxy.ts              Auth / dashboard gate
 npm install
 cp .env.example .env.local
 # Fill NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY
-# Apply supabase/migrations/001–016 to your Supabase project
+# Apply supabase/migrations/001–022 to your Supabase project
 npm run dev
 ```
 
@@ -105,39 +107,44 @@ Optional for verification scripts:
 
 ## Documentation
 
-| Document | Link |
-|----------|------|
-| Docs home | [`docs/README.md`](./docs/README.md) |
-| Architecture status | [`docs/architecture/ARCHITECTURE_STATUS_v0.3.0.md`](./docs/architecture/ARCHITECTURE_STATUS_v0.3.0.md) |
-| Database schema | [`docs/architecture/DATABASE_SCHEMA.md`](./docs/architecture/DATABASE_SCHEMA.md) |
-| Security model | [`docs/architecture/SECURITY_MODEL.md`](./docs/architecture/SECURITY_MODEL.md) |
-| API / RPC reference | [`docs/architecture/API_REFERENCE.md`](./docs/architecture/API_REFERENCE.md) |
-| Current status | [`docs/planning/CURRENT_STATUS.md`](./docs/planning/CURRENT_STATUS.md) |
-| Roadmap | [`docs/planning/ROADMAP.md`](./docs/planning/ROADMAP.md) |
-| Changelog | [`docs/CHANGELOG.md`](./docs/CHANGELOG.md) |
-| Release notes | [`docs/RELEASE_NOTES.md`](./docs/RELEASE_NOTES.md) |
-| Deployment | [`docs/deployment/DEPLOYMENT.md`](./docs/deployment/DEPLOYMENT.md) |
-| Contributing | [`CONTRIBUTING.md`](./CONTRIBUTING.md) |
+| Document              | Link                                                                             |
+| --------------------- | -------------------------------------------------------------------------------- |
+| Docs home             | [`docs/README.md`](./docs/README.md)                                             |
+| Architecture index    | [`docs/architecture/README.md`](./docs/architecture/README.md)                   |
+| Domain model          | [`docs/architecture/DOMAIN_MODEL.md`](./docs/architecture/DOMAIN_MODEL.md)       |
+| Engineering standards | [`docs/STANDARDS.md`](./docs/STANDARDS.md)                                       |
+| Verification matrix   | [`docs/VERIFICATION_MATRIX.md`](./docs/VERIFICATION_MATRIX.md)                   |
+| Database schema       | [`docs/architecture/DATABASE_SCHEMA.md`](./docs/architecture/DATABASE_SCHEMA.md) |
+| Security model        | [`docs/architecture/SECURITY_MODEL.md`](./docs/architecture/SECURITY_MODEL.md)   |
+| API / RPC reference   | [`docs/architecture/API_REFERENCE.md`](./docs/architecture/API_REFERENCE.md)     |
+| Current status        | [`docs/planning/CURRENT_STATUS.md`](./docs/planning/CURRENT_STATUS.md)           |
+| Roadmap               | [`docs/planning/ROADMAP.md`](./docs/planning/ROADMAP.md)                         |
+| Changelog             | [`docs/CHANGELOG.md`](./docs/CHANGELOG.md)                                       |
+| Release notes         | [`docs/RELEASE_NOTES.md`](./docs/RELEASE_NOTES.md)                               |
+| Deployment            | [`docs/deployment/DEPLOYMENT.md`](./docs/deployment/DEPLOYMENT.md)               |
+| Contributing          | [`CONTRIBUTING.md`](./CONTRIBUTING.md)                                           |
 
 ---
 
 ## Current modules
 
-| Module | Status |
-|--------|--------|
-| Foundation (auth, products, notifications, verification) | Complete |
-| Procurement (RFQ → quotation → award → PO) | Complete in code (`v0.4.0`; apply migration `017`) |
+| Module                                     | Status                                                                           |
+| ------------------------------------------ | -------------------------------------------------------------------------------- |
+| Foundation (auth, products, notifications) | Complete                                                                         |
+| Trust & Verification                       | Hardened in code for v0.4.1; apply migrations `019`–`020` and certify on staging |
+| Procurement (RFQ → quotation → award → PO) | Complete in code (`v0.4.0`; apply migration `017`)                               |
+| Fulfillment (Module 3.2 Phase A)           | Database/RPC contract complete in code (apply migration `018`); UI pending       |
 
 ---
 
 ## Future modules
 
-| Module | Focus |
-|--------|-------|
+| Module                     | Focus                                                  |
+| -------------------------- | ------------------------------------------------------ |
 | Module 3 — Trade execution | Purchase orders, order lifecycle, logistics, documents |
-| Module 4 — Finance | Invoices, payments |
-| Module 5 — AI procurement | Real recommendations (replace mock `/ai-sourcing`) |
-| Module 6 — Analytics | Live reporting / admin intelligence |
+| Module 4 — Finance         | Invoices, payments                                     |
+| Module 5 — AI procurement  | Real recommendations (replace mock `/ai-sourcing`)     |
+| Module 6 — Analytics       | Live reporting / admin intelligence                    |
 
 See [`docs/planning/ROADMAP.md`](./docs/planning/ROADMAP.md).
 
@@ -145,8 +152,8 @@ See [`docs/planning/ROADMAP.md`](./docs/planning/ROADMAP.md).
 
 ## Roadmap
 
-**Now:** Trust + procurement through award.  
-**Next:** Order lifecycle / fulfillment (Module 3.2) on accepted POs.  
+**Now:** Trust + procurement through PO plus Fulfillment Phase A.
+**Next:** Fulfillment Phase B services/UI on accepted POs.
 **Later:** Finance → AI → Analytics.
 
 ---
@@ -155,9 +162,9 @@ See [`docs/planning/ROADMAP.md`](./docs/planning/ROADMAP.md).
 
 > Placeholder — product screenshots to be added for marketing/GitHub social preview.
 
-- Buyer RFQ compare & award — *TBD*
-- Supplier quotation / award history — *TBD*
-- Admin verification command center — *TBD*
+- Buyer RFQ compare & award — _TBD_
+- Supplier quotation / award history — _TBD_
+- Admin verification command center — _TBD_
 
 ---
 

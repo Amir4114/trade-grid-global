@@ -1,91 +1,161 @@
-﻿"use client";
+﻿"use client"
 
-import Link from "next/link";
-import { useState } from "react";
+import Link from "next/link"
+import { useEffect, useState } from "react"
 
 import {
   fetchClientAuthRedirectContext,
   resolvePostAuthRedirectPath,
-} from "@/lib/auth/redirects";
-import { registerMarketplaceAccount } from "@/lib/auth/signup";
-import { createClient } from "@/lib/supabase/client";
-import { toast } from "@/lib/toast";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { PasswordInput } from "@/components/auth/PasswordInput";
+} from "@/lib/auth/redirects"
+import { recoverIncompleteMarketplaceAccount } from "@/lib/auth/signup"
+import { createClient } from "@/lib/supabase/client"
+import { toast } from "@/lib/toast"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { PasswordInput } from "@/components/auth/PasswordInput"
 
-type AccountType = "buyer" | "supplier";
+type AccountType = "buyer" | "supplier"
+
+function isAlreadyRegisteredError(error: {
+  code?: string
+  message: string
+  status?: number
+}): boolean {
+  return (
+    error.code === "user_already_exists" ||
+    /already (?:been )?registered|user already exists/i.test(error.message)
+  )
+}
 
 export default function SignupPage() {
-  const supabase = createClient();
+  const supabase = createClient()
 
-  const [accountType, setAccountType] = useState<AccountType>("buyer");
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [companyName, setCompanyName] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [accountType, setAccountType] = useState<AccountType>("buyer")
+  const [fullName, setFullName] = useState("")
+  const [email, setEmail] = useState("")
+  const [companyName, setCompanyName] = useState("")
+  const [password, setPassword] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      const requestedRole = new URLSearchParams(window.location.search).get(
+        "role"
+      )
+      if (requestedRole === "buyer" || requestedRole === "supplier") {
+        setAccountType(requestedRole)
+      }
+    }, 0)
+    return () => window.clearTimeout(timeout)
+  }, [])
 
   const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
     try {
-      setLoading(true);
-      setError(null);
+      setLoading(true)
+      setError(null)
 
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
-      });
+        options: {
+          data: {
+            tradegrid_marketplace_signup: true,
+            marketplace_role: accountType,
+            full_name: fullName,
+            company_name: companyName,
+          },
+        },
+      })
+
+      const existingAccount =
+        (signUpError && isAlreadyRegisteredError(signUpError)) ||
+        (!signUpError &&
+          Array.isArray(data.user?.identities) &&
+          data.user.identities.length === 0)
+
+      if (existingAccount) {
+        const { data: signInData, error: signInError } =
+          await supabase.auth.signInWithPassword({ email, password })
+
+        if (signInError || !signInData.user) {
+          const message =
+            "This email is already registered. Sign in with your existing account."
+          toast.error("Account already exists", { description: message })
+          setError(message)
+          return
+        }
+
+        const recovery = await recoverIncompleteMarketplaceAccount({
+          supabase,
+          userId: signInData.user.id,
+          fullName,
+          companyName,
+          accountType,
+        })
+
+        if (recovery.status === "already_provisioned") {
+          await supabase.auth.signOut()
+          const message =
+            "This marketplace account is already complete. Sign in instead."
+          toast.error("Account already exists", { description: message })
+          setError(message)
+          return
+        }
+
+        toast.success("Account recovered", {
+          description:
+            "Your incomplete registration was repaired. Continue onboarding.",
+        })
+
+        const recoveredContext = await fetchClientAuthRedirectContext(
+          signInData.user.id
+        )
+        window.location.assign(resolvePostAuthRedirectPath(recoveredContext))
+        return
+      }
 
       if (signUpError) {
-        toast.error("Signup failed", { description: signUpError.message });
-        setError(signUpError.message);
-        return;
+        toast.error("Signup failed", { description: signUpError.message })
+        setError(signUpError.message)
+        return
       }
 
       if (!data.user) {
-        setError("User creation failed.");
-        return;
+        setError("User creation failed.")
+        return
       }
-
-      if (data.session) {
-        await supabase.auth.setSession({
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token,
-        });
-      }
-
-      await registerMarketplaceAccount({
-        supabase,
-        userId: data.user.id,
-        email,
-        fullName,
-        companyName,
-        accountType,
-      });
 
       toast.success("Account created", {
-        description:
-          accountType === "supplier"
+        description: data.session
+          ? accountType === "supplier"
             ? "Complete your company profile to start listing products."
-            : "Complete your company profile to unlock more features.",
-      });
+            : "Complete your company profile to unlock more features."
+          : "Check your email to confirm your account before signing in.",
+      })
 
-      const authContext = await fetchClientAuthRedirectContext(data.user.id);
+      if (!data.session) {
+        window.location.assign("/login")
+        return
+      }
 
-      window.location.assign(resolvePostAuthRedirectPath(authContext));
+      const authContext = await fetchClientAuthRedirectContext(data.user.id)
+
+      window.location.assign(resolvePostAuthRedirectPath(authContext))
     } catch (err) {
-      console.error(err);
+      console.error(err)
       const message =
-        err instanceof Error ? err.message : "Something went wrong during signup.";
-      toast.error("Signup failed", { description: message });
-      setError(message);
+        err instanceof Error
+          ? err.message
+          : "Something went wrong during signup."
+      toast.error("Signup failed", { description: message })
+      setError(message)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <main className="min-h-screen bg-neutral-50 px-4 py-10 text-neutral-950">
@@ -93,7 +163,9 @@ export default function SignupPage() {
         onSubmit={handleSignup}
         className="mx-auto max-w-2xl rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm"
       >
-        <h1 className="text-3xl font-semibold">Create your marketplace account</h1>
+        <h1 className="text-3xl font-semibold">
+          Create your marketplace account
+        </h1>
 
         <p className="mt-2 text-sm text-neutral-600">
           Choose how you trade on Trade Grid Global.
@@ -200,5 +272,5 @@ export default function SignupPage() {
         </p>
       </form>
     </main>
-  );
+  )
 }

@@ -1,55 +1,55 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useMemo, useState } from "react"
 
-import RfqFormFields from "@/components/rfq/RfqFormFields";
-import DashboardPanel from "@/components/dashboard/DashboardPanel";
-import DashboardShell from "@/components/dashboard/DashboardShell";
-import { Button } from "@/components/ui/button";
-import { useCompany } from "@/contexts/AuthProvider";
-import { isOnboardingComplete } from "@/lib/auth/redirects";
-import { createDraftRfq } from "@/lib/rfq/service";
-import { EMPTY_RFQ_FORM, type RfqFormValues } from "@/lib/rfq/types";
-import { createClient } from "@/lib/supabase/client";
-import { toast } from "@/lib/toast";
+import RfqFormFields from "@/components/rfq/RfqFormFields"
+import DashboardPanel from "@/components/dashboard/DashboardPanel"
+import DashboardShell from "@/components/dashboard/DashboardShell"
+import { Button } from "@/components/ui/button"
+import { useCompany } from "@/contexts/AuthProvider"
+import { isOnboardingComplete } from "@/lib/auth/redirects"
+import { createDraftRfq } from "@/lib/rfq/service"
+import { EMPTY_RFQ_FORM, type RfqFormValues } from "@/lib/rfq/types"
+import { createClient } from "@/lib/supabase/client"
+import { toast } from "@/lib/toast"
 
 export default function BuyerCreateRfqPage() {
-  const router = useRouter();
-  const { company } = useCompany();
-  const supabase = useMemo(() => createClient(), []);
-  const [values, setValues] = useState<RfqFormValues>(EMPTY_RFQ_FORM);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const router = useRouter()
+  const { company } = useCompany()
+  const supabase = useMemo(() => createClient(), [])
+  const [values, setValues] = useState<RfqFormValues>(EMPTY_RFQ_FORM)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const onboardingComplete = isOnboardingComplete(company);
+  const onboardingComplete = isOnboardingComplete(company)
 
   const onSubmit = async () => {
     if (!values.title.trim() || !values.product_name.trim()) {
-      setError("Title and product name are required.");
-      return;
+      setError("Title and product name are required.")
+      return
     }
     if (
       values.visibility === "invite_only" &&
       values.invite_supplier_ids.length === 0
     ) {
-      setError("Invite-only RFQs need at least one supplier company ID.");
-      return;
+      setError("Invite-only RFQs need at least one supplier company ID.")
+      return
     }
 
     try {
-      setBusy(true);
-      setError(null);
-      const rfq = await createDraftRfq(supabase, values);
-      toast.success("Draft RFQ saved.");
-      router.push(`/dashboard/buyer/rfqs/${rfq.id}`);
+      setBusy(true)
+      setError(null)
+      const rfq = await createDraftRfq(supabase, values)
+      toast.success("Draft RFQ saved.")
+      router.push(`/dashboard/buyer/rfqs/${rfq.id}`)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create RFQ.");
+      setError(err instanceof Error ? err.message : "Failed to create RFQ.")
     } finally {
-      setBusy(false);
+      setBusy(false)
     }
-  };
+  }
 
   return (
     <DashboardShell
@@ -64,8 +64,8 @@ export default function BuyerCreateRfqPage() {
     >
       {!onboardingComplete ? (
         <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          Complete onboarding before you can publish. Draft creation still requires an
-          authenticated buyer company.
+          Complete onboarding before you can publish. Draft creation remains
+          available in your private workspace.
         </div>
       ) : null}
 
@@ -82,5 +82,5 @@ export default function BuyerCreateRfqPage() {
         </div>
       </DashboardPanel>
     </DashboardShell>
-  );
+  )
 }

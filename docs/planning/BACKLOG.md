@@ -29,8 +29,9 @@ Actionable items visible from the current codebase/docs. Tracker tooling (Jira/L
 | ID | Item | Status |
 |----|------|--------|
 | B001 | Confirm migration `016` applied on all envs | Ops |
-| B002 | Design PO schema from `quotation_awards` | Planned |
-| B003 | Replace mock buyer Orders page with real domain | **Not implemented.** |
+| B002 | Design and implement PO schema from `quotation_awards` | Complete in code (`017`) |
+| B003 | Replace mock buyer Orders page with live Purchase Orders | Complete |
+| B004 | Fulfillment Phase B buyer/supplier UI and document workflow | Planned |
 
 ## P1 — Product quality
 
@@ -55,6 +56,8 @@ Actionable items visible from the current codebase/docs. Tracker tooling (Jira/L
 - [ROADMAP.md](./ROADMAP.md)
 - [FUTURE_FEATURES.md](./FUTURE_FEATURES.md)
 - [../architecture/ARCHITECTURE_STATUS_v0.3.0.md](../architecture/ARCHITECTURE_STATUS_v0.3.0.md)
+- [../architecture/DOMAIN_MODEL.md](../architecture/DOMAIN_MODEL.md)
+- [../domains/fulfillment/README.md](../domains/fulfillment/README.md)
 
 ## Future notes
 

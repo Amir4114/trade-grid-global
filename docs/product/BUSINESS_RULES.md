@@ -14,12 +14,13 @@ Implemented rules from RPCs/triggers. Planned rules marked **Not implemented.**
 2. [Trust](#trust)
 3. [Products](#products)
 4. [Procurement](#procurement)
-5. [References](#references)
-6. [Future notes](#future-notes)
+5. [Commercial and fulfillment](#commercial-and-fulfillment)
+6. [References](#references)
+7. [Future notes](#future-notes)
 
 ## Current Status
 
-Trust + procurement rules through award — Implemented. Order/payment rules — **Not implemented.**
+Trust and procurement through Purchase Order are implemented in code. Fulfillment Phase A rules are implemented in code; payment rules are **Not implemented.**
 
 ## Trust
 
@@ -42,15 +43,27 @@ Trust + procurement rules through award — Implemented. Order/payment rules —
 - Award locks RFQ; blocks new quotes
 - Award history retained (`active`/`revoked`)
 
+## Commercial and fulfillment
+
+- Purchase Orders originate from active awards.
+- Issued PO commercial snapshots are immutable.
+- Accepted PO is commercial truth; Fulfillment is operational truth.
+- Exactly one Fulfillment is created for an accepted PO in Module 3.2.
+- Fulfillment follows production → mandatory QC → packaging → ship → delivery → buyer completion.
+- Lifecycle writes are trusted RPC-only and material actions append audit events.
+- Buyer may cancel pre-ship; supplier cancellation is limited to `opened`; post-ship exceptions use dispute/claims paths.
+
 ## References
 
 - [PROCUREMENT_WORKFLOW.md](./PROCUREMENT_WORKFLOW.md)
 - [../architecture/API_REFERENCE.md](../architecture/API_REFERENCE.md)
 - [../architecture/DECISION_LOG.md](../architecture/DECISION_LOG.md)
+- [../architecture/DOMAIN_MODEL.md](../architecture/DOMAIN_MODEL.md)
+- [../domains/fulfillment/README.md](../domains/fulfillment/README.md)
 
 ## Future notes
 
-PO acceptance windows, payment milestones — define with Module 3–4.
+PO amendments, Logistics, Claims, and payment milestones require later modules and decisions.
 
 ---
 

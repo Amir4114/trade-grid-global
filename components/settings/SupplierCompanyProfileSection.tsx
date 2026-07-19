@@ -1,12 +1,12 @@
-"use client";
+"use client"
 
-import { useMemo, useState } from "react";
-import Select from "react-select";
-import type { StylesConfig } from "react-select";
-import type { User } from "@supabase/supabase-js";
+import { useMemo, useState } from "react"
+import Select from "react-select"
+import type { StylesConfig } from "react-select"
+import type { User } from "@supabase/supabase-js"
 
-import SettingsSection from "@/components/settings/SettingsSection";
-import { Button } from "@/components/ui/button";
+import SettingsSection from "@/components/settings/SettingsSection"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -14,23 +14,24 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { FieldLabel } from "@/components/ui/field-help";
-import type { Company } from "@/lib/database/types";
-import { countries } from "@/lib/marketplace/countries";
-import { certifications } from "@/lib/marketplace/certifications";
-import { productCategories } from "@/lib/marketplace/productCategories";
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { FieldLabel } from "@/components/ui/field-help"
+import { validateYearEstablished } from "@/lib/auth/onboarding"
+import type { Company } from "@/lib/database/types"
+import { countries } from "@/lib/marketplace/countries"
+import { certifications } from "@/lib/marketplace/certifications"
+import { productCategories } from "@/lib/marketplace/productCategories"
 import {
   detectSensitiveCompanyChanges,
   requiresReverification,
   sensitiveFieldLabels,
-} from "@/lib/settings/policy";
-import { updateSupplierCompanySettings } from "@/lib/settings/service";
-import { createClient } from "@/lib/supabase/client";
-import { toast } from "@/lib/toast";
+} from "@/lib/settings/policy"
+import { updateSupplierCompanySettings } from "@/lib/settings/service"
+import { createClient } from "@/lib/supabase/client"
+import { toast } from "@/lib/toast"
 
-type SelectOption = { value: string; label: string };
+type SelectOption = { value: string; label: string }
 
 const selectStyles: StylesConfig<SelectOption, true> = {
   control: (base) => ({
@@ -40,7 +41,7 @@ const selectStyles: StylesConfig<SelectOption, true> = {
     borderColor: "#e5e7eb",
     boxShadow: "none",
   }),
-};
+}
 
 const BUSINESS_TYPES = [
   "Manufacturer",
@@ -50,7 +51,7 @@ const BUSINESS_TYPES = [
   "Wholesaler",
   "Import Export Company",
   "Private Label Manufacturer",
-];
+]
 
 const COMPANY_STRUCTURES = [
   "LLC",
@@ -60,45 +61,45 @@ const COMPANY_STRUCTURES = [
   "Private Limited Company",
   "Public Limited Company",
   "Government Enterprise",
-];
+]
 
 type SupplierCompanyProfileSectionProps = {
-  user: User;
-  company: Company;
-  onSaved: (company: Company) => Promise<void>;
-};
+  user: User
+  company: Company
+  onSaved: (company: Company) => Promise<void>
+}
 
 export default function SupplierCompanyProfileSection({
   user,
   company,
   onSaved,
 }: SupplierCompanyProfileSectionProps) {
-  const supabase = useMemo(() => createClient(), []);
+  const supabase = useMemo(() => createClient(), [])
 
-  const [companyName, setCompanyName] = useState(company.company_name);
-  const [country, setCountry] = useState(company.country);
-  const [businessType, setBusinessType] = useState(company.business_type);
+  const [companyName, setCompanyName] = useState(company.company_name)
+  const [country, setCountry] = useState(company.country)
+  const [businessType, setBusinessType] = useState(company.business_type)
   const [companyStructure, setCompanyStructure] = useState(
     company.company_structure
-  );
+  )
   const [yearEstablished, setYearEstablished] = useState(
     company.year_established ?? ""
-  );
+  )
   const [employeeCount, setEmployeeCount] = useState(
     company.employee_count ?? ""
-  );
+  )
   const [categories, setCategories] = useState<SelectOption[]>(
     (company.categories ?? []).map((value) => ({ value, label: value }))
-  );
+  )
   const [exportMarkets, setExportMarkets] = useState<SelectOption[]>(
     (company.export_markets ?? []).map((value) => ({ value, label: value }))
-  );
+  )
   const [companyCertifications, setCompanyCertifications] = useState<
     SelectOption[]
-  >((company.certifications ?? []).map((value) => ({ value, label: value })));
+  >((company.certifications ?? []).map((value) => ({ value, label: value })))
 
-  const [saving, setSaving] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [saving, setSaving] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   const buildInput = () => ({
     companyName,
@@ -110,65 +111,70 @@ export default function SupplierCompanyProfileSection({
     categories: categories.map((item) => item.value),
     exportMarkets: exportMarkets.map((item) => item.value),
     certifications: companyCertifications.map((item) => item.value),
-  });
+  })
 
   const persistChanges = async () => {
     try {
-      setSaving(true);
+      setSaving(true)
       const result = await updateSupplierCompanySettings(
         supabase,
         user.id,
         company,
         buildInput()
-      );
+      )
 
-      await onSaved(result.company);
+      await onSaved(result.company)
 
       if (result.reverificationRequired) {
         toast.warning("Re-verification required", {
           description:
             "Sensitive company identity fields changed. Verification status was reset to pending.",
-        });
+        })
       } else {
         toast.success("Company profile saved", {
           description: "Your changes were confirmed in the database.",
-        });
+        })
       }
     } catch (err) {
-      console.error(err);
+      console.error(err)
       toast.error("Unable to save company profile", {
-        description:
-          err instanceof Error ? err.message : "Please try again.",
-      });
+        description: err instanceof Error ? err.message : "Please try again.",
+      })
     } finally {
-      setSaving(false);
-      setConfirmOpen(false);
+      setSaving(false)
+      setConfirmOpen(false)
     }
-  };
+  }
 
   const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
+    event.preventDefault()
 
     if (!companyName.trim()) {
-      toast.error("Company name is required");
-      return;
+      toast.error("Company name is required")
+      return
     }
 
     if (!country.trim()) {
-      toast.error("Country is required");
-      return;
+      toast.error("Country is required")
+      return
+    }
+
+    const yearError = validateYearEstablished(yearEstablished)
+    if (yearError) {
+      toast.error("Invalid year established", { description: yearError })
+      return
     }
 
     if (requiresReverification(company, buildInput())) {
-      setConfirmOpen(true);
-      return;
+      setConfirmOpen(true)
+      return
     }
 
-    void persistChanges();
-  };
+    void persistChanges()
+  }
 
-  const sensitiveChanges = detectSensitiveCompanyChanges(company, buildInput());
-  const labels = sensitiveFieldLabels();
+  const sensitiveChanges = detectSensitiveCompanyChanges(company, buildInput())
+  const labels = sensitiveFieldLabels()
 
   return (
     <>
@@ -211,7 +217,9 @@ export default function SupplierCompanyProfileSection({
 
           <div className="grid gap-5 md:grid-cols-2">
             <div>
-              <FieldLabel htmlFor="supplier-business-type">Business type</FieldLabel>
+              <FieldLabel htmlFor="supplier-business-type">
+                Business type
+              </FieldLabel>
               <select
                 id="supplier-business-type"
                 className="flex h-11 w-full rounded-xl border border-neutral-200 bg-white px-3 text-sm"
@@ -302,9 +310,7 @@ export default function SupplierCompanyProfileSection({
               isMulti
               options={certifications}
               value={companyCertifications}
-              onChange={(value) =>
-                setCompanyCertifications([...(value ?? [])])
-              }
+              onChange={(value) => setCompanyCertifications([...(value ?? [])])}
               placeholder="Select certifications"
               styles={selectStyles}
             />
@@ -345,5 +351,5 @@ export default function SupplierCompanyProfileSection({
         </DialogContent>
       </Dialog>
     </>
-  );
+  )
 }

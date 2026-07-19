@@ -22,7 +22,7 @@ cp .env.example .env.local
 ```
 
 4. Fill Supabase values (see [ENVIRONMENT.md](./ENVIRONMENT.md)).
-5. Apply database migrations `001`–`016` to your Supabase project (see below).
+5. Apply database migrations `001`–`022` to your Supabase project (see below).
 6. Start the app:
 
 ```bash
@@ -35,11 +35,11 @@ npm run dev
 
 ## Environment variables
 
-| Variable | Required for app | Purpose |
-|----------|------------------|---------|
-| `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Public anon key (RLS enforced) |
-| `SUPABASE_SERVICE_ROLE_KEY` | No (scripts) | Server-only; used by some verification scripts for notification counts / provisioning |
+| Variable                        | Required for app | Purpose                                                                               |
+| ------------------------------- | ---------------- | ------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Yes              | Supabase project URL                                                                  |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes              | Public anon key (RLS enforced)                                                        |
+| `SUPABASE_SERVICE_ROLE_KEY`     | No (scripts)     | Server-only; used by some verification scripts for notification counts / provisioning |
 
 `.env.example` documents required Supabase public keys, optional service role, and reserved future placeholders (NextAuth/OpenAI/Resend/Sentry — **not wired**).
 
@@ -51,7 +51,7 @@ npm run dev
 
 1. Create or select a Supabase project.
 2. Enable Email auth as used by the app.
-3. Apply SQL migrations from `supabase/migrations/` **in numeric order** (`001` … `016`).
+3. Apply SQL migrations from `supabase/migrations/` **in numeric order** (`001` … `020`).
 4. Confirm storage buckets exist after relevant migrations:
    - `company-docs` (003)
    - `product-images` (008)
@@ -65,13 +65,13 @@ The repository does not currently include a checked-in linked Supabase CLI proje
 
 ## Next.js
 
-| Command | Purpose |
-|---------|---------|
-| `npm run dev` | Local development |
-| `npm run build` | Production build |
-| `npm run start` | Start production server |
-| `npm run typecheck` | `tsc --noEmit` |
-| `npm run lint` | ESLint on `app` `components` `lib` `contexts` `proxy.ts` |
+| Command             | Purpose                                                  |
+| ------------------- | -------------------------------------------------------- |
+| `npm run dev`       | Local development                                        |
+| `npm run build`     | Production build                                         |
+| `npm run start`     | Start production server                                  |
+| `npm run typecheck` | `tsc --noEmit`                                           |
+| `npm run lint`      | ESLint on `app` `components` `lib` `contexts` `proxy.ts` |
 
 Hosting target: **Vercel** (Next.js App Router). Configure the same env vars in the Vercel project.
 
@@ -82,7 +82,7 @@ Hosting target: **Vercel** (Next.js App Router). Configure the same env vars in 
 Recommended order:
 
 1. Open Supabase SQL Editor (or `supabase db` / `psql` if configured).
-2. Run each file in `supabase/migrations/` from `001_auth_onboarding.sql` through `016_award_system.sql`.
+2. Run each file in `supabase/migrations/` from `001_auth_onboarding.sql` through `020_verification_case_evidence_lock.sql`.
 3. Do not skip numbers; later migrations depend on earlier helpers/tables.
 4. Re-run is designed to be largely **idempotent** (`if not exists`, `create or replace`, `drop policy if exists`), but always review before production apply.
 
@@ -106,7 +106,7 @@ Scripts load `.env.local` for URL/keys.
 
 ## Production deployment
 
-1. Ensure migrations `001`–`016` are applied on the production Supabase project.
+1. Ensure migrations `001`–`022` are applied on the production Supabase project for the current code baseline.
 2. Set production env vars (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`).
 3. Deploy Next.js to Vercel (or compatible host).
 4. Run smoke checks: login, publish RFQ, submit quotation, award.
@@ -150,10 +150,10 @@ git tag -a v0.3.0-procurement-complete -m "Procurement workflow complete"
 
 ## Version tagging
 
-| Kind | Example | Source of truth |
-|------|---------|-----------------|
+| Kind                   | Example                       | Source of truth |
+| ---------------------- | ----------------------------- | --------------- |
 | Product / docs Git tag | `v0.3.0-procurement-complete` | Git tags + docs |
-| npm package version | `0.3.0` | `package.json` |
+| npm package version    | `0.3.0`                       | `package.json`  |
 
 Keep both referenced consistently (tag for milestone name; semver for package metadata).
 

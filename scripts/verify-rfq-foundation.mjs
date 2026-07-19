@@ -91,15 +91,23 @@ async function assertMigration014Applied() {
 
 async function provisionUser(label, role, extras = {}) {
   const email = `rfq-${role}-${label}-${stamp}@tradegrid.test`;
-  const { data, error } = await supabase.auth.signUp({ email, password });
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        tradegrid_marketplace_signup: true,
+        marketplace_role: role,
+        full_name: `${label} Test`,
+        company_name: `${label} ${role} Co`,
+      },
+    },
+  });
   if (error) fatal(`${label} signup failed: ${error.message}`);
   const userId = data.user?.id;
   const writer = serviceClient ?? supabase;
 
-  await writer.from("profiles").upsert(
-    { id: userId, email, role },
-    { onConflict: "id" }
-  );
+  await writer.from("profiles").upsert({ id: userId, email, role }, { onConflict: "id" });
   await writer.from("companies").upsert(
     {
       user_id: userId,
@@ -148,8 +156,7 @@ async function createDraftAsBuyer(overrides = {}) {
     p_visibility: overrides.visibility ?? "verified_suppliers_only",
     p_invite_supplier_ids: overrides.invite_supplier_ids ?? [],
     p_quote_deadline_at:
-      overrides.quote_deadline_at ??
-      new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      overrides.quote_deadline_at ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
   });
   return { data, error };
 }
@@ -192,20 +199,12 @@ try {
     category: "Rice",
     status: "open",
   });
-  check(
-    "Direct INSERT into rfqs is denied",
-    !!directInsert.error,
-    directInsert.error?.message
-  );
+  check("Direct INSERT into rfqs is denied", !!directInsert.error, directInsert.error?.message);
 
   // --- Supplier cannot create ---
   await signIn(verifiedSupplier.email);
   const supplierCreate = await createDraftAsBuyer({ title: "supplier attempt" });
-  check(
-    "Supplier cannot create_draft_rfq",
-    !!supplierCreate.error,
-    supplierCreate.error?.message
-  );
+  check("Supplier cannot create_draft_rfq", !!supplierCreate.error, supplierCreate.error?.message);
 
   // --- Draft not discoverable ---
   const draftList = await supabase.from("rfqs").select("id").eq("id", publicRfqId);
@@ -217,7 +216,9 @@ try {
 
   // --- Publish public ---
   await signIn(buyer.email);
-  const publishPublic = await supabase.rpc("publish_rfq", { p_rfq_id: publicRfqId });
+  const publishPublic = await supabase.rpc("publish_rfq", {
+    p_rfq_id: publicRfqId,
+  });
   check(
     "Buyer can publish draft RFQ",
     publishPublic.data?.status === "open" && !publishPublic.error,
@@ -246,10 +247,7 @@ try {
   );
 
   await signIn(verifiedSupplier.email);
-  const verifiedSeesPublic = await supabase
-    .from("rfqs")
-    .select("id")
-    .eq("id", publicRfqId);
+  const verifiedSeesPublic = await supabase.from("rfqs").select("id").eq("id", publicRfqId);
   check(
     "Verified supplier can discover public RFQ",
     (verifiedSeesPublic.data?.length ?? 0) === 1,
@@ -274,10 +272,7 @@ try {
   );
 
   await signIn(pendingSupplier.email);
-  const pendingSeesVerifiedOnly = await supabase
-    .from("rfqs")
-    .select("id")
-    .eq("id", verifiedOnlyId);
+  const pendingSeesVerifiedOnly = await supabase.from("rfqs").select("id").eq("id", verifiedOnlyId);
   check(
     "Pending supplier cannot discover verified_suppliers_only RFQ",
     (pendingSeesVerifiedOnly.data?.length ?? 0) === 0,
@@ -289,11 +284,18 @@ try {
     .from("rfqs")
     .select("id")
     .eq("id", verifiedOnlyId);
-  check(
-    "Verified supplier can discover verified_suppliers_only RFQ",
-    (verifiedSeesVerifiedOnly.data?.length ?? 0) === 1,
-    verifiedSeesVerifiedOnly
-  );
+  if (verifiedSupplier.company.verification_status !== "verified") {
+    skip(
+      "Verified supplier can discover verified_suppliers_only RFQ",
+      "trusted verification fixture requires service role"
+    );
+  } else {
+    check(
+      "Verified supplier can discover verified_suppliers_only RFQ",
+      (verifiedSeesVerifiedOnly.data?.length ?? 0) === 1,
+      verifiedSeesVerifiedOnly
+    );
+  }
 
   // --- invite_only ---
   await signIn(buyer.email);
@@ -320,10 +322,15 @@ try {
       badPublish.error?.message
     );
   } else {
-    check("Create invite_only without invites still allowed as draft", !!publishInviteMissing.data || !!publishInviteMissing.error);
+    check(
+      "Create invite_only without invites still allowed as draft",
+      !!publishInviteMissing.data || !!publishInviteMissing.error
+    );
   }
 
-  const publishInvite = await supabase.rpc("publish_rfq", { p_rfq_id: inviteRfqId });
+  const publishInvite = await supabase.rpc("publish_rfq", {
+    p_rfq_id: inviteRfqId,
+  });
   check(
     "Publish invite_only with invites succeeds",
     publishInvite.data?.status === "open",
@@ -383,11 +390,7 @@ try {
       incompletePublish.error?.message
     );
   } else {
-    check(
-      "Incomplete buyer create_draft_rfq",
-      false,
-      incompleteDraft.error?.message
-    );
+    check("Incomplete buyer create_draft_rfq", false, incompleteDraft.error?.message);
   }
 
   // --- Update draft ---
@@ -425,7 +428,9 @@ try {
     visibility: "public",
   });
   await supabase.rpc("publish_rfq", { p_rfq_id: closeTarget.data.id });
-  const closed = await supabase.rpc("close_rfq", { p_rfq_id: closeTarget.data.id });
+  const closed = await supabase.rpc("close_rfq", {
+    p_rfq_id: closeTarget.data.id,
+  });
   check("Buyer can close_rfq", closed.data?.status === "closed", closed.error);
 
   const closedNotif = await countNotifications(buyer.userId, "rfq.closed", closeTarget.data.id);
@@ -442,11 +447,7 @@ try {
     p_rfq_id: cancelTarget.data.id,
     p_reason: "Specs changed",
   });
-  check(
-    "Buyer can cancel_rfq",
-    cancelled.data?.status === "cancelled",
-    cancelled.error
-  );
+  check("Buyer can cancel_rfq", cancelled.data?.status === "cancelled", cancelled.error);
 
   const cancelledNotif = await countNotifications(
     buyer.userId,
@@ -454,7 +455,10 @@ try {
     cancelTarget.data.id
   );
   if (cancelledNotif == null) skip("rfq.cancelled notification", "service role unavailable");
-  else check("rfq.cancelled notification created", cancelledNotif >= 1, { cancelledNotif });
+  else
+    check("rfq.cancelled notification created", cancelledNotif >= 1, {
+      cancelledNotif,
+    });
 
   const supplierCancelNotif = await countNotifications(
     verifiedSupplier.userId,
@@ -464,11 +468,9 @@ try {
   if (supplierCancelNotif == null) {
     skip("rfq.cancelled supplier notification", "service role unavailable");
   } else {
-    check(
-      "Invited supplier receives rfq.cancelled",
-      supplierCancelNotif >= 1,
-      { supplierCancelNotif }
-    );
+    check("Invited supplier receives rfq.cancelled", supplierCancelNotif >= 1, {
+      supplierCancelNotif,
+    });
   }
 
   // --- Supplier cannot close/cancel ---
@@ -480,25 +482,20 @@ try {
   await supabase.rpc("publish_rfq", { p_rfq_id: locked.data.id });
 
   await signIn(verifiedSupplier.email);
-  const supplierClose = await supabase.rpc("close_rfq", { p_rfq_id: locked.data.id });
+  const supplierClose = await supabase.rpc("close_rfq", {
+    p_rfq_id: locked.data.id,
+  });
   check("Supplier cannot close_rfq", !!supplierClose.error, supplierClose.error?.message);
 
   const supplierCancel = await supabase.rpc("cancel_rfq", {
     p_rfq_id: locked.data.id,
     p_reason: "nope",
   });
-  check(
-    "Supplier cannot cancel_rfq",
-    !!supplierCancel.error,
-    supplierCancel.error?.message
-  );
+  check("Supplier cannot cancel_rfq", !!supplierCancel.error, supplierCancel.error?.message);
 
   // --- Events readable by owner ---
   await signIn(buyer.email);
-  const events = await supabase
-    .from("rfq_events")
-    .select("event_type")
-    .eq("rfq_id", publicRfqId);
+  const events = await supabase.from("rfq_events").select("event_type").eq("rfq_id", publicRfqId);
   check(
     "Buyer can read rfq_events",
     !events.error && (events.data?.length ?? 0) >= 1,
@@ -512,15 +509,9 @@ try {
 
   await signIn(verifiedSupplier.email);
   const supplierBuyerFlag = await supabase.rpc("is_buyer");
-  check(
-    "is_buyer() false for supplier",
-    supplierBuyerFlag.data === false,
-    supplierBuyerFlag.error
-  );
+  check("is_buyer() false for supplier", supplierBuyerFlag.data === false, supplierBuyerFlag.error);
 
-  console.log(
-    `\nDone. passed=${passed} failed=${failures.length} skipped=${skipped}`
-  );
+  console.log(`\nDone. passed=${passed} failed=${failures.length} skipped=${skipped}`);
   if (failures.length > 0) {
     console.error("Failures:", failures);
     process.exit(1);

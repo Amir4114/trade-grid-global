@@ -84,15 +84,23 @@ async function assertMigrationsApplied() {
 
 async function provisionUser(label, role, extras = {}) {
   const email = `award-${role}-${label}-${stamp}@tradegrid.test`;
-  const { data, error } = await supabase.auth.signUp({ email, password });
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        tradegrid_marketplace_signup: true,
+        marketplace_role: role,
+        full_name: `${label} Test`,
+        company_name: `${label} ${role} Co`,
+      },
+    },
+  });
   if (error) fatal(`${label} signup failed: ${error.message}`);
   const userId = data.user?.id;
   const writer = serviceClient ?? supabase;
 
-  await writer.from("profiles").upsert(
-    { id: userId, email, role },
-    { onConflict: "id" }
-  );
+  await writer.from("profiles").upsert({ id: userId, email, role }, { onConflict: "id" });
   await writer.from("companies").upsert(
     {
       user_id: userId,
@@ -276,7 +284,9 @@ try {
 
   // Cannot award closed RFQ
   await signIn(buyer.email);
-  const closeRfq = await createAndPublishRfq({ title: `Closed award RFQ ${stamp}` });
+  const closeRfq = await createAndPublishRfq({
+    title: `Closed award RFQ ${stamp}`,
+  });
   await signIn(winner.email);
   const closeOffer = await submitOffer(closeRfq.id, 700);
   await signIn(buyer.email);
@@ -316,17 +326,11 @@ try {
 
   // RLS: supplier reads only own awards
   await signIn(winner.email);
-  const winnerAwards = await supabase
-    .from("quotation_awards")
-    .select("id")
-    .eq("id", awardId);
+  const winnerAwards = await supabase.from("quotation_awards").select("id").eq("id", awardId);
   check("Winning supplier can read own award row", (winnerAwards.data?.length ?? 0) === 1);
 
   await signIn(loser.email);
-  const loserAwards = await supabase
-    .from("quotation_awards")
-    .select("id")
-    .eq("id", awardId);
+  const loserAwards = await supabase.from("quotation_awards").select("id").eq("id", awardId);
   check(
     "Losing supplier cannot read winner award row via RLS",
     (loserAwards.data?.length ?? 0) === 0,
@@ -356,11 +360,21 @@ try {
   // Notifications
   const winnerNotif = await countNotifications(winner.userId, "quotation.awarded", winnerThreadId);
   if (winnerNotif == null) skip("quotation.awarded notification", "no service role");
-  else check("Winner receives quotation.awarded", winnerNotif >= 1, { winnerNotif });
+  else
+    check("Winner receives quotation.awarded", winnerNotif >= 1, {
+      winnerNotif,
+    });
 
-  const loserNotif = await countNotifications(loser.userId, "quotation.not_selected", loserThreadId);
+  const loserNotif = await countNotifications(
+    loser.userId,
+    "quotation.not_selected",
+    loserThreadId
+  );
   if (loserNotif == null) skip("quotation.not_selected notification", "no service role");
-  else check("Loser receives quotation.not_selected", loserNotif >= 1, { loserNotif });
+  else
+    check("Loser receives quotation.not_selected", loserNotif >= 1, {
+      loserNotif,
+    });
 
   const buyerNotif = await countNotifications(buyer.userId, "rfq.awarded", rfq.id);
   if (buyerNotif == null) skip("rfq.awarded notification", "no service role");
@@ -372,7 +386,11 @@ try {
     p_award_id: awardId,
     p_reason: "Re-evaluate",
   });
-  check("Buyer can revoke_award", revoked.data?.status === "revoked" && !revoked.error, revoked.error);
+  check(
+    "Buyer can revoke_award",
+    revoked.data?.status === "revoked" && !revoked.error,
+    revoked.error
+  );
 
   const rfqReopened = await supabase.from("rfqs").select("status").eq("id", rfq.id).single();
   check("RFQ returns to quoted after revoke", rfqReopened.data?.status === "quoted", rfqReopened);
@@ -388,10 +406,7 @@ try {
     reaward.error
   );
 
-  const history = await supabase
-    .from("quotation_awards")
-    .select("id, status")
-    .eq("rfq_id", rfq.id);
+  const history = await supabase.from("quotation_awards").select("id, status").eq("rfq_id", rfq.id);
   check(
     "Award history never deleted (revoked + active rows)",
     (history.data ?? []).length >= 2 &&
@@ -411,9 +426,7 @@ try {
   });
   check("Direct INSERT into quotation_awards denied", !!directInsert.error);
 
-  console.log(
-    `\nDone. passed=${passed} failed=${failures.length} skipped=${skipped}`
-  );
+  console.log(`\nDone. passed=${passed} failed=${failures.length} skipped=${skipped}`);
   if (failures.length > 0) {
     console.error("Failures:", failures);
     process.exit(1);

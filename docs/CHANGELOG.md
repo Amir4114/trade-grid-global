@@ -3,13 +3,63 @@
 All notable changes to Trade Grid Global are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
-Product target tag: `v0.4.0-purchase-orders`. npm `package.json` version: **`0.4.0`**.
+Latest milestone tag: `v0.5.0-phase-a`; full-release target: `v0.5.0-order-lifecycle`. npm `package.json` version: **`0.4.0`**.
 
 Dates use commit / tag dates from the repository history where available.
 
 ---
 
 ## [Unreleased]
+
+### Added
+
+- Permanent architecture index, seven-domain model, engineering handbook, verification matrix, domain template, Fulfillment domain documentation, and repository health report.
+- Migration `019_verification_submission_hardening.sql` for required storage-backed company evidence, owner document metadata enforcement, rejection feedback, and marketplace role/account/risk guards.
+- Migration `020_verification_case_evidence_lock.sql` for immutable case evidence, review-before-decision, reasoned rejection/replacement, material identity invalidation, and canonical trust constraints.
+- Migration `021_atomic_marketplace_signup.sql` for transactional Auth/profile/company provisioning and authenticated recovery of legacy incomplete registrations.
+- Migration `022_pending_company_document_management.sql` for owner deletion of pending, unsubmitted company evidence using ordered Storage/metadata authorization.
+- Admin short-lived signed document review links and shared verification recovery states.
+- Locked Trust & Verification architecture decisions and domain lifecycle contract.
+
+### Changed
+
+- Aligned living product, planning, architecture, security, deployment, and release references with the tagged Phase A baseline.
+- Stabilized Buyer onboarding and Settings before Fulfillment Phase B:
+  - Marketplace signup now provisions Auth, profile, and company inside the Auth database transaction instead of client-side sequential upserts.
+  - Supplier registration no longer attempts to mutate a trigger-created Buyer profile, and failed provisioning rolls back the Auth user.
+  - Retrying an affected legacy registration authenticates the owner and atomically repairs missing profile/company state; complete accounts cannot be reprovisioned.
+  - Loaded-but-missing company data is no longer treated as an indefinite loading state.
+  - Buyer onboarding can create missing owner-scoped profile and company rows through existing RLS policies.
+  - Onboarding now requires contact name, legal organization name, country, business type, company structure, and an import category.
+  - Supplier onboarding now resolves fetch, session, and missing-company states with explicit messages instead of an indefinite loader.
+  - Buyer Settings now exposes explicit load-error retry and missing-company recovery states while retaining the shared Supplier/Buyer settings workspace.
+  - Onboarding verification now covers missing-company buyer recovery.
+  - Verification submission now requires active Trade License and Company Registration evidence at both UI and RPC layers.
+  - Rejected document types can be replaced while preserving rejected evidence history; under-review and verified users cannot resubmit.
+  - Admin review now displays only the evidence frozen for that case; company approval/rejection requires review start and rejection requires actionable feedback.
+  - Verification approval no longer overwrites the independent risk score.
+  - Company settings no longer report failure after a successful company write solely because a redundant profile reload failed.
+- Consolidated Buyer and Supplier onboarding into one role-configured,
+  single-section workspace with Business, Categories, Markets, Certifications,
+  Documents, Review, and Verification Submission steps.
+- Replaced duplicate verification/certification upload pages with compatibility
+  redirects to the canonical onboarding Documents section.
+- Added canonical typed multi-document upload, owner preview, pending replacement
+  and deletion, rejected append-only replacement, status display, and review
+  locks. Removed the unsupported `Certification Document` label.
+- Added a shared role-configured dashboard Overview composition based on real
+  company onboarding/trust data, without analytics schema or invented metrics.
+- Redesigned marketplace entry navigation and replaced Join Free with a Start
+  Trading chooser for Guest, Buyer, and Supplier journeys.
+- Added authenticated-encrypted, two-hour, read-only Guest Marketplace sessions
+  without creating Auth, profile, company, or Trust records.
+- Redirected successful verification submissions to role Workspace Overview.
+- Added under-review workspace access guidance, trust-sensitive action gates,
+  verification progress cards, and Buyer/Supplier Analytics placeholders.
+
+---
+
+## [v0.5.0-phase-a] — 2026-07-18
 
 ### Added
 
@@ -29,7 +79,7 @@ Dates use commit / tag dates from the repository history where available.
 
 ## [v0.4.0] — 2026-07-18
 
-Target tag: **`v0.4.0-purchase-orders`**.  
+Tag: **`v0.4.0-purchase-orders`**.
 npm version: `0.4.0`  
 Release package: [`releases/v0.4.0-purchase-orders/`](../releases/v0.4.0-purchase-orders/release-notes.md)
 
@@ -43,7 +93,7 @@ Release package: [`releases/v0.4.0-purchase-orders/`](../releases/v0.4.0-purchas
 - Supplier Orders UI: list, accept/reject, timeline
 - Notifications: `purchase_order.created|issued|accepted|rejected|cancelled` (`purchase_order.completed` reserved, not emitted in 3.1)
 - Script: `scripts/verify-purchase-order-system.mjs`
-- Phase 0 locks in `docs/architecture/ARCHITECTURE_DECISIONS.md` (AD-3.1-*)
+- Phase 0 locks in `docs/architecture/ARCHITECTURE_DECISIONS.md` (AD-3.1-\*)
 
 ### Changed
 
@@ -54,8 +104,10 @@ Release package: [`releases/v0.4.0-purchase-orders/`](../releases/v0.4.0-purchas
 
 ## [v0.3.0] — 2026-07-18
 
-Also tagged as **`v0.3.0-procurement-complete`**.  
-Commit: `7cd98e1` — *Complete procurement workflow with supplier award system*  
+Also tagged as **`v0.3.0-procurement-complete`**.
+
+Commit: `7cd98e1` — _Complete procurement workflow with supplier award system_
+
 npm version: `0.3.0`
 
 ### Added
@@ -146,13 +198,16 @@ Foundation through product system (commits from initial working tree through `23
 
 ## Version mapping notes
 
-| Product tag | Approximate migrations | Git evidence |
-|-------------|------------------------|--------------|
-| v0.1 | 001–010 | Product + auth foundation commits |
-| v0.2 | 011–015 | Notifications → RFQ → quotations |
-| v0.3.0 | 016 (+ award UI) | Tag `v0.3.0-procurement-complete` |
+| Product tag    | Approximate migrations               | Git evidence                      |
+| -------------- | ------------------------------------ | --------------------------------- |
+| v0.1           | 001–010                              | Product + auth foundation commits |
+| v0.2           | 011–015                              | Notifications → RFQ → quotations  |
+| v0.3.0         | 016 (+ award UI)                     | Tag `v0.3.0-procurement-complete` |
+| v0.4.0         | 017 (+ PO UI)                        | Tag `v0.4.0-purchase-orders`      |
+| v0.5.0 Phase A | 018 (+ Fulfillment service contract) | Tag `v0.5.0-phase-a`              |
 
 [Unreleased]: #unreleased
+[v0.5.0-phase-a]: #v050-phase-a--2026-07-18
 [v0.3.0]: #v030--2026-07-18
 [v0.2]: #v02--2026-07-15--2026-07-17
 [v0.1]: #v01--2026-06-24--2026-07-14

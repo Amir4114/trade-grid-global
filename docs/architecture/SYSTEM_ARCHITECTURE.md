@@ -19,23 +19,24 @@ Runtime architecture only. Schema detail → [DATABASE_SCHEMA.md](./DATABASE_SCH
 
 ## Current Status
 
-| Item | Status |
-|------|--------|
-| Documented architecture (v0.3.0) | Implemented |
-| Orders / payments / logistics services | **Not implemented.** |
-| Dedicated API gateway | **Not implemented.** |
+| Item                                      | Status                               |
+| ----------------------------------------- | ------------------------------------ |
+| Canonical domain architecture             | [DOMAIN_MODEL.md](./DOMAIN_MODEL.md) |
+| Purchase Orders / Fulfillment Phase A     | Implemented in code (`017`/`018`)    |
+| Payments / first-class logistics services | **Not implemented.**                 |
+| Dedicated API gateway                     | **Not implemented.**                 |
 
 ## Logical layers
 
-| Layer | Responsibility | Location |
-|-------|----------------|----------|
-| Presentation | App Router pages, dashboards, marketing | `app/`, `components/` |
-| Domain clients | Typed Supabase calls | `lib/*` |
-| Auth gate | Session / role routing | `proxy.ts`, `lib/auth/` |
-| Auth | Supabase Auth | Hosted Supabase |
-| Data + RLS | PostgreSQL | Migrations `001`–`016` |
-| Privileged logic | SECURITY DEFINER RPCs | Same migrations |
-| Files | Storage buckets | `company-docs`, `product-images`, `rfq-docs`, `quotation-docs` |
+| Layer            | Responsibility                          | Location                                                             |
+| ---------------- | --------------------------------------- | -------------------------------------------------------------------- |
+| Presentation     | App Router pages, dashboards, marketing | `app/`, `components/`                                                |
+| Domain clients   | Typed Supabase calls                    | `lib/*`                                                              |
+| Auth gate        | Session / role routing                  | `proxy.ts`, `lib/auth/`                                              |
+| Auth             | Supabase Auth                           | Hosted Supabase                                                      |
+| Data + RLS       | PostgreSQL                              | Migrations `001`–`022`                                               |
+| Privileged logic | SECURITY DEFINER RPCs                   | Same migrations                                                      |
+| Files            | Storage buckets                         | Domain-private/public buckets including PO and Fulfillment documents |
 
 ## Diagram
 
@@ -61,6 +62,8 @@ Canonical diagram also in [ARCHITECTURE_STATUS_v0.3.0.md](./ARCHITECTURE_STATUS_
 ## References
 
 - [ARCHITECTURE_STATUS_v0.3.0.md](./ARCHITECTURE_STATUS_v0.3.0.md)
+- [DOMAIN_MODEL.md](./DOMAIN_MODEL.md)
+- [../domains/fulfillment/README.md](../domains/fulfillment/README.md)
 - [DATA_FLOW.md](./DATA_FLOW.md)
 - [ER_DIAGRAM.md](./ER_DIAGRAM.md)
 - [../deployment/DEPLOYMENT.md](../deployment/DEPLOYMENT.md)

@@ -1,22 +1,19 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { ArrowRight, FileText, Plus, Search } from "lucide-react";
-
-import DashboardPanel from "@/components/dashboard/DashboardPanel";
-import DashboardShell from "@/components/dashboard/DashboardShell";
-import DataTable from "@/components/dashboard/DataTable";
-import StatCard from "@/components/dashboard/StatCard";
-import { Button } from "@/components/ui/button";
-import { useCompany } from "@/contexts/AuthProvider";
-import { formatVerificationStatus } from "@/lib/dashboard/roles";
-import { inquiries, orders, rfqs } from "@/lib/marketplace/data";
+import DashboardPanel from "@/components/dashboard/DashboardPanel"
+import DashboardShell from "@/components/dashboard/DashboardShell"
+import DataTable from "@/components/dashboard/DataTable"
+import { WorkspaceOverview } from "@/components/dashboard/WorkspaceOverview"
+import { useCompany } from "@/contexts/AuthProvider"
+import { inquiries, orders, rfqs } from "@/lib/marketplace/data"
 
 export default function BuyerDashboardPage() {
-  const { company } = useCompany();
-  const openInquiries = inquiries.filter((item) => item.status !== "Closed").length;
-  const activeOrders = orders.filter((item) => item.status !== "Draft").length;
-  const openRfqs = rfqs.filter((item) => item.status === "Open").length;
+  const { company } = useCompany()
+  const openInquiries = inquiries.filter(
+    (item) => item.status !== "Closed"
+  ).length
+  const activeOrders = orders.filter((item) => item.status !== "Draft").length
+  const openRfqs = rfqs.filter((item) => item.status === "Open").length
 
   return (
     <DashboardShell
@@ -24,21 +21,12 @@ export default function BuyerDashboardPage() {
       title="Buyer Overview"
       description="Monitor sourcing activity, inquiries, and trade orders from one workspace."
     >
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Open RFQs" value={String(openRfqs)} detail="Active sourcing requests" accent />
-        <StatCard label="Active Inquiries" value={String(openInquiries)} detail="Awaiting supplier response" />
-        <StatCard label="Live Orders" value={String(activeOrders)} detail="In negotiation or transit" />
-        <StatCard
-          label="Verification"
-          value={formatVerificationStatus(company?.verification_status ?? "pending")}
-          detail={company?.company_name ?? "Company profile"}
-        />
-      </div>
+      <WorkspaceOverview role="buyer" company={company} />
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[1fr_320px]">
+      <div className="mt-6">
         <DashboardPanel
           title="Recent Inquiries"
-          description="Latest supplier conversations across your active categories."
+          description={`${openRfqs} open RFQs · ${openInquiries} active inquiries · ${activeOrders} live orders`}
         >
           <DataTable
             columns={[
@@ -49,38 +37,6 @@ export default function BuyerDashboardPage() {
             ]}
             rows={inquiries.slice(0, 6)}
           />
-        </DashboardPanel>
-
-        <DashboardPanel title="Quick Actions">
-          <div className="space-y-3">
-            <Button asChild className="w-full justify-between">
-              <Link href="/rfq">
-                <span className="flex items-center gap-2">
-                  <Plus className="size-4" />
-                  Post new RFQ
-                </span>
-                <ArrowRight className="size-4" />
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="w-full justify-between">
-              <Link href="/suppliers">
-                <span className="flex items-center gap-2">
-                  <Search className="size-4" />
-                  Find suppliers
-                </span>
-                <ArrowRight className="size-4" />
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="w-full justify-between">
-              <Link href="/dashboard/buyer/orders">
-                <span className="flex items-center gap-2">
-                  <FileText className="size-4" />
-                  View orders
-                </span>
-                <ArrowRight className="size-4" />
-              </Link>
-            </Button>
-          </div>
         </DashboardPanel>
       </div>
 
@@ -102,5 +58,5 @@ export default function BuyerDashboardPage() {
         </DashboardPanel>
       </div>
     </DashboardShell>
-  );
+  )
 }

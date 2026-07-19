@@ -1,24 +1,24 @@
-"use client";
+"use client"
 
-import Link from "next/link";
+import Link from "next/link"
 
-import SettingsSection from "@/components/settings/SettingsSection";
-import { Button } from "@/components/ui/button";
-import type { Company } from "@/lib/database/types";
-import { formatVerificationStatus } from "@/lib/dashboard/roles";
+import SettingsSection from "@/components/settings/SettingsSection"
+import { Button } from "@/components/ui/button"
+import type { Company } from "@/lib/database/types"
+import { formatVerificationStatus } from "@/lib/dashboard/roles"
 
 type VerificationSecuritySectionProps = {
-  company: Company;
-};
+  company: Company
+}
 
 export default function VerificationSecuritySection({
   company,
 }: VerificationSecuritySectionProps) {
-  const status = company.verification_status;
-  const needsAction =
-    status === "pending" ||
-    status === "rejected" ||
-    status === "under_review";
+  const status = company.verification_status
+  const needsAction = status === "pending" || status === "rejected"
+  const onboardingRole =
+    company.account_type === "supplier" ? "supplier" : "buyer"
+  const documentsHref = `/onboarding/${onboardingRole}?section=documents`
 
   return (
     <SettingsSection
@@ -56,7 +56,7 @@ export default function VerificationSecuritySection({
 
         {needsAction ? (
           <Button asChild>
-            <Link href="/onboarding/verification">
+            <Link href={documentsHref}>
               {status === "rejected"
                 ? "Review and resubmit verification"
                 : "Complete verification"}
@@ -64,10 +64,14 @@ export default function VerificationSecuritySection({
           </Button>
         ) : (
           <Button asChild variant="outline">
-            <Link href="/onboarding/verification">View verification documents</Link>
+            <Link href={documentsHref}>
+              {status === "under_review"
+                ? "View submitted documents"
+                : "View verification documents"}
+            </Link>
           </Button>
         )}
       </div>
     </SettingsSection>
-  );
+  )
 }

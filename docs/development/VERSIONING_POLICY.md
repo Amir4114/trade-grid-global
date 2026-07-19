@@ -20,9 +20,11 @@ Version strings only.
 
 | Kind | Current value |
 |------|---------------|
-| npm `package.json` | `0.3.0` |
-| Git product tag | `v0.3.0-procurement-complete` |
-| Architecture doc | `ARCHITECTURE_STATUS_v0.3.0` |
+| npm `package.json` | `0.4.0` |
+| Stable product tag | `v0.4.0-purchase-orders` |
+| Latest milestone tag | `v0.5.0-phase-a` |
+| Full-release target | `v0.5.0-order-lifecycle` |
+| Canonical architecture | `architecture/DOMAIN_MODEL.md` |
 
 ## Version kinds
 

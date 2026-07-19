@@ -90,15 +90,23 @@ async function assertMigrationsApplied() {
 
 async function provisionUser(label, role, extras = {}) {
   const email = `quote-${role}-${label}-${stamp}@tradegrid.test`;
-  const { data, error } = await supabase.auth.signUp({ email, password });
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        tradegrid_marketplace_signup: true,
+        marketplace_role: role,
+        full_name: `${label} Test`,
+        company_name: `${label} ${role} Co`,
+      },
+    },
+  });
   if (error) fatal(`${label} signup failed: ${error.message}`);
   const userId = data.user?.id;
   const writer = serviceClient ?? supabase;
 
-  await writer.from("profiles").upsert(
-    { id: userId, email, role },
-    { onConflict: "id" }
-  );
+  await writer.from("profiles").upsert({ id: userId, email, role }, { onConflict: "id" });
   await writer.from("companies").upsert(
     {
       user_id: userId,
@@ -118,7 +126,7 @@ async function provisionUser(label, role, extras = {}) {
     .eq("user_id", userId)
     .single();
   if (companyError) fatal(`${label} company load failed: ${companyError.message}`);
-  return { email, userId, companyId: company.id };
+  return { email, userId, companyId: company.id, company };
 }
 
 async function countNotifications(userId, type, entityId) {
@@ -193,41 +201,35 @@ try {
 
   const threadId = submitted.data?.thread_id;
 
-  const submittedNotif = await countNotifications(
-    buyer.userId,
-    "quotation.submitted",
-    threadId
-  );
+  const submittedNotif = await countNotifications(buyer.userId, "quotation.submitted", threadId);
   if (submittedNotif == null) skip("quotation.submitted notification", "no service role");
-  else check("Buyer receives quotation.submitted", submittedNotif >= 1, { submittedNotif });
+  else
+    check("Buyer receives quotation.submitted", submittedNotif >= 1, {
+      submittedNotif,
+    });
 
   // RFQ becomes quoted
   await signIn(buyer.email);
   const rfqAfter = await supabase.from("rfqs").select("status").eq("id", publicRfq.id).single();
-  check("RFQ status becomes quoted after first submit", rfqAfter.data?.status === "quoted", rfqAfter);
+  check(
+    "RFQ status becomes quoted after first submit",
+    rfqAfter.data?.status === "quoted",
+    rfqAfter
+  );
 
   // Buyer sees thread; peer supplier does not
-  const buyerThreads = await supabase
-    .from("quotation_threads")
-    .select("id")
-    .eq("id", threadId);
+  const buyerThreads = await supabase.from("quotation_threads").select("id").eq("id", threadId);
   check("Buyer can read quotation thread for own RFQ", (buyerThreads.data?.length ?? 0) === 1);
 
   await signIn(peerSupplier.email);
-  const peerThreads = await supabase
-    .from("quotation_threads")
-    .select("id")
-    .eq("id", threadId);
+  const peerThreads = await supabase.from("quotation_threads").select("id").eq("id", threadId);
   check(
     "Peer supplier cannot read another supplier thread",
     (peerThreads.data?.length ?? 0) === 0,
     peerThreads
   );
 
-  const peerOffers = await supabase
-    .from("quotation_offers")
-    .select("id")
-    .eq("thread_id", threadId);
+  const peerOffers = await supabase.from("quotation_offers").select("id").eq("thread_id", threadId);
   check(
     "Peer supplier cannot read another supplier offers",
     (peerOffers.data?.length ?? 0) === 0,
@@ -250,13 +252,12 @@ try {
     revised.error
   );
 
-  const updatedNotif = await countNotifications(
-    buyer.userId,
-    "quotation.updated",
-    threadId
-  );
+  const updatedNotif = await countNotifications(buyer.userId, "quotation.updated", threadId);
   if (updatedNotif == null) skip("quotation.updated notification", "no service role");
-  else check("Buyer receives quotation.updated", updatedNotif >= 1, { updatedNotif });
+  else
+    check("Buyer receives quotation.updated", updatedNotif >= 1, {
+      updatedNotif,
+    });
 
   const offers = await supabase
     .from("quotation_offers")
@@ -264,11 +265,7 @@ try {
     .eq("thread_id", threadId)
     .order("revision_no");
   const superseded = (offers.data ?? []).find((o) => o.revision_no === 1);
-  check(
-    "Prior offer becomes superseded",
-    superseded?.status === "superseded",
-    offers.data
-  );
+  check("Prior offer becomes superseded", superseded?.status === "superseded", offers.data);
 
   // Draft flow
   await signIn(buyer.email);
@@ -282,7 +279,11 @@ try {
     p_unit_price: 100,
     p_currency: "USD",
   });
-  check("Supplier can create_draft_quotation", draftOffer.data?.status === "draft", draftOffer.error);
+  check(
+    "Supplier can create_draft_quotation",
+    draftOffer.data?.status === "draft",
+    draftOffer.error
+  );
 
   await signIn(buyer.email);
   const buyerSeesDraft = await supabase
@@ -321,11 +322,7 @@ try {
   const withdrawn = await supabase.rpc("withdraw_quotation", {
     p_thread_id: submitDraft.data.thread_id,
   });
-  check(
-    "Supplier can withdraw_quotation",
-    withdrawn.data?.status === "withdrawn",
-    withdrawn.error
-  );
+  check("Supplier can withdraw_quotation", withdrawn.data?.status === "withdrawn", withdrawn.error);
 
   const withdrawnNotif = await countNotifications(
     buyer.userId,
@@ -333,7 +330,10 @@ try {
     submitDraft.data.thread_id
   );
   if (withdrawnNotif == null) skip("quotation.withdrawn notification", "no service role");
-  else check("Buyer receives quotation.withdrawn", withdrawnNotif >= 1, { withdrawnNotif });
+  else
+    check("Buyer receives quotation.withdrawn", withdrawnNotif >= 1, {
+      withdrawnNotif,
+    });
 
   // Closed RFQ rejection
   await signIn(buyer.email);
@@ -347,11 +347,7 @@ try {
     p_rfq_id: closeTarget.id,
     p_unit_price: 1,
   });
-  check(
-    "Cannot submit_quotation on closed RFQ",
-    !!quoteClosed.error,
-    quoteClosed.error?.message
-  );
+  check("Cannot submit_quotation on closed RFQ", !!quoteClosed.error, quoteClosed.error?.message);
 
   // Invite-only enforcement
   await signIn(buyer.email);
@@ -402,11 +398,18 @@ try {
     p_rfq_id: verifiedOnlyRfq.id,
     p_unit_price: 42,
   });
-  check(
-    "Verified supplier can quote verified_suppliers_only RFQ",
-    verifiedQuote.data?.status === "submitted",
-    verifiedQuote.error
-  );
+  if (verifiedSupplier.company.verification_status !== "verified") {
+    skip(
+      "Verified supplier can quote verified_suppliers_only RFQ",
+      "trusted verification fixture requires service role"
+    );
+  } else {
+    check(
+      "Verified supplier can quote verified_suppliers_only RFQ",
+      verifiedQuote.data?.status === "submitted",
+      verifiedQuote.error
+    );
+  }
 
   // Buyer cannot submit quotation
   await signIn(buyer.email);
@@ -427,17 +430,17 @@ try {
   const peerView = await supabase.rpc("get_quotation_thread", {
     p_thread_id: threadId,
   });
-  check(
-    "Peer supplier denied get_quotation_thread",
-    !!peerView.error,
-    peerView.error?.message
-  );
+  check("Peer supplier denied get_quotation_thread", !!peerView.error, peerView.error?.message);
 
   await signIn(buyer.email);
   const buyerView = await supabase.rpc("get_quotation_thread", {
     p_thread_id: threadId,
   });
-  check("Buyer can get_quotation_thread for own RFQ", !!buyerView.data && !buyerView.error, buyerView.error);
+  check(
+    "Buyer can get_quotation_thread for own RFQ",
+    !!buyerView.data && !buyerView.error,
+    buyerView.error
+  );
 
   // Direct insert denied
   await signIn(verifiedSupplier.email);
@@ -448,9 +451,7 @@ try {
   });
   check("Direct INSERT into quotation_threads denied", !!directInsert.error);
 
-  console.log(
-    `\nDone. passed=${passed} failed=${failures.length} skipped=${skipped}`
-  );
+  console.log(`\nDone. passed=${passed} failed=${failures.length} skipped=${skipped}`);
   if (failures.length > 0) {
     console.error("Failures:", failures);
     process.exit(1);

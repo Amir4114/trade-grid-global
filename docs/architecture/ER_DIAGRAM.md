@@ -6,7 +6,7 @@ Entity-relationship overview of implemented database domains.
 
 ## Scope
 
-Tables from migrations `001`–`016`. Column-level detail → [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md).
+Tables from migrations `001`–`022`. Column-level detail → [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md).
 
 ## Table of contents
 
@@ -20,10 +20,10 @@ Tables from migrations `001`–`016`. Column-level detail → [DATABASE_SCHEMA.m
 
 ## Current Status
 
-| Domain | Status |
-|--------|--------|
-| Auth / companies / products / notifications / verification / RFQ / quotation / award | Implemented |
-| Orders / invoices / payments / shipments | **Not implemented.** |
+| Domain                                                                                                  | Status               |
+| ------------------------------------------------------------------------------------------------------- | -------------------- |
+| Auth / companies / products / notifications / verification / RFQ / quotation / award / PO / Fulfillment | Implemented in code  |
+| Invoices / payments / first-class shipments                                                             | **Not implemented.** |
 
 ## Core identity
 
@@ -63,21 +63,30 @@ erDiagram
   quotation_threads ||--o| quotation_awards : wins
   quotation_offers ||--o| quotation_awards : selected
   quotation_awards ||--o{ award_events : audits
+  quotation_awards ||--o{ purchase_orders : sources
+  purchase_orders ||--o{ purchase_order_items : lines
+  purchase_orders ||--o{ purchase_order_events : audits
+  purchase_orders ||--o{ purchase_order_documents : files
+  purchase_orders ||--o| fulfillment_orders : executes
+  fulfillment_orders ||--o{ fulfillment_order_events : audits
+  fulfillment_orders ||--o{ fulfillment_order_documents : files
 ```
 
 ## Not modeled
 
-Orders, POs, invoices, payments, negotiation messages, shipments — **Not implemented.**
+Invoices, payments, negotiation messages, and first-class shipments — **Not implemented.**
 
 ## References
 
 - [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md)
 - [SYSTEM_ARCHITECTURE.md](./SYSTEM_ARCHITECTURE.md)
 - [../product/PROCUREMENT_WORKFLOW.md](../product/PROCUREMENT_WORKFLOW.md)
+- [DOMAIN_MODEL.md](./DOMAIN_MODEL.md)
+- [../domains/fulfillment/ENTITY_MAP.md](../domains/fulfillment/ENTITY_MAP.md)
 
 ## Future notes
 
-Extend ER when Module 3 introduces `purchase_orders` / `orders` (planned only).
+Extend ER when Logistics 3.3 introduces first-class shipment entities.
 
 ---
 

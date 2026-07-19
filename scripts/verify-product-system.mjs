@@ -64,20 +64,20 @@ function fatal(message) {
 
 async function signUp(label, role) {
   const email = `prod-${role}-${label}-${stamp}@tradegrid.test`;
-  const { data, error } = await supabase.auth.signUp({ email, password });
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        tradegrid_marketplace_signup: true,
+        marketplace_role: role,
+        full_name: `${label} Test`,
+        company_name: `${label} Co`,
+      },
+    },
+  });
   if (error) fatal(`${label} signup failed: ${error.message}`);
   const userId = data.user?.id;
-  await supabase.from("profiles").upsert({ id: userId, email, role }, { onConflict: "id" });
-  await supabase.from("companies").upsert(
-    {
-      user_id: userId,
-      company_name: `${label} Co`,
-      account_type: role,
-      onboarding_completed: false,
-      onboarding_step: "business_info",
-    },
-    { onConflict: "user_id" }
-  );
   const { data: company } = await supabase
     .from("companies")
     .select("id")
@@ -114,7 +114,13 @@ async function assertCannotSelfPromote(who, userId) {
 async function createDraft(companyId, userId, name) {
   return supabase
     .from("products")
-    .insert({ company_id: companyId, created_by: userId, name, category: "Rice", status: "draft" })
+    .insert({
+      company_id: companyId,
+      created_by: userId,
+      name,
+      category: "Rice",
+      status: "draft",
+    })
     .select("*")
     .single();
 }
@@ -126,7 +132,11 @@ try {
   const draft1 = await createDraft(supplier1.companyId, supplier1.userId, "Basmati Draft");
   if (draft1.error) {
     const msg = draft1.error.message || "";
-    if (/relation .*products.* does not exist|schema cache|Could not find the table|PGRST205/i.test(msg)) {
+    if (
+      /relation .*products.* does not exist|schema cache|Could not find the table|PGRST205/i.test(
+        msg
+      )
+    ) {
       fatal(
         "products table not found. Apply migration 006 (and 007) to the live database first, then re-run."
       );
@@ -138,8 +148,14 @@ try {
 
   await assertCannotSelfPromote("Supplier", supplier1.userId);
 
-  const submitIncomplete = await supabase.rpc("submit_product_for_review", { product_id: p1 });
-  check("Incomplete supplier is BLOCKED from submitting", !!submitIncomplete.error, submitIncomplete.error?.message);
+  const submitIncomplete = await supabase.rpc("submit_product_for_review", {
+    product_id: p1,
+  });
+  check(
+    "Incomplete supplier is BLOCKED from submitting",
+    !!submitIncomplete.error,
+    submitIncomplete.error?.message
+  );
 
   const selfPublishDraft = await supabase
     .from("products")
@@ -156,7 +172,9 @@ try {
     .update({ onboarding_completed: true, onboarding_step: "completed" })
     .eq("user_id", supplier1.userId);
 
-  const submitOk = await supabase.rpc("submit_product_for_review", { product_id: p1 });
+  const submitOk = await supabase.rpc("submit_product_for_review", {
+    product_id: p1,
+  });
   check(
     "Completed supplier can submit -> pending",
     !submitOk.error && submitOk.data?.status === "pending",
@@ -168,10 +186,18 @@ try {
     .update({ name: "Hacked Pending" })
     .eq("id", p1)
     .select("*");
-  check("Supplier CANNOT edit a pending product", (editPending.data?.length ?? 0) === 0, editPending.data);
+  check(
+    "Supplier CANNOT edit a pending product",
+    (editPending.data?.length ?? 0) === 0,
+    editPending.data
+  );
 
   const selfApprove = await supabase.rpc("approve_product", { product_id: p1 });
-  check("Supplier CANNOT self-approve (not admin)", !!selfApprove.error, selfApprove.error?.message);
+  check(
+    "Supplier CANNOT self-approve (not admin)",
+    !!selfApprove.error,
+    selfApprove.error?.message
+  );
 
   const draft2 = await createDraft(supplier1.companyId, supplier1.userId, "Reject Flow");
   const p2 = draft2.data.id;
@@ -183,7 +209,12 @@ try {
   const buyer = await signUp("b1", "buyer");
   const buyerInsert = await supabase
     .from("products")
-    .insert({ company_id: buyer.companyId, name: "Buyer Product", category: "Rice", status: "draft" })
+    .insert({
+      company_id: buyer.companyId,
+      name: "Buyer Product",
+      category: "Rice",
+      status: "draft",
+    })
     .select("*");
   check("Buyer CANNOT create products", !!buyerInsert.error, buyerInsert.error?.message);
 
@@ -191,7 +222,10 @@ try {
 
   const buyerApprove = await supabase.rpc("approve_product", { product_id: p1 });
   check("Buyer CANNOT approve products", !!buyerApprove.error, buyerApprove.error?.message);
-  const buyerReject = await supabase.rpc("reject_product", { product_id: p2, reason: "x" });
+  const buyerReject = await supabase.rpc("reject_product", {
+    product_id: p2,
+    reason: "x",
+  });
   check("Buyer CANNOT reject products", !!buyerReject.error, buyerReject.error?.message);
 
   // ---- cross-supplier isolation ------------------------------------------
@@ -235,22 +269,32 @@ try {
       !approve.error && approve.data?.status === "published",
       approve.error?.message
     );
-    const reject = await supabase.rpc("reject_product", { product_id: p2, reason: "Missing certifications" });
+    const reject = await supabase.rpc("reject_product", {
+      product_id: p2,
+      reason: "Missing certifications",
+    });
     check(
       "Admin can reject pending -> rejected (with reason)",
-      !reject.error && reject.data?.status === "rejected" && reject.data?.rejection_reason === "Missing certifications",
+      !reject.error &&
+        reject.data?.status === "rejected" &&
+        reject.data?.rejection_reason === "Missing certifications",
       reject.error?.message
     );
     adminApproved = !approve.error && approve.data?.status === "published";
   } else {
-    skip("Positive admin tests (approve/reject, admin is_admin()=true) - require SUPABASE_SERVICE_ROLE_KEY for trusted admin provisioning");
+    skip(
+      "Positive admin tests (approve/reject, admin is_admin()=true) - require SUPABASE_SERVICE_ROLE_KEY for trusted admin provisioning"
+    );
   }
 
   // ---- public visibility (anon) ------------------------------------------
   await supabase.auth.signOut();
   if (adminApproved) {
     const pubPublished = await supabase.from("products").select("*").eq("id", p1).maybeSingle();
-    check("Public CAN read a published product", !pubPublished.error && pubPublished.data?.id === p1);
+    check(
+      "Public CAN read a published product",
+      !pubPublished.error && pubPublished.data?.id === p1
+    );
   } else {
     const pubPending = await supabase.from("products").select("*").eq("id", p1).maybeSingle();
     check("Public CANNOT read a pending product", !pubPending.error && pubPending.data === null);
@@ -273,14 +317,21 @@ try {
       .update({ description: "Now with certifications" })
       .eq("id", p2)
       .select("*");
-    check("Supplier CAN edit a rejected product", !editRejected.error && (editRejected.data?.length ?? 0) === 1);
-    const resubmit = await supabase.rpc("submit_product_for_review", { product_id: p2 });
+    check(
+      "Supplier CAN edit a rejected product",
+      !editRejected.error && (editRejected.data?.length ?? 0) === 1
+    );
+    const resubmit = await supabase.rpc("submit_product_for_review", {
+      product_id: p2,
+    });
     check(
       "Supplier can resubmit a corrected rejected product -> pending",
       !resubmit.error && resubmit.data?.status === "pending",
       resubmit.error?.message
     );
-    const archivePublished = await supabase.rpc("archive_product", { product_id: p1 });
+    const archivePublished = await supabase.rpc("archive_product", {
+      product_id: p1,
+    });
     check(
       "Supplier can archive a published product",
       !archivePublished.error && archivePublished.data?.status === "archived",

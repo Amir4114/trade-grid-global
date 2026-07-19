@@ -60,6 +60,7 @@ import {
 
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/lib/toast";
+import { canPerformTrustSensitiveActions } from "@/lib/verification/access";
 
 
 
@@ -94,6 +95,7 @@ export default function EditSupplierProductPage() {
 
 
   const onboardingComplete = isOnboardingComplete(company);
+  const canTrade = canPerformTrustSensitiveActions(company?.verification_status);
 
 
 
@@ -205,6 +207,12 @@ export default function EditSupplierProductPage() {
   const handleSubmitForReview = async () => {
 
     if (!product) return;
+    if (!canTrade) {
+      setSaveError(
+        "Verification approval is required before submitting a product for review."
+      );
+      return;
+    }
 
 
 
@@ -443,7 +451,11 @@ export default function EditSupplierProductPage() {
 
                       {onboardingComplete
 
-                        ? "Submitting sends this product to admin review."
+                        ? canTrade
+
+                          ? "Submitting sends this product to admin review."
+
+                          : "Verification approval is required before submitting this draft for review."
 
                         : "Complete your company onboarding to submit for review."}
 
@@ -451,7 +463,7 @@ export default function EditSupplierProductPage() {
 
                     <Button
 
-                      disabled={submitting || !onboardingComplete}
+                      disabled={submitting || !onboardingComplete || !canTrade}
 
                       onClick={() => void handleSubmitForReview()}
 

@@ -1,56 +1,59 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useMemo, useState } from "react"
+import { ArrowLeft } from "lucide-react"
 
-import DashboardPanel from "@/components/dashboard/DashboardPanel";
-import DashboardShell from "@/components/dashboard/DashboardShell";
-import ProductForm from "@/components/products/ProductForm";
-import { Button } from "@/components/ui/button";
-import { useAuth, useCompany } from "@/contexts/AuthProvider";
-import { createDraftProduct } from "@/lib/products/service";
-import { uploadProductImage } from "@/lib/products/storage";
-import { EMPTY_PRODUCT_FORM, type ProductFormValues } from "@/lib/products/types";
-import { createClient } from "@/lib/supabase/client";
-import { toast } from "@/lib/toast";
+import DashboardPanel from "@/components/dashboard/DashboardPanel"
+import DashboardShell from "@/components/dashboard/DashboardShell"
+import ProductForm from "@/components/products/ProductForm"
+import { Button } from "@/components/ui/button"
+import { useAuth, useCompany } from "@/contexts/AuthProvider"
+import { createDraftProduct } from "@/lib/products/service"
+import { uploadProductImage } from "@/lib/products/storage"
+import {
+  EMPTY_PRODUCT_FORM,
+  type ProductFormValues,
+} from "@/lib/products/types"
+import { createClient } from "@/lib/supabase/client"
+import { toast } from "@/lib/toast"
 
 export default function NewSupplierProductPage() {
-  const router = useRouter();
-  const { user } = useAuth();
-  const { company } = useCompany();
-  const supabase = useMemo(() => createClient(), []);
+  const router = useRouter()
+  const { user } = useAuth()
+  const { company } = useCompany()
+  const supabase = useMemo(() => createClient(), [])
 
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async (values: ProductFormValues) => {
     if (!company?.id) {
-      setError("Company profile not found.");
-      return;
+      setError("Company profile not found.")
+      return
     }
 
     try {
-      setSaving(true);
-      setError(null);
+      setSaving(true)
+      setError(null)
       const created = await createDraftProduct(supabase, {
         companyId: company.id,
         createdBy: user?.id ?? null,
         values,
-      });
-      toast.success("Product draft saved");
-      router.push(`/dashboard/supplier/products/${created.id}/edit`);
-      router.refresh();
+      })
+      toast.success("Product draft saved")
+      router.push(`/dashboard/supplier/products/${created.id}/edit`)
+      router.refresh()
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Failed to create product draft.";
-      toast.error("Save failed", { description: message });
-      setError(message);
+        err instanceof Error ? err.message : "Failed to create product draft."
+      toast.error("Save failed", { description: message })
+      setError(message)
     } finally {
-      setSaving(false);
+      setSaving(false)
     }
-  };
+  }
 
   return (
     <DashboardShell
@@ -76,11 +79,14 @@ export default function NewSupplierProductPage() {
           uploadImage={
             company?.id
               ? (file) =>
-                  uploadProductImage(supabase, { companyId: company.id, file })
+                  uploadProductImage(supabase, {
+                    companyId: company.id,
+                    file,
+                  })
               : undefined
           }
         />
       </DashboardPanel>
     </DashboardShell>
-  );
+  )
 }

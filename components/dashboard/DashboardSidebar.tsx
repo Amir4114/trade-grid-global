@@ -1,19 +1,19 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 
-import type { DashboardNavItem } from "@/lib/dashboard/navigation";
-import { roleLabel } from "@/lib/dashboard/roles";
-import type { UserRole } from "@/lib/marketplace/types";
-import { cn } from "@/lib/utils";
+import type { DashboardNavItem } from "@/lib/dashboard/navigation"
+import { roleLabel } from "@/lib/dashboard/roles"
+import type { UserRole } from "@/lib/marketplace/types"
+import { cn } from "@/lib/utils"
 
 type DashboardSidebarProps = {
-  role: UserRole;
-  items: DashboardNavItem[];
-  onNavigate?: () => void;
-  className?: string;
-};
+  role: UserRole
+  items: DashboardNavItem[]
+  onNavigate?: () => void
+  className?: string
+}
 
 export default function DashboardSidebar({
   role,
@@ -21,7 +21,7 @@ export default function DashboardSidebar({
   onNavigate,
   className,
 }: DashboardSidebarProps) {
-  const pathname = usePathname();
+  const pathname = usePathname()
 
   return (
     <aside
@@ -31,7 +31,7 @@ export default function DashboardSidebar({
       )}
     >
       <div className="border-b border-white/10 px-5 py-5">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-500/90">
+        <p className="text-[11px] font-semibold tracking-[0.2em] text-amber-500/90 uppercase">
           Workspace
         </p>
         <p className="mt-1 text-lg font-semibold tracking-tight">
@@ -41,11 +41,11 @@ export default function DashboardSidebar({
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
         {items.map((item) => {
-          const Icon = item.icon;
+          const Icon = item.icon
+          const itemPath = item.href.split("?")[0]
           const isActive =
-            pathname === item.href ||
-            (item.href !== `/dashboard/${role}` &&
-              pathname.startsWith(item.href));
+            pathname === itemPath ||
+            (itemPath !== `/dashboard/${role}` && pathname.startsWith(itemPath))
 
           return (
             <Link
@@ -62,23 +62,23 @@ export default function DashboardSidebar({
               <Icon
                 className={cn(
                   "size-4 shrink-0",
-                  isActive ? "text-amber-500" : "text-neutral-500 group-hover:text-neutral-300"
+                  isActive
+                    ? "text-amber-500"
+                    : "text-neutral-500 group-hover:text-neutral-300"
                 )}
               />
               {item.label}
             </Link>
-          );
+          )
         })}
       </nav>
 
       <div className="border-t border-white/10 px-5 py-4">
-        <p className="text-xs text-neutral-500">
-          Trade Grid Global
-        </p>
+        <p className="text-xs text-neutral-500">Trade Grid Global</p>
         <p className="mt-0.5 text-xs text-neutral-600">
           Enterprise trade platform
         </p>
       </div>
     </aside>
-  );
+  )
 }

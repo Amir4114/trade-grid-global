@@ -1,25 +1,27 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js"
 
 import {
   getDashboardPathForRole,
   getOnboardingPathForRole,
   parseProfileRole,
-} from "@/lib/dashboard/roles";
-import type { Database } from "@/lib/database/types";
-import type { UserRole } from "@/lib/database/types";
-import { createClient } from "@/lib/supabase/client";
+} from "@/lib/dashboard/roles"
+import type { Database } from "@/lib/database/types"
+import type { CompanyVerificationStatus, UserRole } from "@/lib/database/types"
+import { createClient } from "@/lib/supabase/client"
 
 export type AuthRedirectContext = {
-  role: string | null;
-  onboardingCompleted: boolean;
-};
+  role: string | null
+  onboardingCompleted: boolean
+  companyExists?: boolean
+  verificationStatus?: CompanyVerificationStatus | null
+}
 
 export function getUserIdFromClaims(
   claims: Record<string, unknown> | null
 ): string | null {
-  if (!claims) return null;
+  if (!claims) return null
 
-  return typeof claims.sub === "string" ? claims.sub : null;
+  return typeof claims.sub === "string" ? claims.sub : null
 }
 
 export async function fetchAuthRedirectContext(
@@ -27,91 +29,93 @@ export async function fetchAuthRedirectContext(
   userId: string
 ): Promise<AuthRedirectContext> {
   const [profileResult, companyResult] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", userId)
-      .maybeSingle(),
+    supabase.from("profiles").select("role").eq("id", userId).maybeSingle(),
 
     supabase
       .from("companies")
-      .select("onboarding_completed")
+      .select("onboarding_completed,verification_status")
       .eq("user_id", userId)
       .maybeSingle(),
-  ]);
+  ])
 
   if (profileResult.error) {
-    console.error("Failed loading profile:", profileResult.error);
+    console.error("Failed loading profile:", profileResult.error)
   }
 
   if (companyResult.error) {
-    console.error("Failed loading company:", companyResult.error);
+    console.error("Failed loading company:", companyResult.error)
   }
 
   return {
     role: profileResult.data?.role ?? null,
-    onboardingCompleted:
-      companyResult.data?.onboarding_completed ?? false,
-  };
+    companyExists: companyResult.data !== null,
+    onboardingCompleted: companyResult.data?.onboarding_completed ?? false,
+    verificationStatus: companyResult.data?.verification_status ?? null,
+  }
 }
 
 export async function fetchClientAuthRedirectContext(
   userId: string
 ): Promise<AuthRedirectContext> {
-  const supabase = createClient();
+  const supabase = createClient()
 
-  return fetchAuthRedirectContext(supabase, userId);
+  return fetchAuthRedirectContext(supabase, userId)
 }
 
-function isSafeNextPath(
-  nextPath: string,
-  role: UserRole
-): boolean {
-  if (!nextPath.startsWith("/")) return false;
+function isPathWithin(path: string, basePath: string): boolean {
+  const pathname = path.split(/[?#]/, 1)[0]
+  return pathname === basePath || pathname.startsWith(`${basePath}/`)
+}
 
-  if (nextPath.startsWith("//")) return false;
+function isSafeNextPath(nextPath: string, role: UserRole): boolean {
+  if (!nextPath.startsWith("/")) return false
+
+  if (nextPath.startsWith("//")) return false
 
   switch (role) {
     case "buyer":
       return (
-        nextPath.startsWith("/dashboard/buyer") ||
-        nextPath.startsWith("/onboarding/buyer")
-      );
+        isPathWithin(nextPath, "/dashboard/buyer") ||
+        isPathWithin(nextPath, "/onboarding/buyer")
+      )
 
     case "supplier":
       return (
-        nextPath.startsWith("/dashboard/supplier") ||
-        nextPath.startsWith("/onboarding/supplier")
-      );
+        isPathWithin(nextPath, "/dashboard/supplier") ||
+        isPathWithin(nextPath, "/onboarding/supplier")
+      )
 
     case "admin":
       return (
-        nextPath.startsWith("/dashboard/admin") ||
-        nextPath === "/admin" ||
-        nextPath.startsWith("/admin/")
-      );
+        isPathWithin(nextPath, "/dashboard/admin") ||
+        isPathWithin(nextPath, "/admin")
+      )
 
     default:
-      return false;
+      return false
   }
 }
 
 export function resolvePostAuthRedirectPath(
   context: AuthRedirectContext & { nextPath?: string | null }
 ): string {
-  const { role, nextPath } = context;
-  const parsedRole = parseProfileRole(role);
+  const { role, nextPath } = context
+  const parsedRole = parseProfileRole(role)
+
+  if (context.companyExists === false && parsedRole !== "admin") {
+    return "/signup?recovery=1"
+  }
 
   if (!parsedRole) {
-    console.warn("Unknown role received:", role);
-    return "/login";
+    console.warn("Unknown role received:", role)
+    return "/login"
   }
 
   if (nextPath && isSafeNextPath(nextPath, parsedRole)) {
-    return nextPath;
+    return nextPath
   }
 
-  return getDashboardPathForRole(parsedRole);
+  return getDashboardPathForRole(parsedRole)
 }
 
 /**
@@ -122,21 +126,21 @@ export function resolveOnboardingEntryPath({
   role,
   onboardingCompleted,
 }: AuthRedirectContext): string {
-  const parsedRole = parseProfileRole(role);
+  const parsedRole = parseProfileRole(role)
 
   if (!parsedRole) {
-    return "/login";
+    return "/login"
   }
 
   if (parsedRole === "admin") {
-    return getDashboardPathForRole(parsedRole);
+    return getDashboardPathForRole(parsedRole)
   }
 
   if (onboardingCompleted) {
-    return getDashboardPathForRole(parsedRole);
+    return getDashboardPathForRole(parsedRole)
   }
 
-  return getOnboardingPathForRole(parsedRole);
+  return getOnboardingPathForRole(parsedRole)
 }
 
 /**
@@ -146,53 +150,54 @@ export function resolveOnboardingEntryPath({
 export function isOnboardingComplete(
   company: { onboarding_completed?: boolean | null } | null | undefined
 ): boolean {
-  return company?.onboarding_completed === true;
+  return company?.onboarding_completed === true
 }
 
 export function requiresCompletedOnboarding(
   company: { onboarding_completed?: boolean | null } | null | undefined
 ): boolean {
-  return !isOnboardingComplete(company);
+  return !isOnboardingComplete(company)
+}
+
+export function shouldRedirectOnboardingWorkspaceToDashboard(
+  context: AuthRedirectContext
+): boolean {
+  return (
+    context.onboardingCompleted &&
+    (context.verificationStatus === "under_review" ||
+      context.verificationStatus === "verified")
+  )
 }
 
 export function isSharedDashboardPath(pathname: string): boolean {
-  return pathname === "/dashboard/notifications";
+  return pathname === "/dashboard/notifications"
 }
 
-export function isRoleDashboardPath(
-  pathname: string,
-  role: UserRole
-): boolean {
+export function isRoleDashboardPath(pathname: string, role: UserRole): boolean {
   if (isSharedDashboardPath(pathname)) {
-    return true;
+    return true
   }
 
   switch (role) {
     case "buyer":
-      return pathname.startsWith("/dashboard/buyer");
+      return isPathWithin(pathname, "/dashboard/buyer")
 
     case "supplier":
-      return pathname.startsWith("/dashboard/supplier");
+      return isPathWithin(pathname, "/dashboard/supplier")
 
     case "admin":
       return (
-        pathname.startsWith("/dashboard/admin") ||
-        pathname === "/admin" ||
-        pathname.startsWith("/admin/")
-      );
+        isPathWithin(pathname, "/dashboard/admin") ||
+        isPathWithin(pathname, "/admin")
+      )
 
     default:
-      return false;
+      return false
   }
 }
 
-export function isOnboardingFormPath(
-  pathname: string
-): boolean {
-  return (
-    pathname === "/onboarding/buyer" ||
-    pathname === "/onboarding/supplier"
-  );
+export function isOnboardingFormPath(pathname: string): boolean {
+  return pathname === "/onboarding/buyer" || pathname === "/onboarding/supplier"
 }
 
 export function isWrongOnboardingPath(
@@ -200,15 +205,11 @@ export function isWrongOnboardingPath(
   role: UserRole
 ): boolean {
   return (
-    (pathname === "/onboarding/buyer" &&
-      role === "supplier") ||
-    (pathname === "/onboarding/supplier" &&
-      role === "buyer")
-  );
+    (pathname === "/onboarding/buyer" && role === "supplier") ||
+    (pathname === "/onboarding/supplier" && role === "buyer")
+  )
 }
 
-export function getCorrectOnboardingPath(
-  role: UserRole
-): string {
-  return getOnboardingPathForRole(role);
+export function getCorrectOnboardingPath(role: UserRole): string {
+  return getOnboardingPathForRole(role)
 }

@@ -2,7 +2,7 @@
 
 **Document type:** Architecture & business design (blueprint)  
 **Module:** 3.2 Order Lifecycle / Operational Execution  
-**Status:** Design + Phase 0 **LOCKED** — **Not implemented.**  
+**Status:** Design + Phase 0 **LOCKED**; Phase A database/RPC contract **implemented in code** (`018`); Phase B UI not implemented.
 **Release target:** `v0.5.0-order-lifecycle`  
 **Product baseline:** `v0.4.0-purchase-orders` (RFQ → Quotation → Award → Purchase Order)  
 **Constraint:** Extend Module 3.1. Do **not** redesign RFQ, quotation, award, or PO commercial snapshots. Accepted PO remains the commercial baseline (**AD-3.1-023** / **AD-3.2-002**).  
@@ -101,7 +101,7 @@ Order Lifecycle is the **operational execution layer**: it tracks how an accepte
 | Layer | Status |
 |-------|--------|
 | Purchase Order (3.1) | **Implemented** |
-| Order Lifecycle (3.2) | **Not implemented** (this design) |
+| Order Lifecycle (3.2) | Phase A implemented in code; Phase B UI not implemented |
 
 ---
 

@@ -20,14 +20,15 @@ Planned / deferred capabilities. Implemented features → [CURRENT_STATUS.md](./
 
 ## Current Status
 
-All items below are **Not implemented** unless noted as mock UI.
+Items below are **Not implemented** unless another status is stated.
 
 ## Trade execution
 
 | Feature | Status |
 |---------|--------|
-| Purchase orders | **Not implemented.** |
-| Order management | **Not implemented.** (mock Orders page) |
+| Purchase orders | Implemented in code (`017`) |
+| Fulfillment database/RPC contract | Implemented in code (`018`) |
+| Fulfillment UI and rich document workflow | **Not implemented.** |
 | Shipping / logistics visibility | **Not implemented.** |
 | Trade document packs on orders | **Not implemented.** |
 | Negotiation chat | **Not implemented.** |
@@ -64,6 +65,8 @@ All items below are **Not implemented** unless noted as mock UI.
 - [../product/AI_ROADMAP.md](../product/AI_ROADMAP.md)
 - [../product/ORDER_LIFECYCLE.md](../product/ORDER_LIFECYCLE.md)
 - [../product/PAYMENT_WORKFLOW.md](../product/PAYMENT_WORKFLOW.md)
+- [../architecture/DOMAIN_MODEL.md](../architecture/DOMAIN_MODEL.md)
+- [../domains/fulfillment/README.md](../domains/fulfillment/README.md)
 
 ## Future notes
 

@@ -1,9 +1,9 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { useState } from "react";
+import Link from "next/link"
+import { useState } from "react"
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -11,34 +11,38 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import type { AwardEvent, QuotationAward } from "@/lib/database/types";
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import type { AwardEvent, QuotationAward } from "@/lib/database/types"
 import {
   formatLeadTime,
   formatMoney,
   formatMoq,
   QUOTATION_THREAD_STATUS_LABELS,
   type QuotationThreadSummary,
-} from "@/lib/quotation/types";
-import { cn } from "@/lib/utils";
+} from "@/lib/quotation/types"
+import { cn } from "@/lib/utils"
 
 type Props = {
-  rfqStatus: string;
-  requiredCertifications: string[];
-  quotes: QuotationThreadSummary[];
-  award: QuotationAward | null;
-  awardEvents: AwardEvent[];
-  busy: boolean;
-  onAward: (threadId: string, notes: string) => Promise<void>;
-};
+  rfqStatus: string
+  requiredCertifications: string[]
+  quotes: QuotationThreadSummary[]
+  award: QuotationAward | null
+  awardEvents: AwardEvent[]
+  busy: boolean
+  canAward: boolean
+  onAward: (threadId: string, notes: string) => Promise<void>
+}
 
-function isAwardable(rfqStatus: string, quote: QuotationThreadSummary): boolean {
-  if (!["open", "quoted"].includes(rfqStatus)) return false;
-  if (quote.status === "withdrawn") return false;
-  const offer = quote.current_offer;
-  if (!offer) return false;
-  return offer.status === "submitted";
+function isAwardable(
+  rfqStatus: string,
+  quote: QuotationThreadSummary
+): boolean {
+  if (!["open", "quoted"].includes(rfqStatus)) return false
+  if (quote.status === "withdrawn") return false
+  const offer = quote.current_offer
+  if (!offer) return false
+  return offer.status === "submitted"
 }
 
 export default function BuyerAwardComparePanel({
@@ -48,16 +52,15 @@ export default function BuyerAwardComparePanel({
   award,
   awardEvents,
   busy,
+  canAward,
   onAward,
 }: Props) {
-  const [confirmThreadId, setConfirmThreadId] = useState<string | null>(null);
-  const [notes, setNotes] = useState("");
+  const [confirmThreadId, setConfirmThreadId] = useState<string | null>(null)
+  const [notes, setNotes] = useState("")
 
-  const confirmQuote = quotes.find((q) => q.id === confirmThreadId) ?? null;
+  const confirmQuote = quotes.find((q) => q.id === confirmThreadId) ?? null
   const certsLabel =
-    requiredCertifications.length > 0
-      ? requiredCertifications.join(", ")
-      : "—";
+    requiredCertifications.length > 0 ? requiredCertifications.join(", ") : "—"
 
   return (
     <div className="space-y-6">
@@ -67,7 +70,7 @@ export default function BuyerAwardComparePanel({
         <div className="overflow-hidden rounded-lg border border-neutral-200">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1100px] text-left text-sm">
-              <thead className="bg-neutral-50 text-xs uppercase tracking-wide text-neutral-500">
+              <thead className="bg-neutral-50 text-xs tracking-wide text-neutral-500 uppercase">
                 <tr>
                   <th className="px-4 py-3 font-semibold">Supplier</th>
                   <th className="px-4 py-3 font-semibold">Price</th>
@@ -82,13 +85,15 @@ export default function BuyerAwardComparePanel({
               </thead>
               <tbody className="divide-y divide-neutral-200">
                 {quotes.map((quote) => {
-                  const offer = quote.current_offer;
+                  const offer = quote.current_offer
                   const winner =
-                    award?.status === "active" && award.thread_id === quote.id;
+                    award?.status === "active" && award.thread_id === quote.id
                   return (
                     <tr
                       key={quote.id}
-                      className={cn(winner ? "bg-amber-50/60" : "hover:bg-neutral-50")}
+                      className={cn(
+                        winner ? "bg-amber-50/60" : "hover:bg-neutral-50"
+                      )}
                     >
                       <td className="px-4 py-3 font-medium text-neutral-900">
                         {quote.supplier_company_name ?? "Supplier"}
@@ -96,7 +101,9 @@ export default function BuyerAwardComparePanel({
                       <td className="px-4 py-3">
                         {offer ? formatMoney(offer) : "—"}
                       </td>
-                      <td className="px-4 py-3">{offer ? formatMoq(offer) : "—"}</td>
+                      <td className="px-4 py-3">
+                        {offer ? formatMoq(offer) : "—"}
+                      </td>
                       <td className="px-4 py-3">
                         {offer ? formatLeadTime(offer) : "—"}
                       </td>
@@ -114,10 +121,15 @@ export default function BuyerAwardComparePanel({
                         {isAwardable(rfqStatus, quote) ? (
                           <Button
                             size="sm"
-                            disabled={busy}
+                            disabled={busy || !canAward}
+                            title={
+                              canAward
+                                ? undefined
+                                : "Verification approval is required to award a supplier."
+                            }
                             onClick={() => {
-                              setConfirmThreadId(quote.id);
-                              setNotes("");
+                              setConfirmThreadId(quote.id)
+                              setNotes("")
                             }}
                           >
                             Award
@@ -131,7 +143,7 @@ export default function BuyerAwardComparePanel({
                         )}
                       </td>
                     </tr>
-                  );
+                  )
                 })}
               </tbody>
             </table>
@@ -140,7 +152,9 @@ export default function BuyerAwardComparePanel({
       )}
 
       <div>
-        <h4 className="text-sm font-semibold text-neutral-900">Award history</h4>
+        <h4 className="text-sm font-semibold text-neutral-900">
+          Award history
+        </h4>
         {award ? (
           <ul className="mt-3 space-y-3 text-sm">
             <li className="rounded-lg border border-neutral-200 px-3 py-2">
@@ -149,13 +163,19 @@ export default function BuyerAwardComparePanel({
                   Award {award.status === "active" ? "(active)" : "(revoked)"}
                 </div>
                 {award.status === "active" ? (
-                  <Button asChild size="sm">
-                    <Link
-                      href={`/dashboard/buyer/orders/new?awardId=${award.id}`}
-                    >
-                      Create purchase order
-                    </Link>
-                  </Button>
+                  canAward ? (
+                    <Button asChild size="sm">
+                      <Link
+                        href={`/dashboard/buyer/orders/new?awardId=${award.id}`}
+                      >
+                        Create purchase order
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button size="sm" disabled>
+                      Verification required
+                    </Button>
+                  )
                 ) : null}
               </div>
               <div className="text-xs text-neutral-500">
@@ -165,7 +185,9 @@ export default function BuyerAwardComparePanel({
             </li>
             {awardEvents.map((event) => (
               <li key={event.id} className="border-b border-neutral-100 pb-2">
-                <div className="font-medium text-neutral-900">{event.event_type}</div>
+                <div className="font-medium text-neutral-900">
+                  {event.event_type}
+                </div>
                 <div className="text-xs text-neutral-500">
                   {new Date(event.created_at).toLocaleString()}
                   {event.from_status && event.to_status
@@ -186,7 +208,7 @@ export default function BuyerAwardComparePanel({
       <Dialog
         open={Boolean(confirmThreadId)}
         onOpenChange={(open) => {
-          if (!open) setConfirmThreadId(null);
+          if (!open) setConfirmThreadId(null)
         }}
       >
         <DialogContent>
@@ -194,7 +216,8 @@ export default function BuyerAwardComparePanel({
             <DialogTitle>Confirm supplier award</DialogTitle>
             <DialogDescription>
               Awarding locks this RFQ, blocks new quotations, and notifies all
-              quoting suppliers. This cannot be undone without an explicit revoke.
+              quoting suppliers. This cannot be undone without an explicit
+              revoke.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 text-sm">
@@ -224,13 +247,13 @@ export default function BuyerAwardComparePanel({
               Cancel
             </Button>
             <Button
-              disabled={busy || !confirmThreadId}
+              disabled={busy || !confirmThreadId || !canAward}
               onClick={() => {
-                if (!confirmThreadId) return;
+                if (!confirmThreadId) return
                 void (async () => {
-                  await onAward(confirmThreadId, notes);
-                  setConfirmThreadId(null);
-                })();
+                  await onAward(confirmThreadId, notes)
+                  setConfirmThreadId(null)
+                })()
               }}
             >
               Confirm award
@@ -239,5 +262,5 @@ export default function BuyerAwardComparePanel({
         </DialogContent>
       </Dialog>
     </div>
-  );
+  )
 }

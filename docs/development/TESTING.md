@@ -57,8 +57,11 @@ Primary integration coverage is **live Supabase RPC + RLS** verification scripts
 | `verify-rfq-foundation.mjs` | RFQ |
 | `verify-quotation-system.mjs` | Quotations |
 | `verify-award-system.mjs` | Awards |
+| `verify-purchase-order-system.mjs` | Purchase Orders |
+| `verify-order-fulfillment-system.mjs` | Fulfillment |
 
 Run after applying relevant migrations. Optional `SUPABASE_SERVICE_ROLE_KEY` deepens some asserts.
+Complete coverage and planned domains: [../VERIFICATION_MATRIX.md](../VERIFICATION_MATRIX.md).
 
 ## Future E2E testing
 
@@ -76,6 +79,7 @@ See [../deployment/RELEASE_CHECKLIST.md](../deployment/RELEASE_CHECKLIST.md) and
 
 - [../architecture/ARCHITECTURE_STATUS_v0.3.0.md](../architecture/ARCHITECTURE_STATUS_v0.3.0.md)
 - [../deployment/DEPLOYMENT.md](../deployment/DEPLOYMENT.md)
+- [../VERIFICATION_MATRIX.md](../VERIFICATION_MATRIX.md)
 
 ## Future notes
 

@@ -1,13 +1,14 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { useParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import Link from "next/link"
+import { useParams } from "next/navigation"
+import { useEffect, useMemo, useState } from "react"
 
-import QuotationFormFields from "@/components/quotation/QuotationFormFields";
-import DashboardPanel from "@/components/dashboard/DashboardPanel";
-import DashboardShell from "@/components/dashboard/DashboardShell";
-import { Button } from "@/components/ui/button";
+import QuotationFormFields from "@/components/quotation/QuotationFormFields"
+import DashboardPanel from "@/components/dashboard/DashboardPanel"
+import DashboardShell from "@/components/dashboard/DashboardShell"
+import { Button } from "@/components/ui/button"
+import { useCompany } from "@/contexts/AuthProvider"
 import {
   getQuotationThreadDetail,
   pickCurrentOffer,
@@ -15,7 +16,7 @@ import {
   submitQuotation,
   updateDraftQuotation,
   withdrawQuotation,
-} from "@/lib/quotation/service";
+} from "@/lib/quotation/service"
 import {
   EMPTY_QUOTATION_FORM,
   formatLeadTime,
@@ -25,90 +26,105 @@ import {
   QUOTATION_THREAD_STATUS_LABELS,
   type QuotationFormValues,
   type QuotationThreadDetail,
-} from "@/lib/quotation/types";
-import { createClient } from "@/lib/supabase/client";
-import { toast } from "@/lib/toast";
+} from "@/lib/quotation/types"
+import { createClient } from "@/lib/supabase/client"
+import { toast } from "@/lib/toast"
+import { canPerformTrustSensitiveActions } from "@/lib/verification/access"
 
 export default function SupplierQuotationDetail() {
-  const params = useParams<{ id: string }>();
-  const threadId = params.id;
-  const supabase = useMemo(() => createClient(), []);
+  const params = useParams<{ id: string }>()
+  const threadId = params.id
+  const { company } = useCompany()
+  const supabase = useMemo(() => createClient(), [])
+  const canTrade = canPerformTrustSensitiveActions(company?.verification_status)
 
-  const [detail, setDetail] = useState<QuotationThreadDetail | null>(null);
-  const [values, setValues] = useState<QuotationFormValues>(EMPTY_QUOTATION_FORM);
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [detail, setDetail] = useState<QuotationThreadDetail | null>(null)
+  const [values, setValues] =
+    useState<QuotationFormValues>(EMPTY_QUOTATION_FORM)
+  const [loading, setLoading] = useState(true)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const reload = async () => {
-    const data = await getQuotationThreadDetail(supabase, threadId);
-    setDetail(data);
-    const offer = pickCurrentOffer(data.offers);
-    if (offer) setValues(formValuesFromOffer(offer));
-  };
+    const data = await getQuotationThreadDetail(supabase, threadId)
+    setDetail(data)
+    const offer = pickCurrentOffer(data.offers)
+    if (offer) setValues(formValuesFromOffer(offer))
+  }
 
   useEffect(() => {
-    let active = true;
+    let active = true
     void (async () => {
       try {
-        setLoading(true);
-        const data = await getQuotationThreadDetail(supabase, threadId);
-        if (!active) return;
-        setDetail(data);
-        const offer = pickCurrentOffer(data.offers);
-        if (offer) setValues(formValuesFromOffer(offer));
-        setError(null);
+        setLoading(true)
+        const data = await getQuotationThreadDetail(supabase, threadId)
+        if (!active) return
+        setDetail(data)
+        const offer = pickCurrentOffer(data.offers)
+        if (offer) setValues(formValuesFromOffer(offer))
+        setError(null)
       } catch (err) {
-        if (!active) return;
-        setError(err instanceof Error ? err.message : "Failed to load quotation.");
+        if (!active) return
+        setError(
+          err instanceof Error ? err.message : "Failed to load quotation."
+        )
       } finally {
-        if (active) setLoading(false);
+        if (active) setLoading(false)
       }
-    })();
+    })()
     return () => {
-      active = false;
-    };
-  }, [supabase, threadId]);
+      active = false
+    }
+  }, [supabase, threadId])
 
   const run = async (fn: () => Promise<unknown>, success: string) => {
     try {
-      setBusy(true);
-      setError(null);
-      await fn();
-      await reload();
-      toast.success(success);
+      setBusy(true)
+      setError(null)
+      await fn()
+      await reload()
+      toast.success(success)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Action failed.");
+      setError(err instanceof Error ? err.message : "Action failed.")
     } finally {
-      setBusy(false);
+      setBusy(false)
     }
-  };
+  }
 
   if (loading) {
     return (
-      <DashboardShell role="supplier" title="Quotation" description="Loading...">
+      <DashboardShell
+        role="supplier"
+        title="Quotation"
+        description="Loading..."
+      >
         <p className="text-sm text-neutral-500">Loading quotation...</p>
       </DashboardShell>
-    );
+    )
   }
 
   if (!detail) {
     return (
-      <DashboardShell role="supplier" title="Quotation" description="Unavailable">
+      <DashboardShell
+        role="supplier"
+        title="Quotation"
+        description="Unavailable"
+      >
         <p className="text-sm text-red-600">{error}</p>
         <Button asChild className="mt-4" variant="outline">
           <Link href="/dashboard/supplier/quotations">Back</Link>
         </Button>
       </DashboardShell>
-    );
+    )
   }
 
-  const draft = detail.offers.find((o) => o.status === "draft");
-  const submitted = detail.offers.find((o) => o.status === "submitted");
-  const canEditDraft = Boolean(draft) && detail.thread.status !== "withdrawn";
-  const canSubmitDraft = Boolean(draft);
-  const canRevise = Boolean(submitted) && detail.thread.status === "active";
-  const canWithdraw = detail.thread.status === "active" || detail.thread.status === "draft";
+  const draft = detail.offers.find((o) => o.status === "draft")
+  const submitted = detail.offers.find((o) => o.status === "submitted")
+  const canEditDraft = Boolean(draft) && detail.thread.status !== "withdrawn"
+  const canSubmitDraft = Boolean(draft)
+  const canRevise = Boolean(submitted) && detail.thread.status === "active"
+  const canWithdraw =
+    detail.thread.status === "active" || detail.thread.status === "draft"
 
   return (
     <DashboardShell
@@ -127,6 +143,13 @@ export default function SupplierQuotationDetail() {
       }
     >
       {error ? <p className="mb-4 text-sm text-red-600">{error}</p> : null}
+
+      {(canSubmitDraft || canRevise) && !canTrade ? (
+        <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+          You may continue editing this private quotation. Verification approval
+          is required before submitting it to the buyer.
+        </p>
+      ) : null}
 
       {detail.thread.status === "awarded" ||
       detail.offers.some((o) => o.status === "awarded") ? (
@@ -152,7 +175,13 @@ export default function SupplierQuotationDetail() {
 
       <div className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
         <DashboardPanel
-          title={draft ? "Draft offer" : canRevise ? "Create revision" : "Commercial terms"}
+          title={
+            draft
+              ? "Draft offer"
+              : canRevise
+                ? "Create revision"
+                : "Commercial terms"
+          }
           description={
             draft
               ? "Update your draft, then submit to the buyer."
@@ -183,7 +212,12 @@ export default function SupplierQuotationDetail() {
             ) : null}
             {canSubmitDraft ? (
               <Button
-                disabled={busy}
+                disabled={busy || !canTrade}
+                title={
+                  canTrade
+                    ? undefined
+                    : "Verification approval is required to submit a quotation."
+                }
                 onClick={() =>
                   void run(
                     () =>
@@ -200,7 +234,12 @@ export default function SupplierQuotationDetail() {
             ) : null}
             {canRevise ? (
               <Button
-                disabled={busy}
+                disabled={busy || !canTrade}
+                title={
+                  canTrade
+                    ? undefined
+                    : "Verification approval is required to submit a revision."
+                }
                 onClick={() =>
                   void run(
                     () => reviseQuotation(supabase, detail.thread.id, values),
@@ -240,7 +279,8 @@ export default function SupplierQuotationDetail() {
                     className="rounded-lg border border-neutral-200 px-3 py-2"
                   >
                     <div className="font-medium">
-                      Rev {offer.revision_no} · {QUOTATION_OFFER_STATUS_LABELS[offer.status]}
+                      Rev {offer.revision_no} ·{" "}
+                      {QUOTATION_OFFER_STATUS_LABELS[offer.status]}
                     </div>
                     <div className="mt-1 text-neutral-600">
                       {formatMoney(offer)} · {formatLeadTime(offer)}
@@ -265,5 +305,5 @@ export default function SupplierQuotationDetail() {
         </div>
       </div>
     </DashboardShell>
-  );
+  )
 }

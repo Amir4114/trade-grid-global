@@ -1,15 +1,12 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js"
 
 import type {
   Company,
   CompanyDocument,
   Database,
   Product,
-} from "@/lib/database/types";
-import {
-  computeSlaState,
-  formatWaitingDuration,
-} from "@/lib/verification/sla";
+} from "@/lib/database/types"
+import { computeSlaState, formatWaitingDuration } from "@/lib/verification/sla"
 import type {
   VerificationAssessment,
   VerificationCase,
@@ -19,13 +16,13 @@ import type {
   VerificationCaseSummary,
   VerificationQueueFilters,
   VerificationQueueStats,
-} from "@/lib/verification/types";
-import { PRIORITY_ORDER } from "@/lib/verification/types";
+} from "@/lib/verification/types"
+import { PRIORITY_ORDER } from "@/lib/verification/types"
 
-type Client = SupabaseClient<Database>;
+type Client = SupabaseClient<Database>
 
 function mapCase(row: Record<string, unknown>): VerificationCase {
-  return row as unknown as VerificationCase;
+  return row as unknown as VerificationCase
 }
 
 function mapEvent(row: Record<string, unknown>): VerificationCaseEvent {
@@ -39,11 +36,13 @@ function mapEvent(row: Record<string, unknown>): VerificationCaseEvent {
     to_status: row.to_status ? String(row.to_status) : null,
     message: row.message ? String(row.message) : null,
     metadata:
-      row.metadata && typeof row.metadata === "object" && !Array.isArray(row.metadata)
+      row.metadata &&
+      typeof row.metadata === "object" &&
+      !Array.isArray(row.metadata)
         ? (row.metadata as Record<string, unknown>)
         : {},
     created_at: String(row.created_at),
-  };
+  }
 }
 
 function mapAssessment(row: Record<string, unknown>): VerificationAssessment {
@@ -60,47 +59,49 @@ function mapAssessment(row: Record<string, unknown>): VerificationAssessment {
         : Number(row.confidence),
     summary: row.summary ? String(row.summary) : null,
     findings:
-      row.findings && typeof row.findings === "object" && !Array.isArray(row.findings)
+      row.findings &&
+      typeof row.findings === "object" &&
+      !Array.isArray(row.findings)
         ? (row.findings as Record<string, unknown>)
         : {},
     created_at: String(row.created_at),
-  };
+  }
 }
 
 async function fetchCompaniesByIds(
   supabase: Client,
   ids: string[]
 ): Promise<Map<string, Company>> {
-  if (ids.length === 0) return new Map();
+  if (ids.length === 0) return new Map()
 
   const { data, error } = await supabase
     .from("companies")
     .select("*")
-    .in("id", [...new Set(ids)]);
+    .in("id", [...new Set(ids)])
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error(error.message)
   }
 
-  return new Map((data ?? []).map((row) => [row.id, row]));
+  return new Map((data ?? []).map((row) => [row.id, row]))
 }
 
 async function fetchProductsByIds(
   supabase: Client,
   ids: string[]
 ): Promise<Map<string, Product>> {
-  if (ids.length === 0) return new Map();
+  if (ids.length === 0) return new Map()
 
   const { data, error } = await supabase
     .from("products")
     .select("*")
-    .in("id", [...new Set(ids)]);
+    .in("id", [...new Set(ids)])
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error(error.message)
   }
 
-  return new Map((data ?? []).map((row) => [row.id, row]));
+  return new Map((data ?? []).map((row) => [row.id, row]))
 }
 
 function enrichCaseSummary(
@@ -112,20 +113,20 @@ function enrichCaseSummary(
     item.submitted_at,
     item.sla_due_at,
     item.status
-  );
+  )
 
-  let entity_name = "Unknown";
-  let company_name: string | null = null;
+  let entity_name = "Unknown"
+  let company_name: string | null = null
 
   if (item.case_type === "company_verification") {
-    const company = companies.get(item.entity_id);
-    entity_name = company?.company_name ?? "Company";
-    company_name = company?.company_name ?? null;
+    const company = companies.get(item.entity_id)
+    entity_name = company?.company_name ?? "Company"
+    company_name = company?.company_name ?? null
   } else {
-    const product = products.get(item.entity_id);
-    entity_name = product?.name ?? "Product";
-    const company = item.company_id ? companies.get(item.company_id) : undefined;
-    company_name = company?.company_name ?? null;
+    const product = products.get(item.entity_id)
+    entity_name = product?.name ?? "Product"
+    const company = item.company_id ? companies.get(item.company_id) : undefined
+    company_name = company?.company_name ?? null
   }
 
   return {
@@ -134,7 +135,7 @@ function enrichCaseSummary(
     entity_name,
     company_name,
     waiting_label: formatWaitingDuration(item.submitted_at),
-  };
+  }
 }
 
 export async function listVerificationCases(
@@ -144,94 +145,100 @@ export async function listVerificationCases(
   let query = supabase
     .from("verification_cases")
     .select("*")
-    .order("submitted_at", { ascending: filters.sort === "newest" ? false : true });
+    .order("submitted_at", {
+      ascending: filters.sort === "newest" ? false : true,
+    })
 
   if (filters.status === "active") {
-    query = query.in("status", ["pending", "in_review"]);
+    query = query.in("status", ["pending", "in_review"])
   } else if (filters.status && filters.status !== "all") {
-    query = query.eq("status", filters.status);
+    query = query.eq("status", filters.status)
   }
 
   if (filters.caseType && filters.caseType !== "all") {
-    query = query.eq("case_type", filters.caseType);
+    query = query.eq("case_type", filters.caseType)
   }
 
   if (filters.priority && filters.priority !== "all") {
-    query = query.eq("priority", filters.priority);
+    query = query.eq("priority", filters.priority)
   }
 
-  const { data, error } = await query;
+  const { data, error } = await query
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error(error.message)
   }
 
-  const cases = (data ?? []).map((row) => mapCase(row as Record<string, unknown>));
+  const cases = (data ?? []).map((row) =>
+    mapCase(row as Record<string, unknown>)
+  )
 
   const companyIds = cases.flatMap((item) =>
-    item.company_id ? [item.company_id] : item.case_type === "company_verification" ? [item.entity_id] : []
-  );
+    item.company_id
+      ? [item.company_id]
+      : item.case_type === "company_verification"
+        ? [item.entity_id]
+        : []
+  )
   const productIds = cases
     .filter((item) => item.case_type === "product_review")
-    .map((item) => item.entity_id);
+    .map((item) => item.entity_id)
 
   const [companies, products] = await Promise.all([
     fetchCompaniesByIds(supabase, companyIds),
     fetchProductsByIds(supabase, productIds),
-  ]);
+  ])
 
-  let rows = cases.map((item) => enrichCaseSummary(item, companies, products));
+  let rows = cases.map((item) => enrichCaseSummary(item, companies, products))
 
   if (filters.q?.trim()) {
-    const term = filters.q.trim().toLowerCase();
+    const term = filters.q.trim().toLowerCase()
     rows = rows.filter(
       (row) =>
         row.entity_name.toLowerCase().includes(term) ||
         (row.company_name?.toLowerCase().includes(term) ?? false)
-    );
+    )
   }
 
   if (filters.sla && filters.sla !== "all") {
-    rows = rows.filter((row) => row.sla_state === filters.sla);
+    rows = rows.filter((row) => row.sla_state === filters.sla)
   }
 
   if (filters.sort === "sla") {
     rows.sort(
       (a, b) =>
         new Date(a.sla_due_at).getTime() - new Date(b.sla_due_at).getTime()
-    );
+    )
   } else if (filters.sort === "priority") {
-    rows.sort(
-      (a, b) => PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]
-    );
+    rows.sort((a, b) => PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority])
   } else if (filters.sort === "newest") {
     rows.sort(
       (a, b) =>
         new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime()
-    );
+    )
   } else {
     rows.sort(
       (a, b) =>
         new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime()
-    );
+    )
   }
 
-  return rows;
+  return rows
 }
 
 export function buildVerificationQueueStats(
   rows: VerificationCaseSummary[]
 ): VerificationQueueStats {
-  const active = rows.filter((row) =>
-    row.status === "pending" || row.status === "in_review"
-  );
+  const active = rows.filter(
+    (row) => row.status === "pending" || row.status === "in_review"
+  )
 
   return {
     totalPending: active.filter((row) => row.status === "pending").length,
     inReview: active.filter((row) => row.status === "in_review").length,
     dueSoon: active.filter((row) => row.sla_state === "due_soon").length,
     overdue: active.filter((row) => row.sla_state === "overdue").length,
-  };
+  }
 }
 
 export async function getVerificationCaseDetail(
@@ -242,109 +249,145 @@ export async function getVerificationCaseDetail(
     .from("verification_cases")
     .select("*")
     .eq("id", caseId)
-    .maybeSingle();
+    .maybeSingle()
 
   if (caseError) {
-    throw new Error(caseError.message);
+    throw new Error(caseError.message)
   }
 
   if (!caseRow) {
-    return null;
+    return null
   }
 
-  const item = mapCase(caseRow as Record<string, unknown>);
+  const item = mapCase(caseRow as Record<string, unknown>)
 
-  const [{ data: events, error: eventsError }, { data: assessments, error: assessmentsError }] =
-    await Promise.all([
-      supabase
-        .from("verification_case_events")
-        .select("*")
-        .eq("case_id", caseId)
-        .order("created_at", { ascending: true }),
-      supabase
-        .from("verification_assessments")
-        .select("*")
-        .eq("case_id", caseId)
-        .order("created_at", { ascending: false }),
-    ]);
+  const [
+    { data: events, error: eventsError },
+    { data: assessments, error: assessmentsError },
+  ] = await Promise.all([
+    supabase
+      .from("verification_case_events")
+      .select("*")
+      .eq("case_id", caseId)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("verification_assessments")
+      .select("*")
+      .eq("case_id", caseId)
+      .order("created_at", { ascending: false }),
+  ])
 
   if (eventsError) {
-    throw new Error(eventsError.message);
+    throw new Error(eventsError.message)
   }
 
   if (assessmentsError) {
-    throw new Error(assessmentsError.message);
+    throw new Error(assessmentsError.message)
   }
 
-  let company: Company | null = null;
-  let product: Product | null = null;
-  let documents: CompanyDocument[] = [];
+  let company: Company | null = null
+  let product: Product | null = null
+  let documents: CompanyDocument[] = []
 
   if (item.case_type === "company_verification") {
     const { data, error } = await supabase
       .from("companies")
       .select("*")
       .eq("id", item.entity_id)
-      .maybeSingle();
+      .maybeSingle()
 
     if (error) {
-      throw new Error(error.message);
+      throw new Error(error.message)
     }
 
-    company = data;
+    company = data
 
     if (company) {
-      const { data: docs, error: docsError } = await supabase
-        .from("documents")
-        .select("*")
-        .eq("company_id", company.id)
-        .order("uploaded_at", { ascending: false });
+      const { data: evidenceLinks, error: evidenceLinksError } = await supabase
+        .from("verification_case_documents")
+        .select("document_id")
+        .eq("case_id", caseId)
 
-      if (docsError) {
-        throw new Error(docsError.message);
+      if (evidenceLinksError) {
+        throw new Error(evidenceLinksError.message)
       }
 
-      documents = docs ?? [];
+      const documentIds = (evidenceLinks ?? []).map((row) => row.document_id)
+
+      if (documentIds.length > 0) {
+        const { data: docs, error: docsError } = await supabase
+          .from("documents")
+          .select("*")
+          .in("id", documentIds)
+          .order("uploaded_at", { ascending: false })
+
+        if (docsError) {
+          throw new Error(docsError.message)
+        }
+
+        documents = docs ?? []
+      }
     }
   } else {
     const { data, error } = await supabase
       .from("products")
       .select("*")
       .eq("id", item.entity_id)
-      .maybeSingle();
+      .maybeSingle()
 
     if (error) {
-      throw new Error(error.message);
+      throw new Error(error.message)
     }
 
-    product = data;
+    product = data
 
     if (product?.company_id) {
       const { data: co, error: coError } = await supabase
         .from("companies")
         .select("*")
         .eq("id", product.company_id)
-        .maybeSingle();
+        .maybeSingle()
 
       if (coError) {
-        throw new Error(coError.message);
+        throw new Error(coError.message)
       }
 
-      company = co;
+      company = co
     }
   }
 
   return {
     case: item,
     sla_state: computeSlaState(item.submitted_at, item.sla_due_at, item.status),
-    events: (events ?? []).map((row) => mapEvent(row as Record<string, unknown>)),
+    events: (events ?? []).map((row) =>
+      mapEvent(row as Record<string, unknown>)
+    ),
     assessments: (assessments ?? []).map((row) =>
       mapAssessment(row as Record<string, unknown>)
     ),
     company,
     product,
     documents,
-  };
+  }
+}
+
+export async function createCompanyDocumentReviewUrl(
+  supabase: Client,
+  storagePath: string
+): Promise<string> {
+  if (!storagePath.startsWith("documents/")) {
+    throw new Error("Invalid company document storage path.")
+  }
+
+  const { data, error } = await supabase.storage
+    .from("company-docs")
+    .createSignedUrl(storagePath, 5 * 60)
+
+  if (error) {
+    throw new Error(`Unable to open verification document: ${error.message}`)
+  }
+
+  return data.signedUrl
 }
 
 export async function startVerificationCaseReview(
@@ -353,13 +396,13 @@ export async function startVerificationCaseReview(
 ): Promise<VerificationCase> {
   const { data, error } = await supabase.rpc("start_verification_case_review", {
     p_case_id: caseId,
-  });
+  })
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error(error.message)
   }
 
-  return mapCase(data as Record<string, unknown>);
+  return mapCase(data as Record<string, unknown>)
 }
 
 export async function setVerificationCasePriority(
@@ -370,30 +413,28 @@ export async function setVerificationCasePriority(
   const { data, error } = await supabase.rpc("set_verification_case_priority", {
     p_case_id: caseId,
     p_priority: priority,
-  });
+  })
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error(error.message)
   }
 
-  return mapCase(data as Record<string, unknown>);
+  return mapCase(data as Record<string, unknown>)
 }
 
 export async function approveCompanyVerification(
   supabase: Client,
-  companyId: string,
-  riskScore = 0
+  companyId: string
 ): Promise<Company> {
   const { data, error } = await supabase.rpc("approve_company_verification", {
     p_company_id: companyId,
-    p_risk_score: riskScore,
-  });
+  })
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error(error.message)
   }
 
-  return data as Company;
+  return data as Company
 }
 
 export async function rejectCompanyVerification(
@@ -404,13 +445,13 @@ export async function rejectCompanyVerification(
   const { data, error } = await supabase.rpc("reject_company_verification", {
     p_company_id: companyId,
     p_reason: reason,
-  });
+  })
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error(error.message)
   }
 
-  return data as Company;
+  return data as Company
 }
 
 export async function approveProductViaCase(
@@ -419,13 +460,13 @@ export async function approveProductViaCase(
 ): Promise<Product> {
   const { data, error } = await supabase.rpc("approve_product", {
     product_id: productId,
-  });
+  })
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error(error.message)
   }
 
-  return data as Product;
+  return data as Product
 }
 
 export async function rejectProductViaCase(
@@ -436,13 +477,13 @@ export async function rejectProductViaCase(
   const { data, error } = await supabase.rpc("reject_product", {
     product_id: productId,
     reason,
-  });
+  })
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error(error.message)
   }
 
-  return data as Product;
+  return data as Product
 }
 
 /** Map entity_id → active verification case id for admin product management links. */
@@ -452,7 +493,7 @@ export async function findActiveVerificationCasesByEntityIds(
   entityIds: string[]
 ): Promise<Map<string, string>> {
   if (entityIds.length === 0) {
-    return new Map();
+    return new Map()
   }
 
   const { data, error } = await supabase
@@ -460,13 +501,13 @@ export async function findActiveVerificationCasesByEntityIds(
     .select("id, entity_id")
     .eq("case_type", caseType)
     .in("entity_id", [...new Set(entityIds)])
-    .in("status", ["pending", "in_review"]);
+    .in("status", ["pending", "in_review"])
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error(error.message)
   }
 
   return new Map(
     (data ?? []).map((row) => [String(row.entity_id), String(row.id)])
-  );
+  )
 }

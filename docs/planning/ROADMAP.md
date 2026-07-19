@@ -12,16 +12,17 @@ Milestones: [MILESTONES.md](./MILESTONES.md) · Backlog: [BACKLOG.md](./BACKLOG.
 
 | Field | Value |
 |-------|-------|
-| **Product / Git tag** | `v0.4.0-purchase-orders` (target; prior `v0.3.0-procurement-complete`) |
+| **Latest milestone tag** | `v0.5.0-phase-a` |
+| **Full-release target** | `v0.5.0-order-lifecycle` |
 | **npm version** | `0.4.0` |
 | **Completed** | Module 1 + Module 2 + Module 3.1 Purchase Orders |
-| **Next build** | Module 3.2 — Order Lifecycle / fulfillment |
+| **In progress** | Module 3.2 — Fulfillment Phase A implemented in code; Phase B UI/services next |
 | **Explicitly deferred** | Finance, production AI, live analytics |
 
 Procurement path:
 
 `RFQ → Quotation → Award → Purchase Order`  
-**Not implemented:** Fulfillment lifecycle, logistics, payments.
+**Implemented in code:** Fulfillment database/RPC contract (`018`). **Not implemented:** Fulfillment UI, first-class logistics, payments.
 
 ---
 
@@ -86,7 +87,7 @@ Module 1 (companies, products optional link, notifications).
 
 ## Module 3 — Trade Execution
 
-**Status:** Module 3.1 Purchase Orders **implemented** (migration `017`). Remainder **Not implemented.**
+**Status:** Module 3.1 Purchase Orders **implemented** (`017`); Module 3.2 Fulfillment Phase A **implemented in code** (`018`); later trade-execution modules are not implemented.
 
 ### Objectives
 
@@ -97,7 +98,7 @@ Convert awards into executable trade instruments and operational fulfillment vis
 | Feature | Status |
 |---------|--------|
 | Purchase Orders (3.1) | **Implemented** (apply `017`) |
-| Order Lifecycle / fulfillment (3.2) | **Not implemented.** |
+| Order Lifecycle / fulfillment (3.2) | **Phase A DB/RPC implemented in code; Phase B UI pending** |
 | Logistics | **Not implemented.** |
 | Shipping | **Not implemented.** |
 | Trade documents (packing list, CoO, etc. as order artifacts) | Partial metadata table; upload UX limited |
@@ -110,12 +111,12 @@ Module 2 awards (`quotation_awards`, winning `offer_id` / commercial snapshot).
 
 **High** (new tables, RLS, state machines, dual-party dashboards).
 
-### Recommended next slice (3.2)
+### Recommended next slice (3.2 Phase B)
 
-1. Fulfillment states on accepted PO (or child `orders` entity)  
-2. Logistics/shipping events  
-3. Richer document upload UX on PO  
-4. Optional `completed` transition
+1. Buyer/supplier Fulfillment lists, details, actions, and timelines
+2. Typed service hardening and rich document upload UX
+3. Browser/E2E coverage for PO acceptance through completion
+4. Preserve first-class shipments for Logistics 3.3
 
 ---
 

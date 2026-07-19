@@ -61,6 +61,7 @@ Happy path:
 **Verify:** `node --use-system-ca scripts/verify-order-fulfillment-system.mjs`  
 **Service:** `lib/fulfillment/service.ts`  
 **Design:** [MODULE_3_2_ORDER_LIFECYCLE_DESIGN.md](../planning/design/MODULE_3_2_ORDER_LIFECYCLE_DESIGN.md)  
+**Domain documentation:** [domains/fulfillment/README.md](../domains/fulfillment/README.md)
 **Locks:** AD-3.2-001 … AD-3.2-028
 
 ## Dependencies
@@ -74,6 +75,9 @@ Module 2 awards (complete). Module 3.1 POs (complete — apply `017`). Module 3.
 - [LOGISTICS_WORKFLOW.md](./LOGISTICS_WORKFLOW.md)
 - [../planning/design/MODULE_3_1_PURCHASE_ORDER_DESIGN.md](../planning/design/MODULE_3_1_PURCHASE_ORDER_DESIGN.md)
 - [../planning/design/MODULE_3_2_ORDER_LIFECYCLE_DESIGN.md](../planning/design/MODULE_3_2_ORDER_LIFECYCLE_DESIGN.md)
+- [../architecture/DOMAIN_MODEL.md](../architecture/DOMAIN_MODEL.md)
+- [../domains/fulfillment/README.md](../domains/fulfillment/README.md)
+- [../VERIFICATION_MATRIX.md](../VERIFICATION_MATRIX.md)
 
 ---
 

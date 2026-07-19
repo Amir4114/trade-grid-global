@@ -21,14 +21,14 @@ Files under `supabase/migrations/`. RPC/RLS detail → [../architecture/SECURITY
 
 ## Current Status
 
-| Item | Status |
-|------|--------|
-| Migrations `001`–`016` | Implemented |
-| Linked CLI project in repo | **Not implemented.** |
+| Item                       | Status                |
+| -------------------------- | --------------------- |
+| Migrations `001`–`022`     | Present in repository |
+| Linked CLI project in repo | **Not implemented.**  |
 
 ## Migration numbering
 
-- Next file: `017_<snake_case_description>.sql`
+- Next unused file after the current baseline: `023_<snake_case_description>.sql`
 - Never reuse numbers; never edit applied historical files in shared envs.
 
 ## Safe migrations

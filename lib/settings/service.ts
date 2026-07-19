@@ -1,15 +1,15 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js"
 
-import type { Company, Database, Profile } from "@/lib/database/types";
-import { requiresReverification } from "@/lib/settings/policy";
+import type { Company, Database, Profile } from "@/lib/database/types"
+import { requiresReverification } from "@/lib/settings/policy"
 import type {
   AccountSettingsInput,
   BuyerCompanySettingsInput,
   SettingsSaveResult,
   SupplierCompanySettingsInput,
-} from "@/lib/settings/types";
+} from "@/lib/settings/types"
 
-type Client = SupabaseClient<Database>;
+type Client = SupabaseClient<Database>
 
 function assertUpdatedRow<T>(
   data: T | null,
@@ -17,16 +17,16 @@ function assertUpdatedRow<T>(
   label: string
 ): T {
   if (error) {
-    throw new Error(`${label} failed: ${error.message}`);
+    throw new Error(`${label} failed: ${error.message}`)
   }
 
   if (!data) {
     throw new Error(
       `${label} did not persist. No row was updated — check authorization or try again.`
-    );
+    )
   }
 
-  return data;
+  return data
 }
 
 export async function updateAccountSettings(
@@ -41,23 +41,23 @@ export async function updateAccountSettings(
     })
     .eq("id", userId)
     .select("*")
-    .single();
+    .single()
 
-  return assertUpdatedRow(data, error, "Account settings update");
+  return assertUpdatedRow(data, error, "Account settings update")
 }
 
 export async function requestLoginEmailChange(
   supabase: Client,
   nextEmail: string
 ): Promise<void> {
-  const trimmed = nextEmail.trim();
+  const trimmed = nextEmail.trim()
   if (!trimmed) {
-    throw new Error("Enter a valid email address.");
+    throw new Error("Enter a valid email address.")
   }
 
-  const { error } = await supabase.auth.updateUser({ email: trimmed });
+  const { error } = await supabase.auth.updateUser({ email: trimmed })
   if (error) {
-    throw new Error(error.message);
+    throw new Error(error.message)
   }
 }
 
@@ -70,7 +70,9 @@ export async function updateSupplierCompanySettings(
   const sensitiveChange = requiresReverification(currentCompany, {
     company_name: input.companyName,
     country: input.country,
-  });
+    business_type: input.businessType,
+    company_structure: input.companyStructure,
+  })
 
   const payload = {
     company_name: input.companyName.trim(),
@@ -83,33 +85,32 @@ export async function updateSupplierCompanySettings(
     export_markets: input.exportMarkets,
     certifications: input.certifications,
     updated_at: new Date().toISOString(),
-  };
+  }
 
   const { data, error } = await supabase
     .from("companies")
     .update(payload)
     .eq("user_id", userId)
     .select("*")
-    .single();
+    .single()
 
-  const company = assertUpdatedRow(data, error, "Company profile update");
+  const company = assertUpdatedRow(data, error, "Company profile update")
 
   if (company.company_name !== payload.company_name) {
-    throw new Error("Company name did not persist after save.");
+    throw new Error("Company name did not persist after save.")
   }
 
   if (company.country !== payload.country) {
-    throw new Error("Country did not persist after save.");
+    throw new Error("Country did not persist after save.")
   }
 
   return {
-    profile: await fetchProfileOrThrow(supabase, userId),
     company,
     reverificationRequired:
       sensitiveChange &&
       company.verification_status === "pending" &&
       currentCompany.verification_status !== "pending",
-  };
+  }
 }
 
 export async function updateBuyerCompanySettings(
@@ -121,7 +122,9 @@ export async function updateBuyerCompanySettings(
   const sensitiveChange = requiresReverification(currentCompany, {
     company_name: input.companyName,
     country: input.country,
-  });
+    business_type: input.businessType,
+    company_structure: input.companyStructure,
+  })
 
   const payload = {
     company_name: input.companyName.trim(),
@@ -134,40 +137,26 @@ export async function updateBuyerCompanySettings(
     target_markets: input.targetMarkets,
     required_certifications: input.requiredCertifications,
     updated_at: new Date().toISOString(),
-  };
+  }
 
   const { data, error } = await supabase
     .from("companies")
     .update(payload)
     .eq("user_id", userId)
     .select("*")
-    .single();
+    .single()
 
-  const company = assertUpdatedRow(data, error, "Company profile update");
+  const company = assertUpdatedRow(data, error, "Company profile update")
 
   if (company.country !== payload.country) {
-    throw new Error("Country did not persist after save.");
+    throw new Error("Country did not persist after save.")
   }
 
   return {
-    profile: await fetchProfileOrThrow(supabase, userId),
     company,
     reverificationRequired:
       sensitiveChange &&
       company.verification_status === "pending" &&
       currentCompany.verification_status !== "pending",
-  };
-}
-
-async function fetchProfileOrThrow(
-  supabase: Client,
-  userId: string
-): Promise<Profile> {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", userId)
-    .single();
-
-  return assertUpdatedRow(data, error, "Profile reload");
+  }
 }

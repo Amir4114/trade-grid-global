@@ -33,8 +33,10 @@ Human checklist. Process narrative → [RELEASE_PROCESS.md](../development/RELEA
 
 ### Database
 
-- [ ] New migrations additive only (`017+`); historical files untouched
+- [ ] New migrations use the next unused number and are additive; historical files untouched
 - [ ] Migrations applied on staging
+- [ ] Trust release: migrations `019` and `020` applied in order
+- [ ] Signup integrity: migration `021` applied and atomic rollback/recovery verified
 - [ ] Relevant `scripts/verify-*.mjs` passed
 - [ ] Schema docs updated ([../architecture/DATABASE_SCHEMA.md](../architecture/DATABASE_SCHEMA.md))
 
@@ -42,12 +44,13 @@ Human checklist. Process narrative → [RELEASE_PROCESS.md](../development/RELEA
 
 - [ ] RLS / RPC review ([../development/SECURITY_CHECKLIST.md](../development/SECURITY_CHECKLIST.md))
 - [ ] No service role in client bundles
+- [ ] Trust release: case evidence, admin decisions, rejection feedback, and resubmission smoke-tested
 
 ### Documentation
 
 - [ ] [../CHANGELOG.md](../CHANGELOG.md) updated
 - [ ] [../RELEASE_NOTES.md](../RELEASE_NOTES.md) updated if shipping a release
-- [ ] Version strings consistent (`0.3.0` / `v0.3.0-procurement-complete` pattern)
+- [ ] Package SemVer, target/existing tags, changelog, release notes, and release folder are explicitly aligned
 
 ### Release
 

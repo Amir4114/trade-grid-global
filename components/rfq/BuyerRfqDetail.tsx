@@ -1,18 +1,18 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import Link from "next/link"
+import { useParams, useRouter } from "next/navigation"
+import { useEffect, useMemo, useState } from "react"
 
-import BuyerAwardComparePanel from "@/components/quotation/BuyerAwardComparePanel";
-import RfqFormFields from "@/components/rfq/RfqFormFields";
-import DashboardPanel from "@/components/dashboard/DashboardPanel";
-import DashboardShell from "@/components/dashboard/DashboardShell";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useCompany } from "@/contexts/AuthProvider";
-import { isOnboardingComplete } from "@/lib/auth/redirects";
-import type { AwardEvent, QuotationAward } from "@/lib/database/types";
+import BuyerAwardComparePanel from "@/components/quotation/BuyerAwardComparePanel"
+import RfqFormFields from "@/components/rfq/RfqFormFields"
+import DashboardPanel from "@/components/dashboard/DashboardPanel"
+import DashboardShell from "@/components/dashboard/DashboardShell"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { useCompany } from "@/contexts/AuthProvider"
+import { isOnboardingComplete } from "@/lib/auth/redirects"
+import type { AwardEvent, QuotationAward } from "@/lib/database/types"
 import {
   cancelRfq,
   closeRfq,
@@ -22,7 +22,7 @@ import {
   statusTone,
   updateDraftRfq,
   visibilityTone,
-} from "@/lib/rfq/service";
+} from "@/lib/rfq/service"
 import {
   canCancelRfq,
   canCloseRfq,
@@ -33,117 +33,119 @@ import {
   RFQ_VISIBILITY_LABELS,
   type RfqDetail,
   type RfqFormValues,
-} from "@/lib/rfq/types";
+} from "@/lib/rfq/types"
 import {
   awardSupplier,
   getAwardForRfq,
   listBuyerQuotationThreadsForRfq,
-} from "@/lib/quotation/service";
-import type { QuotationThreadSummary } from "@/lib/quotation/types";
-import { createClient } from "@/lib/supabase/client";
-import { toast } from "@/lib/toast";
-import { cn } from "@/lib/utils";
+} from "@/lib/quotation/service"
+import type { QuotationThreadSummary } from "@/lib/quotation/types"
+import { createClient } from "@/lib/supabase/client"
+import { toast } from "@/lib/toast"
+import { cn } from "@/lib/utils"
+import { canPerformTrustSensitiveActions } from "@/lib/verification/access"
 
 export default function BuyerRfqDetailPage() {
-  const params = useParams<{ id: string }>();
-  const rfqId = params.id;
-  const router = useRouter();
-  const { company } = useCompany();
-  const supabase = useMemo(() => createClient(), []);
+  const params = useParams<{ id: string }>()
+  const rfqId = params.id
+  const router = useRouter()
+  const { company } = useCompany()
+  const supabase = useMemo(() => createClient(), [])
 
-  const [detail, setDetail] = useState<RfqDetail | null>(null);
-  const [values, setValues] = useState<RfqFormValues | null>(null);
-  const [quotes, setQuotes] = useState<QuotationThreadSummary[]>([]);
-  const [award, setAward] = useState<QuotationAward | null>(null);
-  const [awardEvents, setAwardEvents] = useState<AwardEvent[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [cancelReason, setCancelReason] = useState("");
+  const [detail, setDetail] = useState<RfqDetail | null>(null)
+  const [values, setValues] = useState<RfqFormValues | null>(null)
+  const [quotes, setQuotes] = useState<QuotationThreadSummary[]>([])
+  const [award, setAward] = useState<QuotationAward | null>(null)
+  const [awardEvents, setAwardEvents] = useState<AwardEvent[]>([])
+  const [loading, setLoading] = useState(true)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [cancelReason, setCancelReason] = useState("")
 
-  const onboardingComplete = isOnboardingComplete(company);
+  const onboardingComplete = isOnboardingComplete(company)
+  const canTrade = canPerformTrustSensitiveActions(company?.verification_status)
 
   const reload = async () => {
-    const data = await getRfqDetail(supabase, rfqId);
+    const data = await getRfqDetail(supabase, rfqId)
     if (!data) {
-      setDetail(null);
-      setValues(null);
-      return;
+      setDetail(null)
+      setValues(null)
+      return
     }
-    setDetail(data);
-    setValues(formValuesFromRfq(data.rfq, data.invites));
+    setDetail(data)
+    setValues(formValuesFromRfq(data.rfq, data.invites))
     if (data.rfq.status !== "draft") {
       const [received, awardPayload] = await Promise.all([
         listBuyerQuotationThreadsForRfq(supabase, rfqId),
         getAwardForRfq(supabase, rfqId),
-      ]);
-      setQuotes(received);
-      setAward(awardPayload?.award ?? null);
-      setAwardEvents(awardPayload?.events ?? []);
+      ])
+      setQuotes(received)
+      setAward(awardPayload?.award ?? null)
+      setAwardEvents(awardPayload?.events ?? [])
     } else {
-      setQuotes([]);
-      setAward(null);
-      setAwardEvents([]);
+      setQuotes([])
+      setAward(null)
+      setAwardEvents([])
     }
-  };
+  }
 
   useEffect(() => {
-    let active = true;
+    let active = true
     void (async () => {
       try {
-        setLoading(true);
-        const data = await getRfqDetail(supabase, rfqId);
-        if (!active) return;
+        setLoading(true)
+        const data = await getRfqDetail(supabase, rfqId)
+        if (!active) return
         if (!data) {
-          setError("RFQ not found or you do not have access.");
-          setDetail(null);
-          return;
+          setError("RFQ not found or you do not have access.")
+          setDetail(null)
+          return
         }
-        setDetail(data);
-        setValues(formValuesFromRfq(data.rfq, data.invites));
+        setDetail(data)
+        setValues(formValuesFromRfq(data.rfq, data.invites))
         if (data.rfq.status !== "draft") {
           const [received, awardPayload] = await Promise.all([
             listBuyerQuotationThreadsForRfq(supabase, rfqId),
             getAwardForRfq(supabase, rfqId),
-          ]);
-          if (!active) return;
-          setQuotes(received);
-          setAward(awardPayload?.award ?? null);
-          setAwardEvents(awardPayload?.events ?? []);
+          ])
+          if (!active) return
+          setQuotes(received)
+          setAward(awardPayload?.award ?? null)
+          setAwardEvents(awardPayload?.events ?? [])
         }
-        setError(null);
+        setError(null)
       } catch (err) {
-        if (!active) return;
-        setError(err instanceof Error ? err.message : "Failed to load RFQ.");
+        if (!active) return
+        setError(err instanceof Error ? err.message : "Failed to load RFQ.")
       } finally {
-        if (active) setLoading(false);
+        if (active) setLoading(false)
       }
-    })();
+    })()
     return () => {
-      active = false;
-    };
-  }, [supabase, rfqId]);
+      active = false
+    }
+  }, [supabase, rfqId])
 
   const runAction = async (action: () => Promise<unknown>, success: string) => {
     try {
-      setBusy(true);
-      setError(null);
-      await action();
-      await reload();
-      toast.success(success);
+      setBusy(true)
+      setError(null)
+      await action()
+      await reload()
+      toast.success(success)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Action failed.");
+      setError(err instanceof Error ? err.message : "Action failed.")
     } finally {
-      setBusy(false);
+      setBusy(false)
     }
-  };
+  }
 
   if (loading) {
     return (
       <DashboardShell role="buyer" title="RFQ" description="Loading...">
         <p className="text-sm text-neutral-500">Loading RFQ detail...</p>
       </DashboardShell>
-    );
+    )
   }
 
   if (!detail || !values) {
@@ -154,11 +156,11 @@ export default function BuyerRfqDetailPage() {
           <Link href="/dashboard/buyer/rfqs">Back</Link>
         </Button>
       </DashboardShell>
-    );
+    )
   }
 
-  const { rfq } = detail;
-  const editable = canEditDraftRfq(rfq);
+  const { rfq } = detail
+  const editable = canEditDraftRfq(rfq)
 
   return (
     <DashboardShell
@@ -172,9 +174,17 @@ export default function BuyerRfqDetailPage() {
           </Button>
           {canPublishRfq(rfq) ? (
             <Button
-              disabled={busy || !onboardingComplete}
+              disabled={busy || !onboardingComplete || !canTrade}
+              title={
+                canTrade
+                  ? undefined
+                  : "Verification approval is required to publish an RFQ."
+              }
               onClick={() =>
-                void runAction(() => publishRfq(supabase, rfq.id), "RFQ published.")
+                void runAction(
+                  () => publishRfq(supabase, rfq.id),
+                  "RFQ published."
+                )
               }
             >
               Publish
@@ -215,6 +225,13 @@ export default function BuyerRfqDetailPage() {
 
       {error ? <p className="mb-4 text-sm text-red-600">{error}</p> : null}
 
+      {canPublishRfq(rfq) && !canTrade ? (
+        <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+          This private draft remains editable. Verification approval is required
+          before publishing it to suppliers.
+        </p>
+      ) : null}
+
       {rfq.status !== "draft" ? (
         <div className="mb-6">
           <DashboardPanel
@@ -228,11 +245,12 @@ export default function BuyerRfqDetailPage() {
               award={award}
               awardEvents={awardEvents}
               busy={busy}
+              canAward={canTrade}
               onAward={async (threadId, notes) => {
                 await runAction(
                   () => awardSupplier(supabase, rfq.id, threadId, notes),
                   "Supplier awarded."
-                );
+                )
               }}
             />
             {quotes.length > 0 ? (
@@ -329,8 +347,8 @@ export default function BuyerRfqDetailPage() {
                   disabled={busy}
                   onClick={() =>
                     void runAction(async () => {
-                      await cancelRfq(supabase, rfq.id, cancelReason);
-                      router.refresh();
+                      await cancelRfq(supabase, rfq.id, cancelReason)
+                      router.refresh()
                     }, "RFQ cancelled.")
                   }
                 >
@@ -340,7 +358,10 @@ export default function BuyerRfqDetailPage() {
             ) : null}
           </DashboardPanel>
 
-          <DashboardPanel title="Invites" description="Supplier companies invited to this RFQ.">
+          <DashboardPanel
+            title="Invites"
+            description="Supplier companies invited to this RFQ."
+          >
             {detail.invites.length === 0 ? (
               <p className="text-sm text-neutral-500">No invites.</p>
             ) : (
@@ -353,7 +374,9 @@ export default function BuyerRfqDetailPage() {
                     <div className="font-medium text-neutral-900">
                       {invite.supplier_company_id}
                     </div>
-                    <div className="text-xs text-neutral-500">{invite.status}</div>
+                    <div className="text-xs text-neutral-500">
+                      {invite.status}
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -366,8 +389,13 @@ export default function BuyerRfqDetailPage() {
             ) : (
               <ul className="space-y-3 text-sm">
                 {detail.events.map((event) => (
-                  <li key={event.id} className="border-b border-neutral-100 pb-2">
-                    <div className="font-medium text-neutral-900">{event.event_type}</div>
+                  <li
+                    key={event.id}
+                    className="border-b border-neutral-100 pb-2"
+                  >
+                    <div className="font-medium text-neutral-900">
+                      {event.event_type}
+                    </div>
                     <div className="text-xs text-neutral-500">
                       {new Date(event.created_at).toLocaleString()}
                       {event.from_status && event.to_status
@@ -375,7 +403,9 @@ export default function BuyerRfqDetailPage() {
                         : ""}
                     </div>
                     {event.message ? (
-                      <div className="mt-1 text-neutral-600">{event.message}</div>
+                      <div className="mt-1 text-neutral-600">
+                        {event.message}
+                      </div>
                     ) : null}
                   </li>
                 ))}
@@ -385,5 +415,5 @@ export default function BuyerRfqDetailPage() {
         </div>
       </div>
     </DashboardShell>
-  );
+  )
 }

@@ -22,7 +22,8 @@ Product milestones only. Day-to-day tasks → [BACKLOG.md](./BACKLOG.md).
 | Milestone | Version / tag | Status |
 |-----------|---------------|--------|
 | Procurement complete through award | `v0.3.0-procurement-complete` / npm `0.3.0` | Shipped |
-| Trade execution (POs) | — | **Not implemented.** |
+| Purchase Orders | `v0.4.0-purchase-orders` / npm `0.4.0` | Tagged |
+| Fulfillment Phase A | `v0.5.0-phase-a` | Tagged; UI pending |
 
 ## Shipped
 
@@ -34,13 +35,15 @@ Product milestones only. Day-to-day tasks → [BACKLOG.md](./BACKLOG.md).
 | RFQ foundation | 014 | v0.2 |
 | Quotation system | 015 | v0.2 |
 | Award & supplier selection | 016 | **v0.3.0** |
+| Purchase Orders | 017 | **v0.4.0 code baseline** |
+| Fulfillment database/RPC contract | 018 | **v0.5.0 Phase A code baseline** |
 
 ## Next
 
 | Milestone | Module | Status |
 |-----------|--------|--------|
-| Purchase Orders from award | Module 3 | Planned / **Not implemented.** |
-| Order lifecycle dashboards | Module 3 | Planned / **Not implemented.** |
+| Fulfillment buyer/supplier dashboards | Module 3.2 Phase B | Planned / **Not implemented.** |
+| Logistics shipments/carriers | Module 3.3 | Planned / **Not implemented.** |
 
 ## Later
 
@@ -52,6 +55,8 @@ Finance (Module 4), AI procurement (Module 5), live analytics (Module 6) — see
 - [ROADMAP.md](./ROADMAP.md)
 - [../CHANGELOG.md](../CHANGELOG.md)
 - [../RELEASE_NOTES.md](../RELEASE_NOTES.md)
+- [../architecture/DOMAIN_MODEL.md](../architecture/DOMAIN_MODEL.md)
+- [../domains/fulfillment/README.md](../domains/fulfillment/README.md)
 
 ## Future notes
 

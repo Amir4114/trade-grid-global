@@ -1,5 +1,7 @@
 # Trade Grid Global — Architecture Status
 
+> **Historical snapshot:** This versioned document describes the v0.3.0 baseline and contains later annotations for context. It is not the current architecture index or implementation-status authority. Use [README.md](./README.md), [DOMAIN_MODEL.md](./DOMAIN_MODEL.md), and [CURRENT_STATUS.md](../planning/CURRENT_STATUS.md) for current truth.
+
 **Document version:** `ARCHITECTURE_STATUS_v0.3.0`  
 **Product version tag:** `v0.3.0-procurement-complete`  
 **npm version:** `0.3.0`  

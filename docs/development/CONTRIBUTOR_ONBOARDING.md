@@ -36,7 +36,7 @@ npm install
 cp .env.example .env.local
 ```
 
-Fill Supabase URL + anon key. Apply migrations `001`–`016` to your project ([../deployment/DEPLOYMENT.md](../deployment/DEPLOYMENT.md)).
+Fill Supabase URL + anon key. Apply migrations `001`–`022` to your project ([../deployment/DEPLOYMENT.md](../deployment/DEPLOYMENT.md)).
 
 ## How to run
 
@@ -56,7 +56,7 @@ Conventions: [GIT_WORKFLOW.md](./GIT_WORKFLOW.md).
 
 ## How to create migrations
 
-1. Add `supabase/migrations/017_….sql` (next number)
+1. Add `supabase/migrations/023_….sql` (next number)
 2. Follow [MIGRATION_GUIDELINES.md](./MIGRATION_GUIDELINES.md)
 3. Update schema/API docs
 4. Add/extend a verify script when security boundaries change

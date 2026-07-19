@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 import {
   createContext,
@@ -7,26 +7,26 @@ import {
   useEffect,
   useMemo,
   useState,
-} from "react";
-import type { Session, User } from "@supabase/supabase-js";
+} from "react"
+import type { Session, User } from "@supabase/supabase-js"
 
-import type { Company, Profile } from "@/lib/database/types";
-import { createClient } from "@/lib/supabase/client";
+import type { Company, Profile } from "@/lib/database/types"
+import { createClient } from "@/lib/supabase/client"
 
 type AuthContextValue = {
-  user: User | null;
-  session: Session | null;
-  profile: Profile | null;
-  company: Company | null;
-  loading: boolean;
-  error: string | null;
-  signOut: () => Promise<void>;
-  refreshProfile: () => Promise<void>;
-  refreshCompany: () => Promise<void>;
-  refreshAll: () => Promise<void>;
-};
+  user: User | null
+  session: Session | null
+  profile: Profile | null
+  company: Company | null
+  loading: boolean
+  error: string | null
+  signOut: () => Promise<void>
+  refreshProfile: () => Promise<void>
+  refreshCompany: () => Promise<void>
+  refreshAll: () => Promise<void>
+}
 
-const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
 async function fetchProfile(
   supabase: ReturnType<typeof createClient>,
@@ -36,13 +36,13 @@ async function fetchProfile(
     .from("profiles")
     .select("*")
     .eq("id", userId)
-    .maybeSingle();
+    .maybeSingle()
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error(error.message)
   }
 
-  return data;
+  return data
 }
 
 async function fetchCompany(
@@ -53,159 +53,183 @@ async function fetchCompany(
     .from("companies")
     .select("*")
     .eq("user_id", userId)
-    .maybeSingle();
+    .maybeSingle()
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error(error.message)
   }
 
-  return data;
+  return data
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const supabase = useMemo(() => createClient(), []);
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [company, setCompany] = useState<Company | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const supabase = useMemo(() => createClient(), [])
+  const [user, setUser] = useState<User | null>(null)
+  const [session, setSession] = useState<Session | null>(null)
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [company, setCompany] = useState<Company | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const refreshProfile = useCallback(async () => {
     if (!user) {
-      setProfile(null);
-      return;
+      setProfile(null)
+      return
     }
 
-    const nextProfile = await fetchProfile(supabase, user.id);
-    setProfile(nextProfile);
-  }, [supabase, user]);
+    try {
+      const nextProfile = await fetchProfile(supabase, user.id)
+      setProfile(nextProfile)
+      setError(null)
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to refresh profile."
+      setError(message)
+      throw err
+    }
+  }, [supabase, user])
 
   const refreshCompany = useCallback(async () => {
     if (!user) {
-      setCompany(null);
-      return;
+      setCompany(null)
+      return
     }
 
-    const nextCompany = await fetchCompany(supabase, user.id);
-    setCompany(nextCompany);
-  }, [supabase, user]);
+    try {
+      const nextCompany = await fetchCompany(supabase, user.id)
+      setCompany(nextCompany)
+      setError(null)
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to refresh company."
+      setError(message)
+      throw err
+    }
+  }, [supabase, user])
 
   const refreshAll = useCallback(async () => {
     if (!user) {
-      setProfile(null);
-      setCompany(null);
-      return;
+      setProfile(null)
+      setCompany(null)
+      return
     }
 
-    const [nextProfile, nextCompany] = await Promise.all([
-      fetchProfile(supabase, user.id),
-      fetchCompany(supabase, user.id),
-    ]);
+    try {
+      const [nextProfile, nextCompany] = await Promise.all([
+        fetchProfile(supabase, user.id),
+        fetchCompany(supabase, user.id),
+      ])
 
-    setProfile(nextProfile);
-    setCompany(nextCompany);
-  }, [supabase, user]);
+      setProfile(nextProfile)
+      setCompany(nextCompany)
+      setError(null)
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to refresh account data."
+      setError(message)
+      throw err
+    }
+  }, [supabase, user])
 
   useEffect(() => {
-    let mounted = true;
+    let mounted = true
 
     const loadSession = async () => {
       try {
-        setLoading(true);
-        setError(null);
+        setLoading(true)
+        setError(null)
 
         const {
           data: { session: currentSession },
           error: sessionError,
-        } = await supabase.auth.getSession();
+        } = await supabase.auth.getSession()
 
         if (sessionError) {
-          throw new Error(sessionError.message);
+          throw new Error(sessionError.message)
         }
 
         if (!mounted) {
-          return;
+          return
         }
 
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
+        setSession(currentSession)
+        setUser(currentSession?.user ?? null)
 
         if (currentSession?.user) {
           const [nextProfile, nextCompany] = await Promise.all([
             fetchProfile(supabase, currentSession.user.id),
             fetchCompany(supabase, currentSession.user.id),
-          ]);
+          ])
 
           if (mounted) {
-            setProfile(nextProfile);
-            setCompany(nextCompany);
+            setProfile(nextProfile)
+            setCompany(nextCompany)
           }
         } else {
-          setProfile(null);
-          setCompany(null);
+          setProfile(null)
+          setCompany(null)
         }
       } catch (err) {
         if (mounted) {
           setError(
             err instanceof Error ? err.message : "Failed to load session."
-          );
+          )
         }
       } finally {
         if (mounted) {
-          setLoading(false);
+          setLoading(false)
         }
       }
-    };
+    }
 
-    void loadSession();
+    void loadSession()
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
-      setSession(nextSession);
-      setUser(nextSession?.user ?? null);
+      setSession(nextSession)
+      setUser(nextSession?.user ?? null)
 
       if (nextSession?.user) {
         try {
           const [nextProfile, nextCompany] = await Promise.all([
             fetchProfile(supabase, nextSession.user.id),
             fetchCompany(supabase, nextSession.user.id),
-          ]);
-          setProfile(nextProfile);
-          setCompany(nextCompany);
-          setError(null);
+          ])
+          setProfile(nextProfile)
+          setCompany(nextCompany)
+          setError(null)
         } catch (err) {
           setError(
             err instanceof Error ? err.message : "Failed to refresh profile."
-          );
+          )
         }
       } else {
-        setProfile(null);
-        setCompany(null);
+        setProfile(null)
+        setCompany(null)
       }
 
-      setLoading(false);
-    });
+      setLoading(false)
+    })
 
     return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, [supabase]);
+      mounted = false
+      subscription.unsubscribe()
+    }
+  }, [supabase])
 
   const signOut = useCallback(async () => {
-    const { error: signOutError } = await supabase.auth.signOut();
+    const { error: signOutError } = await supabase.auth.signOut()
 
     if (signOutError) {
-      throw new Error(signOutError.message);
+      throw new Error(signOutError.message)
     }
 
-    setUser(null);
-    setSession(null);
-    setProfile(null);
-    setCompany(null);
-  }, [supabase]);
+    setUser(null)
+    setSession(null)
+    setProfile(null)
+    setCompany(null)
+  }, [supabase])
 
   const value = useMemo(
     () => ({
@@ -232,34 +256,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       refreshCompany,
       refreshAll,
     ]
-  );
+  )
 
-  return (
-    <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
 function useAuthContext() {
-  const context = useContext(AuthContext);
+  const context = useContext(AuthContext)
 
   if (!context) {
-    throw new Error("Auth hooks must be used within AuthProvider.");
+    throw new Error("Auth hooks must be used within AuthProvider.")
   }
 
-  return context;
+  return context
 }
 
 export function useAuth() {
-  const { user, session, loading, error, signOut } = useAuthContext();
-  return { user, session, loading, error, signOut };
+  const { user, session, loading, error, signOut } = useAuthContext()
+  return { user, session, loading, error, signOut }
 }
 
 export function useProfile() {
-  const { profile, loading, error, refreshProfile } = useAuthContext();
-  return { profile, loading, error, refreshProfile };
+  const { profile, loading, error, refreshProfile } = useAuthContext()
+  return { profile, loading, error, refreshProfile }
 }
 
 export function useCompany() {
-  const { company, loading, error, refreshCompany } = useAuthContext();
-  return { company, loading, error, refreshCompany };
+  const { company, loading, error, refreshCompany } = useAuthContext()
+  return { company, loading, error, refreshCompany }
 }

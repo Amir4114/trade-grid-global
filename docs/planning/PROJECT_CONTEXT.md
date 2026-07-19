@@ -84,7 +84,9 @@ Rice, spices, pulses, frozen foods, dairy, meat, poultry, seafood, fruits, veget
 | RFQ marketplace | Demand capture | Implemented (dashboard; public `/rfq` still mock) |
 | Quotations | Commercial response | Implemented |
 | Award / selection | Supplier selection | Implemented |
-| Orders / logistics / payments | Trade execution | **Not implemented.** |
+| Purchase Orders | Commercial trade execution | Implemented in code (`017`) |
+| Fulfillment | Operational execution | Phase A implemented in code (`018`); UI pending |
+| Logistics / payments | Shipment and settlement | **Not implemented.** |
 | AI intelligence | Matching & assistance | **Not implemented.** (mock `/ai-sourcing` only) |
 | Admin dashboard | Operations | Partially implemented (verification + products live; analytics/RFQ admin mock) |
 
@@ -106,6 +108,6 @@ See [ROADMAP.md](./ROADMAP.md).
 ## Business strategy
 
 1. Finish the **trust + procurement** moat before expanding into AI spectacle.
-2. Convert awards into orders (next revenue-critical step).
+2. Convert accepted orders into visible, auditable Fulfillment execution.
 3. Keep category focus narrow (Food/FMCG) to maintain expertise and trust density.
 4. Charge for outcomes serious importers will pay for: verification depth, risk reduction, conversion speed — not consumer ecommerce chrome.
